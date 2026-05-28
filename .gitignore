@@ -1,0 +1,25 @@
+.task
+bin
+frontend/dist
+frontend/node_modules
+frontend/bindings
+build/linux/appimage/build
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+/.claude/skills/wails-skill-update/
+/.claude/index.json
+/.claude/settings.json
+/.claude/settings.local.json
+/.idea/
+.ace-tool/
+
+# Go 编译产物（开发时偶尔会在仓库根目录生成）
+/foundation.exe
+/foundation
+/*.exe
+
+# 日志
+*.log
+
+# OS 元数据
+.DS_Store
+Thumbs.db

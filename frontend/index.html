@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/wails.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Foundation</title>
+    <style>
+      /* ===== 启动骨架 (Startup Skeleton) =====
+         目的：webview 拿到 HTML 立刻显示版式骨架，等 React mount 完成后再淡出。
+         消除 wails 启动 → React 渲染 之间的白屏（Windows / Linux 无边框窗口尤甚）。
+
+         约束：
+         - 颜色与默认 light 主题对齐；prefers-color-scheme: dark 时切到 dark preset 颜色
+         - 不依赖任何 JS，纯 CSS / HTML 即可可见
+         - 版式与真实 AppLayout 对齐：TitleBar 36px + Sidebar 64px + 主内容
+         - shimmer 动画与 src/components/Skeleton 同款
+         - 切到 prefers-reduced-motion 时关闭 shimmer
+         - React mount 后，main.tsx 通过 #startup-skeleton 移除（带 120ms 淡出）
+      */
+      :root {
+        --fdn-bg-base: #ffffff;
+        --fdn-bg-sidebar: #f6f7fa;
+        --fdn-bg-content: #ffffff;
+        --fdn-bg-elevated: #eef1f6;
+        --fdn-bg-hover: rgba(15, 23, 42, 0.08);
+        --fdn-divider: rgba(15, 23, 42, 0.10);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fdn-bg-base: #0b0d10;
+          --fdn-bg-sidebar: #15181d;
+          --fdn-bg-content: #1c1f24;
+          --fdn-bg-elevated: #2a2f37;
+          --fdn-bg-hover: rgba(255, 255, 255, 0.06);
+          --fdn-divider: rgba(255, 255, 255, 0.08);
+          color-scheme: dark;
+        }
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+        background-color: var(--fdn-bg-content);
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      #root {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* —— 启动骨架本体 —— */
+      #startup-skeleton {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--fdn-bg-content);
+        opacity: 1;
+        transition: opacity 160ms ease-out;
+        pointer-events: none;
+      }
+      #startup-skeleton.fade-out { opacity: 0; }
+
+      /* TitleBar 占位（36px） */
+      .ssk-titlebar {
+        height: 36px;
+        flex-shrink: 0;
+        background-color: var(--fdn-bg-base);
+        border-bottom: 1px solid var(--fdn-divider);
+      }
+
+      /* 主体两栏 */
+      .ssk-body {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+      }
+
+      /* Sidebar 占位（64px） */
+      .ssk-sidebar {
+        width: 64px;
+        flex-shrink: 0;
+        background-color: var(--fdn-bg-sidebar);
+        border-right: 1px solid var(--fdn-divider);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px 0;
+        gap: 8px;
+      }
+      .ssk-brand {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+      }
+      .ssk-brand-divider {
+        width: 40px;
+        height: 1px;
+        background-color: var(--fdn-divider);
+        animation: none;
+      }
+      .ssk-nav-item {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+      }
+      .ssk-grow { flex: 1; }
+
+      /* 主内容占位 */
+      .ssk-content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 48px;
+      }
+      .ssk-eyebrow { width: 140px; height: 12px; border-radius: 4px; }
+      .ssk-hero    { width: 60%;   height: 36px; border-radius: 4px; }
+      .ssk-line    { height: 14px; border-radius: 4px; }
+      .ssk-line-1  { width: 100%; }
+      .ssk-line-2  { width: 80%; }
+      .ssk-card {
+        width: 100%;
+        max-width: 720px;
+        height: 140px;
+        border-radius: 12px;
+        margin-top: 8px;
+      }
+
+      /* —— Shimmer 动画（与 Skeleton 组件同款） —— */
+      .ssk-block {
+        background-color: var(--fdn-bg-elevated);
+        background-image: linear-gradient(
+          90deg,
+          var(--fdn-bg-elevated) 0%,
+          var(--fdn-bg-hover) 50%,
+          var(--fdn-bg-elevated) 100%
+        );
+        background-size: 200% 100%;
+        background-repeat: no-repeat;
+        animation: ssk-shimmer 1.4s ease-in-out infinite;
+      }
+      @keyframes ssk-shimmer {
+        0%   { background-position: -200% 0; }
+        100% { background-position:  200% 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .ssk-block { animation: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      启动骨架（独立于 #root，React mount 后由 main.tsx 移除）。
+      千万不要塞进 #root —— createRoot.render() 会立即清空根节点，骨架就废了。
+    -->
+    <div id="startup-skeleton" aria-hidden="true">
+      <div class="ssk-titlebar"></div>
+      <div class="ssk-body">
+        <div class="ssk-sidebar">
+          <div class="ssk-brand ssk-block"></div>
+          <div class="ssk-brand-divider"></div>
+          <div class="ssk-nav-item ssk-block"></div>
+          <div class="ssk-grow"></div>
+          <div class="ssk-nav-item ssk-block"></div>
+        </div>
+        <div class="ssk-content">
+          <div class="ssk-eyebrow ssk-block"></div>
+          <div class="ssk-hero ssk-block"></div>
+          <div class="ssk-line ssk-line-1 ssk-block"></div>
+          <div class="ssk-line ssk-line-2 ssk-block"></div>
+          <div class="ssk-card ssk-block"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
