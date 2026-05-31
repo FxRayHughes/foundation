@@ -23,7 +23,7 @@ import (
 
 // Run 创建 Wails 应用、注册服务、打开主窗口并启动事件循环。
 // assets 由调用方（main.go）通过 //go:embed 注入。
-func Run(assets embed.FS) error {
+func Run(assets embed.FS, trayIcon []byte) error {
 	// —— 工具层先就绪：日志 → HTTP UA → 后续模块都能直接用 ——
 	if err := logx.Init(logx.Config{
 		Level:          slog.LevelInfo,
@@ -59,6 +59,7 @@ func Run(assets embed.FS) error {
 	// 但 application.New 又需要 services 列表 —— 用预创建 + Bind 模式：
 	//   先 new 一个空 service 占位，然后在 app.New 之后回填 app 引用。
 	subSvc := subprocess.New(nil) // app 暂为 nil
+	childWinSvc := NewChildWindowService()
 
 	app := application.New(application.Options{
 		Name:        "Foundation",
@@ -69,6 +70,7 @@ func Run(assets embed.FS) error {
 			application.NewService(appsettings.New(holder)),
 			application.NewService(storagesvc.New(holder, cfgMgr)),
 			application.NewService(subSvc),
+			application.NewService(childWinSvc),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
@@ -78,8 +80,12 @@ func Run(assets embed.FS) error {
 		},
 	})
 	subSvc.AttachApp(app)
+	childWinSvc.AttachApp(app)
 
 	app.Window.NewWithOptions(windowOptions())
+
+	// 系统托盘默认禁用，后续通过配置启用
+	// setupSystray(app, trayIcon)
 
 	go emitTimeLoop(app)
 

@@ -1,9 +1,11 @@
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
+import WidgetsRoundedIcon from '@mui/icons-material/WidgetsRounded';
 import { lazy } from 'react';
 import { HomePage } from '@/pages/HomePage/HomePage';
 import { HomePageSkeleton } from '@/pages/HomePage/HomePage.skeleton';
 import { SettingsPageSkeleton } from '@/pages/SettingsPage/SettingsPage.skeleton';
+import { XProDemoPageSkeleton } from '@/pages/XProDemoPage/XProDemoPage.skeleton';
 import type { RouteDefinition } from '@/router';
 
 // SettingsPage 走 React.lazy：调色板编辑器较重，首屏不进入 main bundle。
@@ -14,6 +16,11 @@ import type { RouteDefinition } from '@/router';
 const SettingsPage = lazy(async () => {
   const mod = await import('@/pages/SettingsPage/SettingsPage');
   return { default: mod.SettingsPage };
+});
+
+const XProDemoPage = lazy(async () => {
+  const mod = await import('@/pages/XProDemoPage/XProDemoPage');
+  return { default: mod.XProDemoPage };
 });
 
 // 路由表是唯一事实源：
@@ -33,7 +40,16 @@ export const routes: RouteDefinition[] = [
     element: <HomePage />,
     fallback: <HomePageSkeleton />,
     slot: 'primary',
-    keepAlive: true, // 演示：离开后再回来，Greet 输入框保留上次内容
+    keepAlive: true,
+  },
+  {
+    id: 'x-pro-demo',
+    labelKey: 'route.xProDemo',
+    label: 'X-Pro Demo',
+    icon: WidgetsRoundedIcon,
+    element: <XProDemoPage />,
+    fallback: <XProDemoPageSkeleton />,
+    slot: 'primary',
   },
   {
     id: 'settings',

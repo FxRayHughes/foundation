@@ -18,5 +18,14 @@ export default defineConfig({
       "@bindings": path.resolve(__dirname, "bindings"),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        child: path.resolve(__dirname, "child.html"),
+        systray: path.resolve(__dirname, "systray.html"),
+      },
+    },
+  },
   plugins: [react(), wails("./bindings")],
 });

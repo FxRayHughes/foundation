@@ -19,8 +19,7 @@ export const homePageStyles = (theme: Theme): Record<string, SxProps<Theme>> => 
       display: 'flex',
       flexDirection: 'column',
       gap: 4,
-      alignItems: 'flex-start',
-      maxWidth: 720,
+      alignItems: 'stretch',
     },
     eyebrow: {
       fontSize: 12,

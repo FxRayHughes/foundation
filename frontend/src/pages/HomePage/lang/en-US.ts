@@ -14,6 +14,22 @@ export const homePageEnUS: Messages = {
       submitting: 'Greeting…',
       errorPrefix: 'Error: ',
     },
+    childWindowCard: {
+      title: 'Child Window Test',
+      description: 'Click buttons to open different child windows and test inter-window communication.',
+      confirmBtn: 'Confirm',
+      messageBtn: 'Message',
+      blankBtn: 'Blank',
+      resultPrefix: 'Child returned: ',
+    },
+    systrayCard: {
+      title: 'System Tray',
+      description: 'Enable the system tray to show a MUI panel popup when clicking the tray icon.',
+      enableBtn: 'Enable Tray',
+      disableBtn: 'Disable Tray',
+      statusOn: 'Enabled',
+      statusOff: 'Disabled',
+    },
     footer: {
       backendTick: 'Backend tick: {{time}}',
       poweredBy: 'Powered by Wails 3 · React 19 · MUI 9',

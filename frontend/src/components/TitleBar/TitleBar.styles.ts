@@ -11,7 +11,8 @@ export const titleBarStyles = (theme: Theme): Record<string, SxProps<Theme>> => 
       minHeight: 36,
       display: 'flex',
       alignItems: 'center',
-      px: 1.5,
+      pl: 1.5,
+      pr: 0,
       backgroundColor: fp.bg.base,
       borderBottom: `1px solid ${fp.divider}`,
       flexShrink: 0,
@@ -40,7 +41,7 @@ export const titleBarStyles = (theme: Theme): Record<string, SxProps<Theme>> => 
     // 不再继承全局 IconButton 默认样式（borderRadius / 默认底色）
     controlBtn: {
       width: 46,
-      height: 32,
+      height: 36,
       borderRadius: 0,
       fontSize: 14,
       backgroundColor: 'transparent',
@@ -53,7 +54,7 @@ export const titleBarStyles = (theme: Theme): Record<string, SxProps<Theme>> => 
     },
     closeBtn: {
       width: 46,
-      height: 32,
+      height: 36,
       borderRadius: 0,
       fontSize: 14,
       backgroundColor: 'transparent',
