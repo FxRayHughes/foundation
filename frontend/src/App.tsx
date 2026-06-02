@@ -1,6 +1,7 @@
 import { AppLayout } from '@/components/AppLayout';
 import { I18nProvider, registerFoundationLocales } from '@/i18n';
 import { registerHomePageLocales } from '@/pages/HomePage/lang';
+import { registerXProDemoPageLocales } from '@/pages/XProDemoPage/lang';
 import { registerSettingsPageLocales } from '@/pages/SettingsPage/lang';
 import { PreferencesProvider } from '@/preferences';
 import { RouterProvider } from '@/router';
@@ -17,6 +18,7 @@ import { FoundationThemeProvider, registerFoundationThemes } from '@/styles/them
 registerFoundationThemes();
 registerFoundationLocales();
 registerHomePageLocales();
+registerXProDemoPageLocales();
 registerSettingsPageLocales();
 
 // Provider 嵌套顺序（自外向内）：

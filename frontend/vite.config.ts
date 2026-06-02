@@ -23,7 +23,8 @@ export default defineConfig({
       input: {
         main: path.resolve(__dirname, "index.html"),
         child: path.resolve(__dirname, "child.html"),
-        systray: path.resolve(__dirname, "systray.html"),
+        // TODO(systray): 托盘功能暂时移除，后端 bindings 不存在；恢复时取消下面入口注释。
+        // systray: path.resolve(__dirname, "systray.html"),
       },
     },
   },

@@ -1,6 +1,7 @@
 import { Box, Button, TextField, Typography, useTheme } from '@mui/material';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
-import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
+// TODO(systray): 托盘功能暂时移除；恢复时取消下面图标 import 注释。
+// import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import { useT } from '@/i18n';
 import { useHomePage } from './useHomePage';
 import { homePageStyles } from './HomePage.styles';
@@ -11,7 +12,7 @@ export const HomePage = () => {
   const theme = useTheme();
   const styles = homePageStyles(theme);
   const t = useT();
-  const { name, setName, result, time, loading, error, greet, openConfirm, openMessage, openBlank, childResult, systrayEnabled, toggleSystray } = useHomePage();
+  const { name, setName, result, time, loading, error, greet, openConfirm, openMessage, openBlank, childResult } = useHomePage();
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -75,6 +76,7 @@ export const HomePage = () => {
           )}
         </Box>
 
+        {/* TODO(systray): 托盘功能暂时移除，后端 bindings 不存在；恢复时取消下面整段注释。
         <Box sx={styles.card}>
           <Typography sx={styles.cardTitle}>{t('home.systrayCard.title')}</Typography>
           <Typography sx={{ fontSize: 13, color: theme.palette.foundation.text.secondary }}>
@@ -95,6 +97,7 @@ export const HomePage = () => {
             </Typography>
           </Box>
         </Box>
+        */}
 
         <Box sx={styles.footer}>
           <Typography variant="inherit">

@@ -30,6 +30,7 @@ export const zhCN: Locale = {
     },
     route: {
       home: '首页',
+      xProDemo: 'X-Pro 组件',
       settings: '设置',
     },
     common: {

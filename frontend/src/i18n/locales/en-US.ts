@@ -23,6 +23,7 @@ export const enUS: Locale = {
     },
     route: {
       home: 'Home',
+      xProDemo: 'X-Pro Components',
       settings: 'Settings',
     },
     common: {

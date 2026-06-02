@@ -3,7 +3,8 @@ import { GreetService } from '@/services';
 import { useTimeEvent } from '@/shared/hooks/useTimeEvent';
 import { onChildResult, onChildClosed } from '@/services/childwindow';
 import { ChildWindowService } from '@/services/childwindow/ChildWindowService';
-import { SystrayService } from '@/services/systray';
+// TODO(systray): 托盘功能暂时移除，后端 bindings 不存在；恢复时取消下面注释。
+// import { SystrayService } from '@/services/systray';
 
 export interface UseHomePageResult {
   name: string;
@@ -17,8 +18,9 @@ export interface UseHomePageResult {
   openMessage: () => Promise<void>;
   openBlank: () => Promise<void>;
   childResult: string | null;
-  systrayEnabled: boolean;
-  toggleSystray: () => Promise<void>;
+  // TODO(systray): 托盘功能暂时移除。
+  // systrayEnabled: boolean;
+  // toggleSystray: () => Promise<void>;
 }
 
 // HomePage ViewModel：
@@ -30,7 +32,8 @@ export const useHomePage = (): UseHomePageResult => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [childResult, setChildResult] = useState<string | null>(null);
-  const [systrayEnabled, setSystrayEnabled] = useState<boolean>(false);
+  // TODO(systray): 托盘功能暂时移除。
+  // const [systrayEnabled, setSystrayEnabled] = useState<boolean>(false);
   const time = useTimeEvent();
 
   const greet = useCallback(async (): Promise<void> => {
@@ -70,15 +73,16 @@ export const useHomePage = (): UseHomePageResult => {
     setChildResult('blank → opened');
   }, []);
 
-  const toggleSystray = useCallback(async (): Promise<void> => {
-    if (systrayEnabled) {
-      await SystrayService.disable();
-      setSystrayEnabled(false);
-    } else {
-      await SystrayService.enable();
-      setSystrayEnabled(true);
-    }
-  }, [systrayEnabled]);
+  // TODO(systray): 托盘功能暂时移除，后端 bindings 不存在；恢复时取消下面注释。
+  // const toggleSystray = useCallback(async (): Promise<void> => {
+  //   if (systrayEnabled) {
+  //     await SystrayService.disable();
+  //     setSystrayEnabled(false);
+  //   } else {
+  //     await SystrayService.enable();
+  //     setSystrayEnabled(true);
+  //   }
+  // }, [systrayEnabled]);
 
-  return { name, setName, result, time, loading, error, greet, openConfirm, openMessage, openBlank, childResult, systrayEnabled, toggleSystray };
+  return { name, setName, result, time, loading, error, greet, openConfirm, openMessage, openBlank, childResult };
 };
