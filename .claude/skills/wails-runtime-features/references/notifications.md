@@ -105,6 +105,29 @@ notifier.SendNotificationWithActions(notifications.NotificationOptions{
 })
 ```
 
+### 增强字段（beta.9 新增）
+
+`NotificationOptions` 在 `Title` / `Subtitle` / `Body` / `CategoryID` / `Data` 之外新增了以下可选字段。**平台不支持时会优雅降级**（忽略该字段而非报错）：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `Sound` | `*NotificationSound` | 送达提示音。`&NotificationSound{Silent: true}` 静音；`&NotificationSound{Name: "Ping"}` 指定音效（macOS 需音频文件位于 bundle 的 `Library/Sounds`） |
+| `Attachments` | `[]NotificationAttachment` | 随通知展示的媒体文件（图片 / 音视频，主要 macOS） |
+| `ThreadID` | `string` | 在通知中心把相关通知**分组**到同一线程 |
+| `InterruptionLevel` | `string` | 优先级：`"passive"` / `"active"` / `"timeSensitive"` / `"critical"` |
+| `Schedule` | `*NotificationSchedule` | 延迟 / 定时投递（macOS 用原生 trigger 并持久化） |
+
+```go
+notifier.SendNotification(notifications.NotificationOptions{
+    ID:                "scheduled-1",
+    Title:             "Standup 提醒",
+    Body:              "10 分钟后开始",
+    Sound:             &notifications.NotificationSound{Name: "Ping"},
+    ThreadID:          "standup",
+    InterruptionLevel: "timeSensitive",
+})
+```
+
 ## Notification Responses
 
 Process user interactions with notifications:

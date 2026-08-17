@@ -1,6 +1,6 @@
 ---
 name: wails-runtime-features
-description: 剪贴板、通知、屏幕、自启动、平台 API（dock）、键盘快捷键、文件/HTML 拖放、浏览器集成、环境信息、前端 @wailsio/runtime。当用户问到「app.Clipboard / Notifications / app.Screen / Autostart / Dock / KeyBinding / EnableFileDrop / OpenURL / app.Env / @wailsio/runtime / Application Window WML Events Browser Dialogs Flags Screens System」等运行时功能时使用。
+description: 剪贴板、通知（含 beta.9 声音/附件/定时字段）、屏幕、自启动、平台 API（dock）、键盘快捷键（应用级 KeyBinding + 系统级 GlobalShortcut）、平台检测（System.IsMobile/IsDesktop/...）、文件/HTML 拖放、浏览器集成、环境信息、前端 @wailsio/runtime。当用户问到「app.Clipboard / Notifications / app.Screen / Autostart / Dock / KeyBinding / GlobalShortcut / 全局快捷键 / System.IsMac / IsMobile / IsDesktop / EnableFileDrop / OpenURL / app.Env / @wailsio/runtime / Application Window WML Events Browser Dialogs Flags Screens System」等运行时功能时使用。
 ---
 
 # Wails v3 - Runtime 功能合集

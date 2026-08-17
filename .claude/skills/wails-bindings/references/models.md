@@ -289,10 +289,12 @@ const config = new Config({
 
 | Go Type | JavaScript Type |
 |---------|----------------|
-| `time.Time` | `Date` |
-| `[]byte` | `Uint8Array` |
+| `time.Time` | `string` (RFC3339Nano) — 默认；可用 `wails3 generate bindings -time-type=Date` 改为 `Date` |
+| `[]byte` | `string` (base64) |
 | `*T` | `T` (pointers transparent) |
 | `interface{}` | `any` |
+
+> **beta.9 变更**：`time.Time` 默认绑定为 **RFC3339Nano 字符串**（不再是 `Date`）。本页后文凡出现 `createdAt: Date = new Date()` / `.getTime()` / `.toLocaleDateString()` 的生成代码示例，均对应 `wails3 generate bindings -time-type=Date` 模式；默认（string）模式下该字段是 `string`。
 
 ### Collections
 
@@ -690,7 +692,7 @@ manager.loadUsers()
 
 - **Use JSON tags** - Control field names
 - **Add comments** - They become JSDoc
-- **Use time.Time** - Converts to Date
+- **Use time.Time** - 默认序列化为 RFC3339Nano 字符串（如需 JS `Date`，用 `wails3 generate bindings -time-type=Date`）
 - **Validate on Go side** - Don't trust frontend
 - **Keep models simple** - Data containers only
 - **Use pointers for optional** - `*string` for nullable

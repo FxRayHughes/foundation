@@ -806,6 +806,15 @@ Mac: application.MacWindow{
 - `MacWindowLevelPopUpMenu` - Pop-up menu level
 - `MacWindowLevelScreenSaver` - Screen saver level
 
+**CornerType** (`MacWindowCornerType`) — *beta.9 新增*
+- 控制**无边框（frameless）** macOS 窗口的圆角形状。
+- `MacWindowCornerTypeRounded` - 保留 AppKit 标准圆角（默认）；配合 `CornerRadius` 可自定义半径
+- `MacWindowCornerTypeSquare` - 真正的直角无边框窗口（此时 `CornerRadius` 被忽略）
+
+**CornerRadius** (`float64`) — *beta.9 新增*
+- 圆角无边框窗口的自定义圆角半径（单位：点 / points）。
+- `0`（默认）保留 AppKit 标准圆角；仅在 `CornerType == MacWindowCornerTypeRounded` 且窗口为 frameless 时生效。
+
 **CollectionBehavior** (`MacWindowCollectionBehavior`)
 
 Controls how the window behaves across macOS Spaces and fullscreen. These are bitmask values that can be combined using bitwise OR (`|`).
@@ -859,6 +868,7 @@ Windows: application.WindowsWindow{
     BackdropType:                      application.Auto,
     CustomTheme:                       application.ThemeSettings{},
     DisableFramelessWindowDecorations: false,
+    DisableMenu:                       false,
 },
 ```
 
@@ -879,6 +889,9 @@ There are no `WindowsBackdropTypeMica`-style constants — use `application.Mica
 
 **DisableFramelessWindowDecorations** (`bool`)
 - Disable default frameless decorations (Aero shadow, rounded corners).
+
+**DisableMenu** (`bool`) — *beta.9 新增*
+- 禁用该窗口的菜单。
 
 **Example:**
 

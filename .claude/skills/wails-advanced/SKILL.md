@@ -1,6 +1,6 @@
 ---
 name: wails-advanced
-description: Wails v3 高级与杂项主题：自定义传输（WebSocket/gRPC）、单实例、文件关联、自定义 URL 协议、自动更新器（Updater）、性能优化、安全实践、Panic 处理、Raw Messages、HTTP/Gin 路由集成、E2E 测试 (Playwright)、单元测试、自定义模板。当用户问到「Custom Transport / SingleInstance / FileAssociations / myapp:// / app.Updater / Provider / GitHub Releases / RawMessageHandler / PanicHandler / Gin 路由 / e2e Playwright / wails3 generate template」时使用。
+description: Wails v3 高级与杂项主题：自定义传输（WebSocket/gRPC）、Streams（app.HandleStream 双向字节流）、内置 MCP Server（mcp tag）、单实例、文件关联、自定义 URL 协议、自动更新器（Updater）、性能优化、安全实践、Panic 处理、Raw Messages、HTTP/Gin 路由集成、E2E 测试 (Playwright)、单元测试、自定义模板。当用户问到「Custom Transport / Streams / HandleStream / Stream() / JSONStream / MCP / WAILS_MCP / SingleInstance / FileAssociations / myapp:// / app.Updater / Provider / GitHub Releases / RawMessageHandler / PanicHandler / Gin 路由 / e2e Playwright / wails3 generate template」时使用。
 ---
 
 # Wails v3 - 高级与杂项
@@ -45,6 +45,38 @@ app := application.New(application.Options{
 ```
 
 详见 `custom-transport.md` + `examples/websocket-transport`。
+
+### Streams（beta.9 新增：Go↔JS 双向字节流，WebSocket 编程模型、无监听端口）
+
+比自定义传输更轻：不占 TCP 端口、不走 `evaluateJavaScript`，直接骑在 app 已有的 asset server 上（天然 origin 绑定）。Go→JS 用每窗口一条 held-poll，JS→Go 用普通 POST；`-tags server` 构建下自动切换为真正的 WebSocket，业务代码不变。
+
+```go
+// Go：handler 每条连接跑一次，各自独立 goroutine
+app.HandleStream("telemetry", func(c *application.StreamConn) {
+    defer c.Close()
+    for {
+        frame, err := c.Receive()   // 阻塞直到一帧到达
+        if err != nil { return }    // 页面刷新 / 窗口关闭 / app 退出
+        _ = c.Send(process(frame))  // 像 socket write 一样阻塞
+    }
+})
+```
+
+```js
+// 前端：按名字连接，返回对象实现 WebSocket 接口，同步返回（readyState=CONNECTING）
+import { Stream } from "@wailsio/runtime"
+const s = Stream("telemetry")
+s.onopen    = () => s.send(new TextEncoder().encode("hello"))
+s.onmessage = (ev) => console.log(new Uint8Array(ev.data))  // 帧是 ArrayBuffer / Go 侧 []byte
+```
+
+结构化数据用 `JSONStream(name)`（自动 JSON 编解码）。迁移已有 WebSocket 见 `streams-from-websockets.md`。详见 `streams.md`。
+
+### 内置 MCP Server（beta.9 可用：`mcp` build tag）
+
+用 `mcp` 构建标签编译时，应用会自动启动一个 Model Context Protocol server，让 LLM agent 测试 / 操控运行中的 Wails 应用（窗口控制、DOM 检查、执行 JS、调用绑定方法、收发事件、模拟鼠标键盘并带屏幕光标动画）。无需写任何代码：`wails3 build` / `wails3 dev` 在设置了 `WAILS_MCP=1` 时会自动加 `mcp` tag。
+
+配置全走环境变量：`WAILS_MCP_HOST` / `WAILS_MCP_PORT` / `WAILS_MCP_TIMEOUT` / `WAILS_MCP_HIDE_CURSOR`。
 
 ### 单实例
 
@@ -244,6 +276,8 @@ wails3 init -t github:user/wails-template
 | 主题 | 文件 |
 |------|------|
 | 自定义传输（WebSocket/gRPC） | [custom-transport.md](./references/custom-transport.md) |
+| Streams（双向字节流，beta.9） | [streams.md](./references/streams.md) |
+| WebSocket → Streams 迁移 | [streams-from-websockets.md](./references/streams-from-websockets.md) |
 | 单实例 | [single-instance.md](./references/single-instance.md) |
 | 文件关联 | [file-associations.md](./references/file-associations.md) |
 | 自定义 URL 协议 | [custom-protocols.md](./references/custom-protocols.md) |

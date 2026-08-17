@@ -587,6 +587,28 @@ This is a fire-and-forget function with no return value. Use events to receive r
 
 For more details, see the [Raw Messages Guide](/guides/raw-messages).
 
+#### 平台检测（beta.9 新增）
+
+`System` 还导出一组**同步**平台检测函数，可在共享前端代码里无需构建分支即可判断运行环境（与 Go 侧 `application.System` 对应）：
+
+```typescript
+import { System } from '@wailsio/runtime'
+
+if (System.IsMac())     { /* macOS */ }
+if (System.IsMobile())  { /* iOS 或 Android */ }
+if (System.IsDesktop()) { /* macOS / Windows / Linux */ }
+```
+
+| 函数 | 返回 | 说明 |
+|------|------|------|
+| `IsWindows()` / `IsMac()` / `IsLinux()` | `boolean` | 具体桌面平台 |
+| `IsIOS()` / `IsAndroid()` | `boolean` | 具体移动平台 |
+| `IsMobile()` | `boolean` | iOS 或 Android |
+| `IsDesktop()` | `boolean` | macOS / Windows / Linux |
+| `IsAMD64()` / `IsARM()` / `IsARM64()` | `boolean` | CPU 架构 |
+| `IsDebug()` | `boolean` | 是否 debug 构建 |
+| `IsDarkMode()` | `Promise<boolean>` | 系统是否深色模式（**异步**，注意需 `await`） |
+
 ### Application
 
 Application-level methods.

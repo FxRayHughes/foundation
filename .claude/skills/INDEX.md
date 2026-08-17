@@ -29,7 +29,7 @@
 ## 内容来源
 
 所有 SKILL 内容源自官方仓库 `wailsapp/wails`（`docs/src/content/docs/`，Astro Starlight）。
-最新基准：master @ `6329e9d2bec9`（2026-05-28 拉取，91 个英文 mdx 文档）。
+最新基准：`v3.0.0-beta.9`（tag `9b3cd78`，2026-08-17 拉取）。此前基准为 master @ `6329e9d2bec9`（2026-05-28，对应 alpha.96）。
 
 每个 SKILL 文件夹结构：
 
