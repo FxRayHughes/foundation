@@ -7,7 +7,9 @@ sidebar:
 
 import { Tabs, TabItem } from "@astrojs/starlight/components";
 
-Wails provides a powerful key binding system that allows you to register global keyboard shortcuts that work across all windows in your application. This enables users to quickly access functionality without navigating through menus.
+Wails provides a powerful key binding system that allows you to register keyboard shortcuts that work across all windows in your application **while the app is focused**. This enables users to quickly access functionality without navigating through menus.
+
+> **注意（beta.9）**：`app.KeyBinding` 是**应用级**快捷键——只在应用获得焦点时触发。若需要**系统级全局快捷键**（应用未聚焦也能触发），请使用 `app.GlobalShortcut`（见文末「Global Shortcuts（系统级）」）。
 
 ## Accessing the Key Binding Manager
 
@@ -432,3 +434,31 @@ Test your key bindings on all target platforms to ensure they work correctly and
 :::danger[Warning]
 Be careful not to override critical system shortcuts. Some key combinations are reserved by the operating system and cannot be captured by applications.
 :::
+
+## Global Shortcuts（系统级）— beta.9 新增
+
+`app.KeyBinding` 只在应用聚焦时触发。若要注册**系统级全局快捷键**（应用未聚焦、甚至在后台时也能触发），使用 `app.GlobalShortcut`。各平台原生实现、无第三方依赖：macOS 用 Carbon Hot Keys，Windows 用 `RegisterHotKey`，X11 用 `XGrabKey`，Wayland 走 XDG Desktop Portal 的 global shortcuts 接口。
+
+```go
+app := application.New(application.Options{Name: "Global Shortcut Demo"})
+
+// 注册：accelerator 字符串 + 无参回调
+err := app.GlobalShortcut.Register("Ctrl+Alt+K", func() {
+    app.Logger.Info("全局快捷键触发（应用未聚焦也生效）")
+})
+if err != nil {
+    app.Logger.Error("注册失败", "error", err)
+}
+```
+
+完整 API（`app.GlobalShortcut *GlobalShortcutManager`）：
+
+| 方法 | 签名 | 说明 |
+|------|------|------|
+| `Register` | `Register(accelerator string, callback func()) error` | 注册一个系统级快捷键 |
+| `Unregister` | `Unregister(accelerator string) error` | 注销指定快捷键 |
+| `UnregisterAll` | `UnregisterAll() error` | 注销全部（应用退出时会自动调用） |
+| `IsRegistered` | `IsRegistered(accelerator string) bool` | 查询是否已注册 |
+| `GetAll` | `GetAll() []string` | 列出当前已注册的全部 accelerator |
+
+对比一句话记忆：**`KeyBinding` = 应用内（聚焦时跨窗口）；`GlobalShortcut` = 操作系统级（不聚焦也触发）。**

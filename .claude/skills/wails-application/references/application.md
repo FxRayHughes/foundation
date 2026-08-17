@@ -414,6 +414,32 @@ app := application.New(application.Options{
 
 For more details, see the [Raw Messages Guide](/guides/raw-messages).
 
+## Platform Detection: `application.System`（beta.9 新增）
+
+`application.System` 是一个全局单例，用于在**共享代码**里做运行时平台判断——无需 build tag、在每个目标平台都能编译，因此可以直接 `if` 分支而不必拆 `_darwin.go` / `_windows.go` 文件。
+
+```go
+if application.System.IsMobile()  { /* iOS 或 Android */ }
+if application.System.IsDesktop() { /* macOS / Windows / Linux */ }
+if application.System.IsServer()  { /* server build tag */ }
+
+// 精确判断单一目标：
+if application.System.IsPlatform(application.PlatformMacOS) { /* ... */ }
+```
+
+| 方法 | 说明 |
+|------|------|
+| `System.IsMobile()` | iOS 或 Android |
+| `System.IsDesktop()` | macOS / Windows / Linux |
+| `System.IsServer()` | 以 `server` build tag 构建 |
+| `System.IsPlatform(p Platform)` | 精确匹配单一平台 |
+
+`Platform` 常量：`PlatformMacOS` / `PlatformWindows` / `PlatformLinux` / `PlatformIOS` / `PlatformAndroid` / `PlatformServer`。
+
+> 前端有对应的 `@wailsio/runtime` 的 `System.IsMobile/IsDesktop/IsMac/...`（见 `wails-runtime-features`）。
+>
+> **与 Foundation 铁律的关系**：窗口/平台差异仍优先用 `internal/app/window_<os>.go` 的 build tag 文件（项目约定）；`application.System` 适用于那些不值得单开 build-tag 文件的轻量分支。
+
 ## Platform-Specific Options
 
 ### Windows Options
