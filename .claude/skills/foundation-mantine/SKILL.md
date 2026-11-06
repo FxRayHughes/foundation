@@ -141,7 +141,7 @@ import classes from './Foo.module.css';
 - 不要用 Mantine style props 堆样式（`c` / `fw` / `mt` / `bg` …）——现有代码全部走 CSS Modules；布局组件的 `gap` 等少量结构性 prop 可以用。
 - 状态用 **data 属性**而非拼 class：`data-active={x || undefined}` + CSS `.item[data-active]`。Mantine 自己也用 `[data-disabled]`、`[data-variant='subtle']`、`[data-hovered]` 等（各组件的 data 属性见 components skill 的 references/official 里的 Styles API 表）。
 - 改 Mantine 组件内部元素：`className`（root）或 `classNames={{ root, input, label, dropdown, … }}`（selector 名见官方 Styles API）。示例：`Personalization.tsx` 的 `<ColorInput classNames={{ root: classes.paletteInputRoot, input: classes.paletteInput }} />`。
-- **优先级坑**：Mantine 的 `styles.css` 不在 `@layer` 中，和你的 module class 同优先级时谁后加载谁赢。要压过全局覆盖（如 ActionIcon subtle 的 hover），把选择器写两次提权：`.item.item:hover {…}`（见 `Sidebar.module.css`）。
+- **优先级坑**：Mantine 的 `styles.css` 不在 `@layer` 中，和你的 module class 同优先级时谁后加载谁赢。要压过全局覆盖（如 ActionIcon subtle 的 hover），把选择器写两次提权：`.item.item:hover {…}`（见 `components/Navigation/NavRail/NavRail.module.css`）。
 - 只依赖运行时数值的样式（计算出的宽度、depth 缩进等）可用内联 `style`，值仍用 CSS 变量：`style={{ '--dg-depth': depth } as CSSProperties}`。
 - 三方库内部 class 用 `:global(...)` 改写（见 `x-pro/data-grid/DataGrid.module.css`）。
 - 子页面可以混用父页面共享样式：`import shared from '../SettingsPage.module.css'`（`shared.section` / `shared.sectionTitle` / `shared.sectionHint`）。
@@ -196,21 +196,25 @@ View / ViewModel 都不直接 import `@bindings/*`。ViewModel 暴露 i18n key�
 
 ---
 
-## 标准示例：`components/Sidebar/`（迁移后的范本）
+## 标准示例：`components/Navigation/NavRail/`（迁移后的范本）
+
+> `components/Sidebar` 现在只是 `NavRail` 的兼容出口；导航组件统一在 `components/Navigation`。
 
 ```tsx
-import { ActionIcon, Box, Tooltip } from '@mantine/core';
-import { IconHome } from '@tabler/icons-react';
-import classes from './Sidebar.module.css';
+import { ActionIcon, Tooltip } from '@mantine/core';
+import { navLabel } from '../navLabel';
+import { useNavRail } from './useNavRail';      // 复用共享 ViewModel useNavigation（条目来自路由表）
+import classes from './NavRail.module.css';
 
-const Icon = r.icon ?? IconHome;               // r.icon: Icon（Tabler）
-<Tooltip label={label} position="right">       {/* withArrow / openDelay 来自全局默认 */}
+const label = navLabel(t, item);               // ViewModel 只给 labelKey，View 负责翻译
+const Icon = item.icon;                        // Icon（Tabler），缺省 IconHome 在 VM 里兜底
+<Tooltip label={label} position={tooltipPosition} disabled={!showTooltip}>  {/* withArrow / openDelay 来自全局默认 */}
   <ActionIcon                                  /* variant 默认 subtle（全局） */
-    onClick={() => navigate(r.id)}
+    onClick={() => navigate(item.id)}
     className={classes.item}
-    data-active={isActive || undefined}
+    data-active={item.active || undefined}
     aria-label={label}
-    aria-current={isActive ? 'page' : undefined}
+    aria-current={item.active ? 'page' : undefined}
   >
     <Icon size={24} stroke={1.75} />
   </ActionIcon>
@@ -225,7 +229,13 @@ const Icon = r.icon ?? IconHome;               // r.icon: Icon（Tabler）
 .item.item[data-active]:hover { color: var(--fd-accent); background-color: var(--fd-bg-active); }
 ```
 
-其它可参考：`pages/SettingsPage/`（`UnstyledButton` 卡片选择、`Switch` 开关行、`ColorInput` 取色、`Button` filled/default）、`pages/HomePage/`（`TextInput` + `Button` 表单）、`childwindows/ConfirmWindow/`。
+其它可参考：`pages/SettingsPage/`（`UnstyledButton` 卡片选择 —— `layout/Layout.tsx` 是带方向键的 `role="radiogroup"` 卡片网格、`Switch` 开关行、`ColorInput` 取色、`Button` filled/default）、`pages/HomePage/`（`TextInput` + `Button` 表单）、`childwindows/ConfirmWindow/`。
+
+---
+
+## 应用外壳与布局（简述）
+
+应用外壳**不用** Mantine `AppShell`：`components/AppLayout` 是一个 CSS Grid（`title` / `nav` / `main`），由**布局预设**（`frontend/src/layouts/`，`nav.variant × nav.placement × frame`，9 个内置 + `layoutRegistry.register` 扩展）经 `data-placement` / `data-frame` / `data-dock-side` 切换；导航形态在 `components/Navigation`（NavRail / NavSidebar / NavBar / NavDock / NavigationDrawerButton）；`TitleBar` 提供 `leading` / `center` 插槽，高度用 `var(--fd-titlebar-h)`（macOS 40px / 其它 36px）。要改导航位置或外壳形态 → 加预设，不要在 `AppLayout.tsx` 硬编码。详见 [foundation-layout](../foundation-layout/SKILL.md)。
 
 ---
 
@@ -261,7 +271,7 @@ const Icon = r.icon ?? IconHome;               // r.icon: Icon（Tabler）
 | `Portal` / `Modal`(base) | `Portal` / `Overlay` | |
 | `Paper` / `Card` | `Paper` / `Card`（已全局 surface 化） | |
 | `Accordion` | `Accordion` + `.Item value` / `.Control` / `.Panel` | |
-| `AppBar` | 项目 `TitleBar` 组件 / `AppShell` | |
+| `AppBar` | 项目 `TitleBar` 组件（`leading` / `center` 插槽） | 外壳用项目 `AppLayout`（CSS Grid + 布局预设），不用 `AppShell` |
 | `Divider` | `Divider` | |
 | `Chip` | `Badge`（展示）/ `Chip`（可选） | |
 | `Avatar` / `Badge`(角标) | `Avatar` / `Indicator` | |
@@ -295,6 +305,7 @@ Mantine 9 相对 7/8 的破坏性变更（AI 训练数据里常见旧写法）�
 | [foundation-mantine-icons](../foundation-mantine-icons/SKILL.md) | Tabler 图标规范：尺寸 / stroke、查找名称、`Icon` 类型、MUI 图标对照 |
 | [foundation-mantine-charts](../foundation-mantine-charts/SKILL.md) | `@mantine/charts` + 项目 x-pro 图表（Heatmap/Funnel/Radar/Candlestick/Sankey/Gantt/Treemap/Zoomable）+ 配色规则 |
 | [foundation-mantine-datatable](../foundation-mantine-datatable/SKILL.md) | `mantine-datatable` + 项目 `DataGridPro` / `DataGridPremium` |
+| [foundation-layout](../foundation-layout/SKILL.md) | 布局预设 / AppLayout 网格 / Navigation 导航形态 / TitleBar 插槽 / 悬浮 Dock |
 | `foundation-theme` | 主题预设注册 / 切换 / 自定义主题 / `mantineOverrides` |
 | `foundation-i18n` | `useT()`、页面级语言包、组件级语言包注册 |
 | `foundation-persistence` | 前端跨会话状态的唯一出路 |

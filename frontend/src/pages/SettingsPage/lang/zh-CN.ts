@@ -14,6 +14,10 @@ export const settingsPageZhCN: Messages = {
         label: '个性化',
         description: '主题、显示偏好与自定义配色',
       },
+      layout: {
+        label: '布局',
+        description: '导航位置与应用外壳的网格布局',
+      },
       language: {
         label: '语言',
         description: '切换界面语言',

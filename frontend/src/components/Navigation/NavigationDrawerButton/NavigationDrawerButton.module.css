@@ -1,0 +1,29 @@
+/* 标题栏菜单按钮（放在标题栏内，高度 var(--fd-titlebar-h)：macOS 40px / 其它 36px）+ 导航抽屉。
+   抽屉内容复用 NavSidebar 的抽屉模式，这里只去掉 Drawer 自带的内边距并铺 sidebar 底色。 */
+
+.button.button {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 6px;
+  color: var(--fd-text-secondary);
+}
+
+.button.button:hover {
+  background-color: var(--fd-bg-hover);
+  color: var(--fd-text-primary);
+}
+
+.content {
+  background-color: var(--fd-bg-sidebar);
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  display: flex;
+}

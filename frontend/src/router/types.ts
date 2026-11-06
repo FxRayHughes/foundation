@@ -27,10 +27,15 @@ export interface RouteDefinition {
   fallback?: ReactNode;
 }
 
+// 页面参数：键值对字符串（桌面应用无 URL，仅随 navigate 传递）
+export type RouteParams = Readonly<Record<string, string>>;
+
 export interface RouterContextValue {
   routes: RouteDefinition[];          // 全部已注册路由（含 hidden）
   active: RouteDefinition;            // 当前激活路由
-  navigate: (id: string) => void;     // 跳转
+  // 跳转；params 为可选的页面参数（如设置页子项 { section: 'layout' }），随本次跳转替换
+  navigate: (id: string, params?: RouteParams) => void;
+  params: RouteParams;                // 最近一次 navigate 传入的参数（无则为空对象）
   primary: RouteDefinition[];         // slot === 'primary'
   footer: RouteDefinition[];          // slot === 'footer'
 }

@@ -11,6 +11,10 @@ export const settingsPageEnUS: Messages = {
         label: 'Personalization',
         description: 'Theme, display preferences, and custom palette',
       },
+      layout: {
+        label: 'Layout',
+        description: 'Navigation position and app shell grid',
+      },
       language: {
         label: 'Language',
         description: 'Switch the UI language',

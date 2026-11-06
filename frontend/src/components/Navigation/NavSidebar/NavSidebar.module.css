@@ -1,0 +1,187 @@
+/* 展开侧栏：
+   - 宽 220px，折叠为 64px（与 rail 同宽），width 平滑过渡
+   - 行布局 = 48px 图标格 + 文字：root 左右 8px padding，图标中心恒在 32px，
+     折叠 / 展开时图标不跳位，只有文字淡出被裁掉
+   - 选中：bg.active + accent + 外侧 3px indicator bar
+   - 分隔线读 --nav-divider（inset 外框下透明） */
+
+.root {
+  width: 220px;
+  flex-shrink: 0;
+  background-color: var(--fd-bg-sidebar);
+  border-right: 1px solid var(--nav-divider, var(--fd-divider));
+  display: flex;
+  flex-direction: column;
+  padding: 12px 8px;
+  gap: 4px;
+  overflow: hidden;
+  transition: width 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.root[data-collapsed] {
+  width: 64px;
+}
+
+.root[data-placement='right'] {
+  border-right: none;
+  border-left: 1px solid var(--nav-divider, var(--fd-divider));
+}
+
+.root[data-in-drawer] {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+}
+
+/* ---- 品牌行 ---- */
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.brandCell {
+  width: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--fd-bg-elevated);
+  color: var(--fd-accent);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.brandTitle {
+  flex: 1;
+  min-width: 0;
+  padding-left: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fd-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.brandTitle[data-no-logo] {
+  padding-left: 12px;
+}
+
+.close.close {
+  flex-shrink: 0;
+  color: var(--fd-text-secondary);
+}
+
+.divider {
+  height: 1px;
+  margin: 4px;
+  flex-shrink: 0;
+  background-color: var(--fd-divider);
+}
+
+/* ---- 条目 ---- */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-block: 4px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  color: var(--fd-text-secondary);
+  transition:
+    background-color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.item:hover {
+  background-color: var(--fd-bg-hover);
+  color: var(--fd-text-primary);
+}
+
+.item[data-active],
+.item[data-active]:hover {
+  color: var(--fd-accent);
+  background-color: var(--fd-bg-active);
+}
+
+.item[data-kind='toggle'] {
+  color: var(--fd-text-muted);
+}
+
+.itemIcon {
+  width: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.root[data-collapsed] .label,
+.root[data-collapsed] .brandTitle {
+  opacity: 0;
+}
+
+.indicator {
+  position: absolute;
+  left: -8px;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background-color: var(--fd-accent);
+}
+
+.root[data-placement='right'] .indicator {
+  left: auto;
+  right: -8px;
+  border-radius: 2px 0 0 2px;
+}
+
+.root[data-in-drawer] .indicator {
+  display: none;
+}

@@ -18,7 +18,7 @@ export const xProDemoPageEnUS: Messages = {
       age: 'Age',
     },
     charts: {
-      title: 'Charts Pro (seven self-implemented charts)',
+      title: 'Charts Pro (eight self-implemented charts)',
       heatmap: 'Heatmap',
       funnel: 'Funnel',
       radar: 'Radar',

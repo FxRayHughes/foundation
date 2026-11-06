@@ -4,12 +4,13 @@
 
 ## 模块职责
 
-提供应用的用户界面。技术栈 React 19 + TypeScript（strict）+ Mantine 9 + CSS Modules + Vite 8，按 MVVM 分层（View / ViewModel hook / Style / Service）。提供干净的两栏布局（侧边栏 + 主内容）、自绘标题栏、方形圆角按钮主题、注册式多主题系统。生产构建产物 `frontend/dist` 由 `main.go` 通过 `embed.FS` 打入 Go 二进制。
+提供应用的用户界面。技术栈 React 19 + TypeScript（strict）+ Mantine 9 + CSS Modules + Vite 8，按 MVVM 分层（View / ViewModel hook / Style / Service）。提供可切换的布局预设系统（CSS Grid 外壳 + 9 种内置导航形态 / 位置组合，见「布局预设」）、自绘标题栏（`leading` / `center` 插槽）、方形圆角按钮主题、注册式多主题系统。生产构建产物 `frontend/dist` 由 `main.go` 通过 `embed.FS` 打入 Go 二进制。
 
 ## 入口与启动
 
 - HTML 入口：`frontend/index.html`
-- TS 入口：`frontend/src/main.tsx`（`import '@/styles'` 引入全局样式 + 创建 React 19 root）；子窗口入口 `frontend/child.html` + `src/child.tsx`；托盘面板入口 `frontend/systray.html` + `src/systrayEntry.tsx`。三个入口都挂 `<I18nProvider><FoundationThemeProvider>`，经 `appsettings:changed` 事件保持主题 / 语言同步
+- HTML 入口在 `<head>` 首帧前执行一段内联脚本：macOS 上写 `document.documentElement.dataset.platform = 'darwin'`，让启动骨架与 React 标题栏共用同一 `--fd-titlebar-h`（macOS 40px / 其它 36px）
+- TS 入口：`frontend/src/main.tsx`（`import '@/styles'` 引入全局样式 + 创建 React 19 root + 监听 `APP_READY_EVENT` 淡出启动骨架，见「骨架屏与首屏优化」）；子窗口入口 `frontend/child.html` + `src/child.tsx`；托盘面板入口 `frontend/systray.html` + `src/systrayEntry.tsx`。三个入口都挂 `<I18nProvider><FoundationThemeProvider>`，经 `appsettings:changed` 事件保持主题 / 语言同步
 - 应用根：`frontend/src/App.tsx`（注册主题预设 / locale + `<I18nProvider>` + `<FoundationThemeProvider>`（内含 `MantineProvider`）+ `PreferencesProvider` + `RouterProvider` + `AppLayout`）
 - Vite 配置：`frontend/vite.config.ts`
   - dev server 绑定 `127.0.0.1:9245`（可通过 `WAILS_VITE_PORT` 覆盖）
@@ -34,6 +35,8 @@
 | 系统托盘 | `SystrayService.{enable,disable,isEnabled,setMenuLabels}`（开关由后端持久化到 preferences `systray.enabled`，启动自动恢复） | `src/services/systray/SystrayService.ts` 包装 `@bindings/foundation/internal/app/systrayservice` |
 | 事件订阅 | `time` 事件 → `useTimeEvent()` | `src/shared/hooks/useTimeEvent.ts` |
 | 事件订阅 | `appsettings:changed`（payload = 字段名）→ `AppSettingsService.onChanged(cb)`，`FoundationThemeProvider`（200ms 防抖）/ `I18nProvider` 据此重拉 | `src/services/appsettings/AppSettingsService.ts` |
+| 布局预设 | `useLayoutPreset()` → `{ preset, presets, setLayout }`；`layoutRegistry.{register,has,list,resolve}`；偏好键 `layout` / `navCollapsed` / `floatDockSide` / `floatDockY` 经 `PreferencesService` 存 SQLite | `src/layouts/` |
+| 应用就绪信号 | `PreferencesProvider` 的 `ready` → `useAppLayout` 调 `signalAppReady()` → `main.tsx` 监听 `APP_READY_EVENT`（`foundation:app-ready`） | `src/shared/appReady.ts` |
 | 窗口控制 | 最小化 / 最大化 / 关闭 | `src/components/TitleBar/useWindowControls.ts` 调用 `Window.Minimise/Maximise/Close` |
 
 ## 关键依赖与配置
@@ -42,8 +45,8 @@
 
 - `type: module`
 - 运行时依赖：`react ^19.2.6`、`react-dom ^19.2.6`、`@mantine/core 9.7.5`、`@mantine/hooks 9.7.5`、`@mantine/charts 9.7.5`（+ `recharts 3.10.1`）、`mantine-datatable 9.4.0`、`@tabler/icons-react 3.50.0`、`clsx`、`@wailsio/runtime 3.1.0`（锁定版本，不用 latest）
-- 开发依赖：`vite ^8.0.14`、`@vitejs/plugin-react ^6.0.2`、`typescript ^6.0.3`、`@types/react`、`@types/react-dom`
-- 脚本：`dev` / `build` / `build:dev` / `preview` / `typecheck`
+- 开发依赖：`vite ^8.0.14`、`@vitejs/plugin-react ^6.0.2`、`typescript ^6.0.3`、`@types/react`、`@types/react-dom`、`@playwright/test 1.64.1`
+- 脚本：`dev` / `build` / `build:dev` / `preview` / `typecheck` / `e2e`（`playwright test`）/ `e2e:screenshots`（只跑 `e2e/screenshots.spec.ts`）
 
 `frontend/tsconfig.json`：strict 全开，`noUncheckedIndexedAccess`，`paths` 别名 `@/* @bindings/*`，`allowJs: true`（Wails 生成的 bindings 是 .js）。
 
@@ -51,7 +54,7 @@
 
 完整规范见 [DEVELOPMENT.md](./DEVELOPMENT.md)。核心四条铁律：
 
-1. **每个组件 / 页面独立文件夹**，至少含 `<Name>.tsx`（View）、`use<Name>.ts`（ViewModel）、`<Name>.module.css`（Style，CSS Modules）、`index.ts`（出口）。带文案的页面再补 `lang/{<code>.ts, index.ts}`。Style 文件标准范例：`src/components/Sidebar/Sidebar.module.css`（Sidebar 状态全部来自 `useRouter()` / `usePreferences()`，因此省略了 ViewModel）。
+1. **每个组件 / 页面独立文件夹**，至少含 `<Name>.tsx`（View）、`use<Name>.ts`（ViewModel）、`<Name>.module.css`（Style，CSS Modules）、`index.ts`（出口）。带文案的页面再补 `lang/{<code>.ts, index.ts}`。Style 文件标准范例：`src/components/Navigation/NavRail/NavRail.module.css`（NavRail 的 ViewModel `useNavRail` 复用共享的 `useNavigation`，导航条目全部来自 `useRouter()` / `usePreferences()`）。
 2. **View 不写业务**（仅消费 ViewModel），**ViewModel 不返回 JSX**（仅返回数据 + 回调）。
 3. **ViewModel 不直接 import** `@wailsio/runtime` 或 `@bindings/*`，必须经 `services/` 层。**ViewModel 不持有翻译后的字符串** —— 暴露 i18n key 给 View，由 View 调 `t()`。
 4. **任何人类可见字符串必须走 `t()`** —— 见下方"i18n 规范"小节。
@@ -63,10 +66,10 @@
 ### 核心约束
 
 1. **路由表是唯一事实源** —— 所有页面必须在 `src/routes.tsx` 注册一条 `RouteDefinition`，禁止在任何组件里硬编码 `if (page === 'xxx')` 或独立的页面切换 state。
-2. **导航只能通过 `useRouter().navigate(id)`** —— 不允许传递 `onNavigate` 回调、不允许直接读写"当前页"的全局状态、不允许新建并行的路由系统。
+2. **导航只能通过 `useRouter().navigate(id, params?)`** —— 不允许传递 `onNavigate` 回调、不允许直接读写"当前页"的全局状态、不允许新建并行的路由系统。
 3. **页面 = pages/<Name>/ 文件夹，三件齐全** —— `<Name>.tsx` + `use<Name>.ts`（即使空也要有，便于扩展）+ `<Name>.module.css` + `index.ts`，与其他组件相同 MVVM 结构。
-4. **`AppLayout` 不接收 `children`** —— 主内容由 `<RouterOutlet />` 从路由表渲染。新增页面**绝不**改 `AppLayout`。
-5. **Sidebar 不维护菜单数组** —— 它从 `useRouter()` 的 `primary` / `footer` 自动读取，新增带导航的页面只需在 `routes.tsx` 设置 `slot`。
+4. **`AppLayout` 不接收 `children`** —— 主内容由 `<RouterOutlet />` 从路由表渲染。新增页面**绝不**改 `AppLayout`；外壳布局由布局预设决定（见「布局预设」）。
+5. **导航组件不维护菜单数组** —— 所有导航形态（NavRail / NavSidebar / NavBar / NavDock / 抽屉）经共享 ViewModel `useNavigation()` 从 `useRouter()` 的 `primary` / `footer` 自动读取，新增带导航的页面只需在 `routes.tsx` 设置 `slot`。
 
 ### 添加一个新页面（标准操作）
 
@@ -96,7 +99,7 @@ export const routes: RouteDefinition[] = [
 // 5. App.tsx 顶部调一次 registerAccountPageLocales()
 ```
 
-**完成。** 不需要改 `AppLayout` / `Sidebar` / `App.tsx` —— 系统会自动接管。
+**完成。** 不需要改 `AppLayout` / `Navigation` / `App.tsx` —— 所有布局预设下的导航都会自动出现该条目。
 
 ### 在页面内跳转
 
@@ -106,13 +109,28 @@ navigate('settings');         // 跳转到 settings 页
 console.log(active.id);       // 当前激活页 id
 ```
 
+### 页面参数 `params`
+
+桌面路由没有 URL，参数随 `navigate` 传递：`navigate(id, params?)`，`params` 类型为 `RouteParams = Readonly<Record<string, string>>`。目标页从 `useRouter().params` 读取（**每次 navigate 都会替换**；不传则为冻结的空对象）。
+
+```ts
+// 首页「当前布局」卡片：直达设置页的布局子项
+navigate('settings', { section: 'layout' });
+
+// SettingsPage/useSettingsPage.ts：params.section 命中 items 中的 id 时切到该子项
+const { params } = useRouter();
+const requested = params.section && items.some((i) => i.id === params.section) ? params.section : undefined;
+```
+
+约定：参数只放可序列化的短字符串（id / 枚举），不要塞对象或回调；页面需校验参数合法性并回落到默认。
+
 ### `RouteSlot` 语义
 
 | slot | 行为 |
 |------|------|
-| `'primary'`（默认） | Sidebar 顶部主导航区 |
-| `'footer'` | Sidebar 底部固定区（如 Settings） |
-| `'hidden'` | 不在 Sidebar 上出现，但仍可通过 `navigate(id)` 进入（如向导、详情页） |
+| `'primary'`（默认） | 导航主区（图标栏 / 侧栏顶部、导航条左侧、Dock 分隔线前） |
+| `'footer'` | 导航尾部固定区（如 Settings；图标栏 / 侧栏底部、导航条右侧、Dock 分隔线后） |
+| `'hidden'` | 不在任何导航形态上出现，但仍可通过 `navigate(id)` 进入（如向导、详情页） |
 
 ### `keepAlive` 语义（页面状态缓存）
 
@@ -157,13 +175,53 @@ return page === 'home' ? <HomePage /> : <SettingsPage />;
 
 ```
 src/router/
-├── types.ts              # RouteDefinition / RouteSlot / RouterContextValue
+├── types.ts              # RouteDefinition / RouteSlot / RouteParams / RouterContextValue
 ├── RouterProvider.tsx    # <RouterProvider> + useRouter()
 ├── RouterOutlet.tsx      # 渲染当前激活路由的 element
 └── index.ts              # 出口
 
 src/routes.tsx            # 路由表（唯一事实源）
 ```
+
+## 布局预设（Layout Preset）
+
+> 完整指南见 `.claude/skills/foundation-layout/SKILL.md`（加预设 / 加导航形态 / 网格区域 / macOS 标题栏对齐 / 悬浮 Dock 约束）。
+
+外壳 `components/AppLayout` 是一个 **CSS Grid**（`grid-template-areas`：`title` / `nav` / `main`），具体排布由**布局预设**决定。预设只声明三件事：
+
+| 字段 | 取值 | 含义 |
+|------|------|------|
+| `nav.variant` | `rail` / `sidebar` / `bar` / `dock` / `none` | 导航组件形态（64px 图标栏 / 可折叠展开侧栏 / 水平导航条 / 浮动 Dock / 无常驻导航） |
+| `nav.placement` | `left` / `right` / `top` / `titlebar` / `bottom` / `float` / `drawer` | 导航位置（左 / 右 / 标题栏下独占一行 / 嵌入标题栏 / 内容区底部浮动 / 内容区悬浮可拖拽 / 标题栏菜单按钮呼出抽屉） |
+| `frame` | `flush` / `inset` | 内容区外框（贴边 / 浮动圆角卡片） |
+
+内置 9 个（`src/layouts/presets.ts`，顺序即设置页展示顺序）：
+
+| id | variant × placement × frame | 说明 |
+|----|------------------------------|------|
+| `classic`（默认） | rail × left × flush | 左侧 64px 图标栏 |
+| `sidebar` | sidebar × left × flush | 图标 + 文字展开侧栏，可折叠（`navCollapsed`） |
+| `topnav` | bar × top × flush | 标题栏下方水平导航条 |
+| `titlebar` | bar × titlebar × flush | 导航嵌入标题栏 `center` 插槽 |
+| `right` | rail × right × flush | 图标栏在右 |
+| `dock` | dock × bottom × flush | 内容区底部居中浮动 Dock |
+| `floating` | dock × float × flush | 竖向悬浮 Dock，可拖拽，松手吸附左 / 右边缘 |
+| `inset` | sidebar × left × inset | 侧栏 + 圆角内容卡片 |
+| `focus` | none × drawer × flush | 无常驻导航，标题栏 `leading` 菜单按钮呼出抽屉 |
+
+关键文件与 API：
+
+- `src/layouts/types.ts`（`LayoutPreset` / `NavVariant` / `NavPlacement` / `LayoutFrame`）、`presets.ts`（`BUILTIN_LAYOUTS` / `DEFAULT_LAYOUT_ID = 'classic'`）、`registry.ts`（`layoutRegistry.register / has / list / resolve`，未知 id 回落默认）、`useLayoutPreset.ts`（`{ preset, presets, setLayout }`）。
+- 持久化：preferences 表键 `layout`（预设 id）、`navCollapsed`（展开侧栏是否折叠）、`floatDockSide`（`'left' | 'right'`）、`floatDockY`（Dock 中心占内容区高度比例 0–1）。
+- `AppLayout.tsx` 只把 `data-layout` / `data-placement` / `data-frame` / `data-dock-side` 写到根节点；`AppLayout.module.css` 据此切换网格区域。`placement` 为 `titlebar` 时导航进 `TitleBar` 的 `center` 插槽，`drawer` 时 `NavigationDrawerButton` 进 `leading` 插槽，其余进 `nav` 网格单元（`bottom` / `float` 与 `main` 共用单元、浮于内容之上，并给 `main` 留出 padding 避免遮挡）。
+- `components/Navigation/`：`Navigation`（按 variant 分发）、`NavRail`、`NavSidebar`（含抽屉模式）、`NavBar`（`top` / `titlebar`）、`NavDock`（底部 / `floating`）、`NavigationDrawerButton`、共享 ViewModel `useNavigation`（条目来自路由表）与 `navLabel(t, item)`。`components/Sidebar` 仅为 `NavRail` 的兼容出口（`export { NavRail as Sidebar }`），新代码用 `@/components/Navigation`。
+- `TitleBar` 插槽：`leading`（标题前）/ `center`（标题后占剩余宽度），两者自动包 `--wails-draggable: no-drag`，空白处仍可拖拽窗口。
+- 标题栏高度：CSS 变量 `--fd-titlebar-h`（`styles/global.css` + `index.html` 各定义一份：默认 36px，`:root[data-platform='darwin']` 为 40px，与 `internal/app/window_darwin.go` 的 `InvisibleTitleBarHeight: 40` + `macTitleBar()`（`MacToolbarStyleUnifiedCompact`，红绿灯中心约 20pt）对齐）。**任何依赖标题栏高度的样式都用该变量**，改值须同步 Go 侧。
+- 悬浮 Dock（`floating`）：拖动顶部手柄（指针捕获，窗口失焦 / 失去捕获时以最后合法位置提交）；位置夹取在内容区内、上下各留 12px 安全距离，**永远不进入标题栏**（macOS 顶部 40pt 是原生拖拽区 + 红绿灯，压上去手柄将无法再拖）；方向键可移动 / 换边，双击手柄复位到右侧居中；位置以比例存储，窗口缩放后仍成立。
+- 设置 → 布局（`pages/SettingsPage/layout/`）：预设卡片网格（`role="radiogroup"`，方向键切换，纯 CSS 缩略图 `LayoutThumbnail`）+ 折叠侧栏开关；文案 `settings.layout.*`（含 `settings.layout.presets.<id>.{label,description}`，预设的 `labelKey` / `descriptionKey` 指向这里，首页「当前布局」卡片同样依赖）。
+- 首页（`pages/HomePage`）为响应式卡片网格，「当前布局」卡片经 `navigate('settings', { section: 'layout' })` 直达布局设置。
+
+**铁律**：新的导航位置 / 外壳组合 = 新增一个预设（`presets.ts` 加一行，或业务侧 `layoutRegistry.register(...)` + 在页面语言包里补 `settings.layout.presets.<id>.*` 文案），必要时在 `AppLayout.module.css` 加 `data-*` 选择器规则；**禁止**在 `AppLayout.tsx` 或页面里硬编码布局分支、写死某个导航组件。
 
 
 
@@ -200,7 +258,7 @@ src/routes.tsx            # 路由表（唯一事实源）
 
 启动 → React mount 之间的白屏在 wails 桌面应用上特别明显（Windows / Linux 无边框窗口尤甚）。本脚手架内置三层方案：
 
-1. **首屏静态骨架（消除白屏）** —— `frontend/index.html` 内联了一段 CSS + 静态 HTML 骨架（标题栏 36 + Sidebar 64 + 主内容三段），webview 拿到 HTML 立刻可见，色值与默认 light 主题对齐，`prefers-color-scheme: dark` 时切到 dark preset 颜色。React mount 完成后由 `main.tsx` 在 rAF 后给 `#startup-skeleton` 加 `.fade-out` 触发 160ms 淡出，再移除节点（兜底 800ms 强制移除）。**不要把骨架塞进 `#root`** —— `createRoot.render()` 会清空根节点，骨架就废了；它必须是 `#root` 的兄弟。
+1. **首屏静态骨架（消除白屏）** —— `frontend/index.html` 内联了一段 CSS + 静态 HTML 骨架（标题栏高 `var(--fd-titlebar-h)` + 64px 图标栏 + 主内容三段），webview 拿到 HTML 立刻可见，色值与默认 light 主题对齐，`prefers-color-scheme: dark` 时切到 dark preset 颜色。骨架（fixed 覆盖层）**一直盖到「应用就绪」**：`PreferencesProvider` 从 SQLite 读回偏好（含布局预设）后置 `ready = true`（读失败也置 true，用默认值），`useAppLayout` 随即调用 `signalAppReady()`（`src/shared/appReady.ts`，派发 `foundation:app-ready`）；`main.tsx` 监听该事件，rAF 嵌套两层后给 `#startup-skeleton` 加 `.fade-out` 触发 160ms 淡出再移除节点（兜底 800ms 强制移除）。若后端异常迟迟不就绪，`main.tsx` 在 **1500ms** 兜底照常淡出。这样非默认布局的用户不会先看到默认布局再跳变。骨架本身按默认 classic 版式绘制；业务一般不需要直接调用 `signalAppReady`。**不要把骨架塞进 `#root`** —— `createRoot.render()` 会清空根节点，骨架就废了；它必须是 `#root` 的兄弟。
 2. **页面级骨架屏组件** —— `src/components/Skeleton/{Skeleton.tsx, Skeleton.module.css}` 提供 `<Skeleton variant="rect|text|circle">` 与 `<SkeletonText lines={n} />`。颜色取 `var(--fd-bg-elevated)` / `var(--fd-bg-hover)`，shimmer 用 CSS `@keyframes`（写在 module.css 里），自动尊重 `prefers-reduced-motion`。每个 page 同目录补一份 `<Name>.skeleton.tsx` 复刻版式（避免"骨架→真实"切换时跳动）。
 3. **lazy import + Suspense 兜底** —— 在 `RouteDefinition` 上加 `fallback?: ReactNode`（推荐传该页面的骨架屏组件）。`<RouterOutlet />` 自动用 `<Suspense fallback={route.fallback}>` 包裹每个 element。重型页面（`SettingsPage` 含调色板编辑器）用 `React.lazy(() => import('@/pages/X/X'))` 按需加载；轻量页面（`HomePage`）保持同步即可。**lazy 必须 import 具体文件**（如 `@/pages/SettingsPage/SettingsPage`），不要走 `index.ts` —— 否则与其他静态 import 同 index 的代码合并到主 bundle，分包失效。
 
@@ -314,7 +372,7 @@ import { IconFolderOpen, IconRestore, IconTrash } from '@tabler/icons-react';
 **尺寸规则**（`size` 单位 px）：
 - `16`–`18`：行内文本 / 小号按钮（`size="xs"`）/ 表格单元格
 - `20`：按钮 `leftSection` / ActionIcon / 表格行（默认首选）
-- `24`：Sidebar 导航图标
+- `24`：NavRail / NavDock 导航图标
 - `32`–`40`：状态卡片 / 空状态 / 子窗口提示图标
 - 不要用 `style` 内联改尺寸，用 `size` prop；需要额外样式时给 `className`
 
@@ -351,9 +409,11 @@ SettingsPage/
 │   ├── Personalization.module.css
 │   ├── lang/{zh-CN,en-US,index}.ts
 │   └── index.ts               # 出口：Personalization + registerPersonalizationLocales
-├── language/                  # 子页面 2：语言选择
+├── layout/                    # 子页面 2：布局预设卡片 + 折叠侧栏开关
 │   └── ...（同上结构）
-└── database/                  # 子页面 3：数据存储路径管理
+├── language/                  # 子页面 3：语言选择
+│   └── ...（同上结构）
+└── database/                  # 子页面 4：数据存储路径管理
     └── ...（同上结构）
 ```
 
@@ -365,6 +425,7 @@ SettingsPage/
 4. `SettingsPage/useSettingsPage.ts` 的 `items` 追加一项 `{ id, labelKey, descriptionKey }`
 5. `SettingsPage/lang/{zh-CN,en-US}.ts` 在 `settings.list.<id>.{label,description}` 加文案
 6. `SettingsPage.tsx` 右列分发处加 `{vm.activeItem.id === '<id>' && <Sub />}`
+7. （可选）外部直达：`navigate('settings', { section: '<id>' })` —— `useSettingsPage` 读 `params.section` 自动选中
 
 **约束**：
 - 子页面**不向外暴露内部业务**（只导出顶层 View 组件 + register 函数）
@@ -381,13 +442,20 @@ SettingsPage/
 
 ## 数据模型
 
-Sidebar 不持有数据模型 —— 导航项完全来自 `src/routes.tsx` 的 `RouteDefinition`（`icon?: Icon` 为 `@tabler/icons-react` 组件）。数据表格的列模型见 `src/components/x-pro/data-grid/types.ts`（`DataGridColumn<T>` / `DataGridRow`）。
+导航组件不持有数据模型 —— 导航项完全来自 `src/routes.tsx` 的 `RouteDefinition`（`icon?: Icon` 为 `@tabler/icons-react` 组件）。数据表格的列模型见 `src/components/x-pro/data-grid/types.ts`（`DataGridColumn<T>` / `DataGridRow`）。
 
 ## 测试与质量
 
-- 当前未配置测试框架（无 Vitest / Playwright）。
-- TypeScript strict 模式 + `noUncheckedIndexedAccess` 已开启。
-- 推荐：Vitest 覆盖 `use<Page>` ViewModel hook（纯函数，易测），Playwright 覆盖窗口控制 / 关键页面流程。
+- TypeScript strict 模式 + `noUncheckedIndexedAccess` 已开启；`pnpm typecheck`。
+- **E2E：Playwright**（`playwright.config.ts` + `e2e/`）
+  - 被测对象是 Wails **server 模式**二进制：先在仓库根 `wails3 task build:server`（产物 `bin/foundation-server`，无原生窗口、纯 HTTP），再 `cd frontend && pnpm e2e`。`webServer` 每次清空并重建数据目录后启动它，`FOUNDATION_DATA_DIR` 指向 `<repo>/.e2e-data`（隔离，绝不触碰用户真实数据库），端口经 `WAILS_SERVER_PORT` 传入。
+  - 环境变量：`E2E_CHANNEL`（默认 `msedge`，用本机已装 Edge 免下载；CI 可设 `chromium` 并先 `npx playwright install chromium`）、`E2E_PORT`（默认 9346）、`E2E_DATA_DIR`。
+  - 串行（`workers: 1`），`locale: 'zh-CN'`，viewport 1280×800 @2x。
+  - `e2e/helpers.ts`：`openApp(page)`（等 `#startup-skeleton` 消失 = 偏好已读回）、`chooseLayout(page, label)`（像用户一样经「设置 → 布局」切换预设，写入真实后端）。
+  - `e2e/floating-dock.spec.ts`：悬浮 Dock 拖到左上角（红绿灯处）/ 右下角都完整留在内容区内，松手后手柄仍可拖，刷新后位置持久化。
+  - `e2e/screenshots.spec.ts`：`pnpm e2e:screenshots`，用 `sqlite3` CLI 直接写 E2E 库的 `preferences` / `app_settings` 后刷新，确定性地生成 9 种布局 / 设置页 / x-pro / 主题 / 托盘面板 / 子窗口截图到 `docs/screenshots/`（伪装 `navigator.platform = 'Win32'`，标题栏按 Windows 渲染）。
+  - 产物目录 `frontend/test-results` / `frontend/playwright-report` 与 `.e2e-data` 已 gitignore。
+- 尚无前端单元测试；如需可加 Vitest 覆盖 `use<Page>` ViewModel hook。
 
 ## 常见问题 (FAQ)
 
@@ -401,25 +469,29 @@ Sidebar 不持有数据模型 —— 导航项完全来自 `src/routes.tsx` 的 
   - A：检查根容器是否设置了 `'--wails-draggable': 'drag'`，且按钮区设置了 `'no-drag'`。Windows / Linux 无边框窗口完全依赖此 CSS 变量。
 - Q：macOS 上为什么标题栏左侧空了一块？
   - A：那是给系统红绿灯按钮预留的 72px spacer（`TitleBar.tsx` 中 `isMac && <div className={classes.macSpacer} />`）。
+- Q：macOS 红绿灯和标题栏文字没对齐？
+  - A：红绿灯位置由 NSToolbar 样式决定。`internal/app/window_darwin.go` 的 `macTitleBar()` 固定为 `MacToolbarStyleUnifiedCompact`（红绿灯中心约 20pt），前端 `--fd-titlebar-h` 在 macOS 为 40px 与之居中；`InvisibleTitleBarHeight` 也是 40。改任何一侧都要同步另两处（`styles/global.css` / `index.html`）。
 
 ## 相关文件清单
 
 ```
 frontend/
 ├── DEVELOPMENT.md             # 前端开发规范（MVVM）
-├── index.html                 # HTML 入口（主窗口，含内联首屏骨架）
+├── index.html                 # HTML 入口（主窗口，含内联首屏骨架 + 首帧前 data-platform 脚本）
 ├── child.html                 # 子窗口 HTML 入口
 ├── systray.html               # 托盘面板 HTML 入口
 ├── package.json               # 依赖与脚本
 ├── vite.config.ts             # Vite 配置 + 路径别名 + rolldownOptions 多入口（main / child / systray）
 ├── tsconfig.json              # TS strict + paths
+├── playwright.config.ts       # E2E 配置（server 模式二进制 + FOUNDATION_DATA_DIR 隔离）
+├── e2e/                       # Playwright 用例：helpers / floating-dock / screenshots
 ├── public/                    # 静态资源
 │   ├── wails.png
 │   ├── react.svg
 │   └── Inter-Medium.ttf
 ├── bindings/                  # wails3 generate bindings 产物（.gitignore）
 └── src/
-    ├── main.tsx               # import '@/styles' + React 19 createRoot
+    ├── main.tsx               # import '@/styles' + React 19 createRoot + 等 APP_READY_EVENT 淡出启动骨架
     ├── child.tsx              # 子窗口入口（I18nProvider + FoundationThemeProvider，按 query 路由）
     ├── systrayEntry.tsx       # 托盘面板入口（I18nProvider + FoundationThemeProvider + SystrayPanel）
     ├── App.tsx                # I18nProvider + ThemeProvider + PreferencesProvider + RouterProvider
@@ -431,18 +503,24 @@ frontend/
     │   ├── I18nProvider.tsx   # <I18nProvider> + useI18n() / useT()
     │   ├── index.ts
     │   └── locales/{zh-CN,en-US}.ts   # 公用 locale（不含页面级文案）
-    ├── router/                # key-based 桌面路由（无 URL）
+    ├── router/                # key-based 桌面路由（无 URL；navigate(id, params?)）
     │   ├── types.ts
     │   ├── RouterProvider.tsx
     │   ├── RouterOutlet.tsx   # 含 keepAlive 缓存逻辑
     │   └── index.ts
-    ├── preferences/           # 显示偏好（showLogo / showTooltip）
+    ├── preferences/           # 偏好（showLogo / showTooltip / layout / navCollapsed / floatDockSide / floatDockY）
     │   ├── types.ts
-    │   ├── PreferencesProvider.tsx
+    │   ├── PreferencesProvider.tsx   # 暴露 ready（后端值已读回）
+    │   └── index.ts
+    ├── layouts/               # 布局预设（详见 foundation-layout SKILL）
+    │   ├── types.ts           # LayoutPreset / NavVariant / NavPlacement / LayoutFrame
+    │   ├── presets.ts         # BUILTIN_LAYOUTS（9 个）+ DEFAULT_LAYOUT_ID
+    │   ├── registry.ts        # layoutRegistry（register / has / list / resolve）
+    │   ├── useLayoutPreset.ts # { preset, presets, setLayout }
     │   └── index.ts
     ├── styles/
     │   ├── index.ts           # 全局样式入口（Mantine core/charts/datatable 样式 + global.css）
-    │   ├── global.css         # 全局基础样式（替代 CssBaseline），只用 --fd-*
+    │   ├── global.css         # 全局基础样式（替代 CssBaseline），只用 --fd-*；定义 --fd-titlebar-h
     │   └── themes/                # 注册式主题系统（详见 foundation-theme SKILL）
     │       ├── types.ts
     │       ├── buildMantineTheme.ts   # preset → Mantine theme + --fd-* CSS 变量 + FOUNDATION_CSS_VARS
@@ -455,6 +533,7 @@ frontend/
     │       └── presets/{light,dark,obsidian}.ts
     ├── shared/
     │   ├── platform.ts        # isWindows / isMac / isLinux
+    │   ├── appReady.ts        # APP_READY_EVENT + signalAppReady()（启动骨架淡出信号）
     │   ├── events.ts          # AppEvents 常量
     │   └── hooks/
     │       └── useTimeEvent.ts
@@ -470,9 +549,10 @@ frontend/
     │   ├── childwindow/                       # ChildWindowService + 事件总线 bus.ts
     │   └── systray/SystrayService.ts          # enable / disable / isEnabled / setMenuLabels
     ├── components/
-    │   ├── AppLayout/         # 两栏外壳（TitleBar + Sidebar + RouterOutlet）；useAppLayout 推送托盘菜单文案 + 处理 app:open-settings
-    │   ├── TitleBar/          # 自绘标题栏 + 三联控制按钮（按 OS 隐藏）
-    │   ├── Sidebar/           # 左侧导航 + 底部 Settings 按钮
+    │   ├── AppLayout/         # CSS Grid 外壳（按布局预设 data-placement / data-frame / data-dock-side 切换）；useAppLayout 返回预设 + 发就绪信号 + 推送托盘菜单文案 + 处理 app:open-settings
+    │   ├── TitleBar/          # 自绘标题栏（leading / center 插槽，高度 --fd-titlebar-h）+ 三联控制按钮（按 OS 隐藏）
+    │   ├── Navigation/        # 导航形态：Navigation 分发器 / NavRail / NavSidebar / NavBar / NavDock / NavigationDrawerButton + useNavigation / navLabel
+    │   ├── Sidebar/           # 兼容出口：export { NavRail as Sidebar }
     │   ├── Skeleton/          # 骨架屏基础组件（Skeleton / SkeletonText）
     │   ├── ChildTitleBar/     # 子窗口标题栏（关闭按钮 aria-label = t('titleBar.controls.close')）
     │   └── x-pro/
@@ -481,20 +561,20 @@ frontend/
     ├── childwindows/          # 子窗口类型（Confirm / Message / Blank，详见 foundation-childwindow SKILL）
     ├── systray/               # 托盘面板模块系统（详见 foundation-systray SKILL）
     └── pages/
-        ├── HomePage/          # 示例页：Greet 调用 + Time 事件
+        ├── HomePage/          # 示例页：响应式卡片网格（Greet / 子窗口 / 托盘 / 当前布局）
         │   ├── HomePage.tsx
         │   ├── HomePage.skeleton.tsx  # ← 该页骨架屏
         │   ├── useHomePage.ts
         │   ├── HomePage.module.css
         │   ├── lang/{zh-CN,en-US,index}.ts
         │   └── index.ts
-        └── SettingsPage/      # 设置页：主题 / 显示偏好 / 自定义主题 / 语言
+        └── SettingsPage/      # 设置页：主题 / 显示偏好 / 自定义主题 / 布局 / 语言 / 数据存储
             ├── SettingsPage.tsx
             ├── SettingsPage.skeleton.tsx
             ├── SettingsPage.skeleton.module.css   # 骨架独立样式（不与懒加载页面共用）
             ├── useSettingsPage.ts
             ├── SettingsPage.module.css
-            ├── personalization/ language/ database/   # 子页面（各自 View / VM / module.css / lang）
+            ├── personalization/ layout/ language/ database/   # 子页面（各自 View / VM / module.css / lang）
             ├── lang/{zh-CN,en-US,index}.ts
             └── index.ts
 ```
@@ -510,3 +590,4 @@ frontend/
 - 2026-05-28（设置页子目录隔离）：`SettingsPage` 重构为「框架 + 子页面」结构 —— `personalization/` / `language/` / `database/` 三个子目录各自独立 `<Sub>.tsx` + `use<Sub>.ts` + `<Sub>.styles.ts` + `lang/`；顶层 `useSettingsPage` 仅管 items + activeItemId；新增子页面遵循同样规范（导出顶层 View + register 函数，文案命名空间 `settings.<sub>.*`）。
 - 2026-05-28（数据可视化 + 表清理 + Icon 规范）：升级 `@mui/x-charts@^9.3.0`；数据存储页新增双图（PieChart 占比 + 横向 BarChart 字节，颜色取自 `theme.palette.foundation.*`），表清单逐项清空（仅对 `Clearable=true` 的表启用，带原生确认对话框）；后端 `internal/storage/models.go` 引入 `ModelDescriptor`（labelKey / clearable），`storagesvc` 新增 `GetTableStats` / `ClearTable`；新增 Icon 规范铁律：禁止 emoji / Unicode / 第三方 icon 包，必须用 `@mui/icons-material` 的 `*Rounded` 系列（与方圆设计语言对齐）。
 - 2026-11-06（UI 库迁移 MUI → Mantine）：`@mui/*` / `@emotion/*` 全部移除，改用 `@mantine/core` 9.7.5 + `@mantine/hooks` + `@mantine/charts`（recharts 3.10.1）+ `mantine-datatable` 9.4.0 + `@tabler/icons-react` 3.50.0；主题编译器 `buildMuiTheme.ts` → `buildMantineTheme.ts`（`FoundationPalette` → CSS 变量 `--fd-*` + 主色 `foundation` 10 级色阶 + Mantine 语义变量映射，`FOUNDATION_CSS_VARS` / `useFoundationPalette()` 供 JS 侧），预设字段 `muiOverrides` → `mantineOverrides`；MVVM Style 文件由 `<Name>.styles.ts`（sx 工厂）改为 `<Name>.module.css`（CSS Modules），颜色一律 `var(--fd-*)`；全局样式 `src/styles/global.css` 经 `import '@/styles'` 引入；Icon 铁律改为 `@tabler/icons-react`；`@wailsio/runtime` 锁定 3.1.0。
+- 2026-11-06（布局系统 + E2E）：新增 `src/layouts/`（布局预设 `nav.variant × nav.placement × frame`，9 个内置，`layoutRegistry.register` 扩展，偏好 `layout` / `navCollapsed` / `floatDockSide` / `floatDockY`）；`AppLayout` 改为 CSS Grid；新增 `components/Navigation`（NavRail / NavSidebar / NavBar / NavDock / NavigationDrawerButton + `useNavigation`），`components/Sidebar` 改为兼容出口；TitleBar 新增 `leading` / `center` 插槽，高度改 `--fd-titlebar-h`（macOS 40px）；设置页新增「布局」子页面；首页改响应式卡片网格 + 「当前布局」卡片；路由 `navigate(id, params?)` + `params`；启动骨架等 `PreferencesProvider.ready` → `signalAppReady`（兜底 1500ms）；新增 Playwright E2E（`pnpm e2e` / `pnpm e2e:screenshots`）。

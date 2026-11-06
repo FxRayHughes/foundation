@@ -4,8 +4,8 @@
    拖拽区由 TitleBar.tsx 内联 --wails-draggable 声明（drag / no-drag）。 */
 
 .root {
-  height: 36px;
-  min-height: 36px;
+  height: var(--fd-titlebar-h, 36px);
+  min-height: var(--fd-titlebar-h, 36px);
   display: flex;
   align-items: center;
   padding-left: 12px;
@@ -31,6 +31,28 @@
 
 .spacer {
   flex: 1;
+}
+
+/* 插槽（leading / center）：内部可交互元素，外层声明 no-drag */
+.slot {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+}
+
+/* center 插槽占据标题与窗口按钮之间的剩余宽度；空白处仍可拖拽 */
+.center {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding-inline: 12px;
+}
+
+.slot + .title {
+  margin-left: 8px;
 }
 
 .controls {

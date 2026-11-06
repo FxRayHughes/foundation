@@ -1,0 +1,336 @@
+/* 布局子页面专属样式。颜色全部取 --fd-* 变量；容器圆角 8。 */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* —— 预设卡片 —— */
+.card {
+  position: relative;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--fd-divider);
+  background-color: var(--fd-bg-surface);
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+.card:hover {
+  background-color: var(--fd-bg-hover);
+}
+.card:focus-visible {
+  outline: 2px solid var(--fd-accent);
+  outline-offset: 2px;
+}
+.card[data-active],
+.card[data-active]:hover {
+  border-color: var(--fd-accent);
+  background-color: var(--fd-bg-active);
+  box-shadow: 0 0 0 1px var(--fd-accent);
+  transition: none;
+}
+
+.cardTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 2px 2px;
+}
+
+.cardLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fd-text-primary);
+}
+
+.cardDesc {
+  font-size: 12px;
+  color: var(--fd-text-muted);
+  line-height: 1.5;
+}
+
+.check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--fd-accent);
+  color: var(--fd-bg-surface);
+  box-shadow: 0 0 0 2px var(--fd-bg-surface);
+}
+
+.currentLine {
+  font-size: 12px;
+  color: var(--fd-text-muted);
+}
+
+/* —— 示意缩略图 ——
+   thumb ─┬─ thTitle（标题条：红绿灯点 / 汉堡菜单 / 标题栏内导航 pill）
+          └─ thBody ─┬─ thNav（rail 细列 / sidebar 宽列 / bar 细行）
+                     └─ thMain（内容占位线；dock 浮在其底部居中） */
+.thumb {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 6px;
+  border: 1px solid var(--fd-divider);
+  background-color: var(--fd-bg-content);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.thumb i {
+  display: block;
+  flex-shrink: 0;
+}
+
+.thTitle {
+  height: 14%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  background-color: var(--fd-bg-sidebar);
+  border-bottom: 1px solid var(--fd-divider);
+}
+
+.thDots {
+  display: flex;
+  gap: 2px;
+}
+.thDots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--fd-text-muted);
+  opacity: 0.45;
+}
+
+.thMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5px;
+}
+.thMenu i {
+  width: 9px;
+  height: 1.5px;
+  border-radius: 1px;
+  background-color: var(--fd-accent);
+}
+
+.thPills {
+  display: flex;
+  gap: 3px;
+}
+.thPills i {
+  width: 14px;
+  height: 5px;
+  border-radius: 3px;
+  background-color: var(--fd-divider);
+}
+.thPills i[data-on] {
+  background-color: var(--fd-accent);
+}
+
+.thBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+}
+.thumb[data-placement='right'] .thBody {
+  flex-direction: row-reverse;
+}
+.thumb[data-placement='top'] .thBody {
+  flex-direction: column;
+}
+
+/* 导航块：强调色淡底 + 强调色选中项 */
+.thNav {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 0;
+  background-color: color-mix(in srgb, var(--fd-accent) 14%, var(--fd-bg-sidebar));
+  border-right: 1px solid var(--fd-divider);
+}
+.thNav i {
+  background-color: var(--fd-divider);
+}
+.thNav i[data-on] {
+  background-color: var(--fd-accent);
+}
+.thumb[data-placement='right'] .thNav {
+  border-right: none;
+  border-left: 1px solid var(--fd-divider);
+}
+
+/* rail：细列 + 方形图标 */
+.thumb[data-variant='rail'] .thNav {
+  width: 12%;
+}
+.thumb[data-variant='rail'] .thNav i {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+}
+
+/* sidebar：宽列 + 整行条目 */
+.thumb[data-variant='sidebar'] .thNav {
+  width: 28%;
+  align-items: stretch;
+  padding: 5px;
+}
+.thumb[data-variant='sidebar'] .thNav i {
+  height: 5px;
+  border-radius: 2px;
+}
+
+/* bar：细行 + pill */
+.thumb[data-variant='bar'] .thNav {
+  width: auto;
+  height: 12%;
+  flex-direction: row;
+  padding: 0 6px;
+  border-right: none;
+  border-bottom: 1px solid var(--fd-divider);
+}
+.thumb[data-variant='bar'] .thNav i {
+  width: 14px;
+  height: 5px;
+  border-radius: 3px;
+}
+
+/* 内容区：占位线 */
+.thMain {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px;
+  background-color: var(--fd-bg-content);
+}
+.thMain > i {
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--fd-divider);
+}
+.thMain > i:nth-child(1) {
+  width: 55%;
+  height: 6px;
+}
+.thMain > i:nth-child(2) {
+  width: 85%;
+}
+.thMain > i:nth-child(3) {
+  width: 70%;
+}
+
+/* inset：外层露出侧栏底色，内容为四周留白的圆角卡片 */
+.thumb[data-frame='inset'] .thBody {
+  background-color: color-mix(in srgb, var(--fd-accent) 14%, var(--fd-bg-sidebar));
+}
+.thumb[data-frame='inset'] .thNav {
+  border-right: none;
+  background-color: transparent;
+}
+.thumb[data-frame='inset'] .thMain {
+  margin: 5px 5px 5px 0;
+  border-radius: 4px;
+  border: 1px solid var(--fd-divider);
+}
+
+/* dock：内容区底部居中的小 pill */
+.thDock {
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 3px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background-color: var(--fd-bg-elevated);
+  border: 1px solid var(--fd-accent);
+}
+.thDock i {
+  width: 5px;
+  height: 5px;
+  border-radius: 1.5px;
+  background-color: var(--fd-divider);
+}
+.thDock i[data-on] {
+  background-color: var(--fd-accent);
+}
+
+/* —— 导航选项：开关行 —— */
+.switchRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 20px;
+  border-radius: 6px;
+  border: 1px solid var(--fd-divider);
+  background-color: var(--fd-bg-surface);
+}
+
+.switchTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.switchLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fd-text-primary);
+}
+
+.switchDesc {
+  font-size: 12px;
+  color: var(--fd-text-muted);
+  line-height: 1.5;
+}
+
+.switchNote {
+  font-size: 12px;
+  color: var(--fd-warning);
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+/* floating：右侧竖向小 pill（带拖拽手柄短线） */
+.thDock[data-float] {
+  left: auto;
+  right: 5px;
+  bottom: auto;
+  top: 50%;
+  transform: translateY(-50%);
+  flex-direction: column;
+  padding: 3px 2px;
+}
+.thDock[data-float]::before {
+  content: '';
+  width: 5px;
+  height: 1.5px;
+  border-radius: 1px;
+  background-color: var(--fd-text-muted);
+}

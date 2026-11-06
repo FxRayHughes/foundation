@@ -5,6 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/wails.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Foundation</title>
+    <script>
+      // 尽早标记平台（首帧前），让启动骨架与 React 标题栏使用同一高度：
+      // macOS 红绿灯（UnifiedCompact 工具栏）中心约在 20pt，标题栏取 40px 与之对齐；其它平台 36px。
+      if (/mac/i.test(navigator.platform || navigator.userAgent)) {
+        document.documentElement.dataset.platform = 'darwin';
+      }
+    </script>
     <style>
       /* ===== 启动骨架 (Startup Skeleton) =====
          目的：webview 拿到 HTML 立刻显示版式骨架，等 React mount 完成后再淡出。
@@ -26,6 +33,10 @@
         --fdn-bg-hover: rgba(15, 23, 42, 0.08);
         --fdn-divider: rgba(15, 23, 42, 0.10);
         color-scheme: light;
+        --fd-titlebar-h: 36px;
+      }
+      :root[data-platform='darwin'] {
+        --fd-titlebar-h: 40px;
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -68,7 +79,7 @@
 
       /* TitleBar 占位（36px） */
       .ssk-titlebar {
-        height: 36px;
+        height: var(--fd-titlebar-h);
         flex-shrink: 0;
         background-color: var(--fdn-bg-base);
         border-bottom: 1px solid var(--fdn-divider);

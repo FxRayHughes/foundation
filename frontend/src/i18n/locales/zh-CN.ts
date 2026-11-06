@@ -25,6 +25,11 @@ export const zhCN: Locale = {
     sidebar: {
       brand: 'F',
       navAriaLabel: '主导航',
+      collapse: '收起侧栏',
+      expand: '展开侧栏',
+      openMenu: '打开导航菜单',
+      closeMenu: '关闭导航菜单',
+      dragDock: '拖动以移动 Dock（方向键微调，←/→ 换边）',
     },
     titleBar: {
       controls: {

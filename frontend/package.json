@@ -8,7 +8,9 @@
     "build:dev": "tsc -b && vite build --minify false --mode development",
     "build": "tsc -b && vite build --mode production",
     "preview": "vite preview",
-    "typecheck": "tsc -b --noEmit"
+    "typecheck": "tsc -b --noEmit",
+    "e2e": "playwright test",
+    "e2e:screenshots": "playwright test e2e/screenshots.spec.ts"
   },
   "dependencies": {
     "@mantine/charts": "9.7.5",
@@ -23,6 +25,7 @@
     "recharts": "3.10.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",

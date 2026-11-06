@@ -19,7 +19,7 @@ export const xProDemoPageZhCN: Messages = {
       age: '年龄',
     },
     charts: {
-      title: 'Charts Pro（七种自实现图表）',
+      title: 'Charts Pro（八种自实现图表）',
       heatmap: '热力图',
       funnel: '漏斗图',
       radar: '雷达图',

@@ -31,6 +31,10 @@ export const homePageEnUS: Messages = {
       statusOff: 'Disabled',
       errorPrefix: 'Tray error: ',
     },
+    layoutCard: {
+      title: 'Current layout',
+      changeBtn: 'Change in Settings',
+    },
     footer: {
       backendTick: 'Backend tick: {{time}}',
       poweredBy: 'Powered by Wails 3 · React 19 · Mantine 9',

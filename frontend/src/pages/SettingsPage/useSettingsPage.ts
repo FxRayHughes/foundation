@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from '@/router';
 
 // 设置页两列：左列每项对应一个"分类子页面"。
 // 业务方加新子页面：
@@ -30,6 +31,11 @@ export const useSettingsPage = (): UseSettingsPageResult => {
         descriptionKey: 'settings.list.personalization.description',
       },
       {
+        id: 'layout',
+        labelKey: 'settings.list.layout.label',
+        descriptionKey: 'settings.list.layout.description',
+      },
+      {
         id: 'language',
         labelKey: 'settings.list.language.label',
         descriptionKey: 'settings.list.language.description',
@@ -43,7 +49,13 @@ export const useSettingsPage = (): UseSettingsPageResult => {
     [],
   );
 
-  const [activeItemId, setActiveItemId] = useState<string>(items[0]!.id);
+  // 外部可经 navigate('settings', { section: '<id>' }) 直达某个子项（如首页"当前布局"卡片）
+  const { params } = useRouter();
+  const requested = params.section && items.some((i) => i.id === params.section) ? params.section : undefined;
+  const [activeItemId, setActiveItemId] = useState<string>(requested ?? items[0]!.id);
+  useEffect(() => {
+    if (requested) setActiveItemId(requested);
+  }, [requested, params]);
   const activeItem = useMemo<SettingsItem>(
     () => items.find((i) => i.id === activeItemId) ?? items[0]!,
     [items, activeItemId],

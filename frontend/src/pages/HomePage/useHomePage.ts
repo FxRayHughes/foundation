@@ -4,6 +4,8 @@ import { useTimeEvent } from '@/shared/hooks/useTimeEvent';
 import { onChildResult, onChildClosed } from '@/services/childwindow';
 import { ChildWindowService } from '@/services/childwindow/ChildWindowService';
 import { SystrayService } from '@/services/systray';
+import { useLayoutPreset } from '@/layouts';
+import { useRouter } from '@/router';
 
 export interface UseHomePageResult {
   name: string;
@@ -22,6 +24,10 @@ export interface UseHomePageResult {
   systrayBusy: boolean;
   systrayError: string | null;
   toggleSystray: () => Promise<void>;
+  // 当前布局卡片：只给 i18n key，翻译由 View 负责
+  layoutLabelKey: string;
+  layoutDescriptionKey: string;
+  openLayoutSettings: () => void;
 }
 
 // HomePage ViewModel：
@@ -37,6 +43,9 @@ export const useHomePage = (): UseHomePageResult => {
   const [systrayBusy, setSystrayBusy] = useState<boolean>(false);
   const [systrayError, setSystrayError] = useState<string | null>(null);
   const time = useTimeEvent();
+  const { preset } = useLayoutPreset();
+  const { navigate } = useRouter();
+  const openLayoutSettings = useCallback(() => navigate('settings', { section: 'layout' }), [navigate]);
 
   const greet = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -116,5 +125,8 @@ export const useHomePage = (): UseHomePageResult => {
     name, setName, result, time, loading, error, greet,
     openConfirm, openMessage, openBlank, childResult,
     systrayEnabled, systrayBusy, systrayError, toggleSystray,
+    layoutLabelKey: preset.labelKey,
+    layoutDescriptionKey: preset.descriptionKey,
+    openLayoutSettings,
   };
 };

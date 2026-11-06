@@ -4,8 +4,8 @@ set -e
 # Build configuration
 APP_NAME="foundation.exe"
 BUNDLE_ID="com.example.foundation"
-VERSION="1.0.0"
-BUILD_NUMBER="1.0.0"
+VERSION="2.0.0"
+BUILD_NUMBER="2.0.0"
 BUILD_DIR="build/ios"
 TARGET="simulator"
 

@@ -40,7 +40,20 @@
   line-height: 1.6;
 }
 
+/* 仪表盘网格：卡片最小 360px，自动换列；.spanFull 独占整行 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+
+.spanFull {
+  grid-column: 1 / -1;
+}
+
 .card {
+  min-width: 0;
   width: 100%;
   padding: 24px;
   background-color: var(--fd-bg-surface);
@@ -137,4 +150,38 @@
   font-size: 13px;
   line-height: 1.5;
   color: var(--fd-text-secondary);
+}
+
+/* —— 当前布局卡片 —— */
+.layoutRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.layoutIcon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fd-accent);
+  background-color: var(--fd-bg-active);
+}
+
+.layoutTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.layoutName {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--fd-text-primary);
 }

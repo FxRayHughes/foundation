@@ -88,6 +88,10 @@ func loadOrCreateKey() ([]byte, error) {
 }
 
 func masterKeyDir() (string, error) {
+	// 与 storage.DataDirEnv 一致：设置后主密钥放在该目录（E2E / 便携版隔离）
+	if v := os.Getenv("FOUNDATION_DATA_DIR"); v != "" {
+		return v, nil
+	}
 	switch runtime.GOOS {
 	case "windows":
 		if v := os.Getenv("AppData"); v != "" {

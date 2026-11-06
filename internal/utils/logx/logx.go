@@ -151,6 +151,10 @@ func Error(msg string, args ...any) { For("").Error(msg, args...) }
 func Debug(msg string, args ...any) { For("").Debug(msg, args...) }
 
 func defaultLogDir() (string, error) {
+	// 与 storage.DataDirEnv 一致：设置后日志写到 <该目录>/logs
+	if v := os.Getenv("FOUNDATION_DATA_DIR"); v != "" {
+		return filepath.Join(v, "logs"), nil
+	}
 	switch runtime.GOOS {
 	case "windows":
 		if v := os.Getenv("AppData"); v != "" {

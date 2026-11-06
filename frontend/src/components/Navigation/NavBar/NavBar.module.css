@@ -1,0 +1,109 @@
+/* 水平导航条：
+   - top：44px，bg.sidebar，底部分隔线（--nav-divider，inset 外框下透明），primary 靠左、footer 靠右
+   - titlebar：≤28px，嵌入标题栏（var(--fd-titlebar-h)）；透明底、无分隔线、无品牌
+   - 条目：图标 + 文字；hover bg.hover；选中 pill（bg.active + accent） */
+
+.root {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-inline: 12px;
+  background-color: var(--fd-bg-sidebar);
+  border-bottom: 1px solid var(--nav-divider, var(--fd-divider));
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.root::-webkit-scrollbar {
+  display: none;
+}
+
+.root[data-placement='titlebar'] {
+  height: 28px;
+  padding-inline: 0;
+  gap: 2px;
+  background-color: transparent;
+  border-bottom: none;
+}
+
+.brand {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  margin-right: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--fd-bg-elevated);
+  color: var(--fd-accent);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.root[data-placement='titlebar'] .group {
+  gap: 2px;
+}
+
+.spacer {
+  flex: 1;
+  min-width: 12px;
+}
+
+.separator {
+  width: 1px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-inline: 6px;
+  background-color: var(--fd-divider);
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding-inline: 10px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  color: var(--fd-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.item:hover {
+  background-color: var(--fd-bg-hover);
+  color: var(--fd-text-primary);
+}
+
+.item[data-active],
+.item[data-active]:hover {
+  background-color: var(--fd-bg-active);
+  color: var(--fd-accent);
+}
+
+.root[data-placement='titlebar'] .item {
+  height: 26px;
+  padding-inline: 8px;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.label {
+  line-height: 1;
+}

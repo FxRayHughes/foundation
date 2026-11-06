@@ -6,7 +6,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { RouteDefinition, RouterContextValue } from './types';
+import type { RouteDefinition, RouteParams, RouterContextValue } from './types';
+
+const EMPTY_PARAMS: RouteParams = Object.freeze({});
 
 const RouterContext = createContext<RouterContextValue | null>(null);
 
@@ -28,14 +30,16 @@ export const RouterProvider = ({ routes, initialId, children }: RouterProviderPr
   const fallback = routes[0]!;
   const initial = initialId ? routes.find((r) => r.id === initialId) ?? fallback : fallback;
   const [activeId, setActiveId] = useState<string>(initial.id);
+  const [params, setParams] = useState<RouteParams>(EMPTY_PARAMS);
 
   const navigate = useCallback(
-    (id: string): void => {
+    (id: string, nextParams?: RouteParams): void => {
       const next = routes.find((r) => r.id === id);
       if (!next) {
         throw new Error(`Route "${id}" is not registered`);
       }
       setActiveId(id);
+      setParams(nextParams ?? EMPTY_PARAMS);
     },
     [routes],
   );
@@ -46,10 +50,11 @@ export const RouterProvider = ({ routes, initialId, children }: RouterProviderPr
       routes,
       active,
       navigate,
+      params,
       primary: routes.filter((r) => (r.slot ?? 'primary') === 'primary'),
       footer: routes.filter((r) => r.slot === 'footer'),
     };
-  }, [routes, activeId, navigate, fallback]);
+  }, [routes, activeId, params, navigate, fallback]);
 
   return <RouterContext.Provider value={value}>{children}</RouterContext.Provider>;
 };

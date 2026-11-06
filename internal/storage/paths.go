@@ -17,6 +17,10 @@ import (
 // 改成业务名时，连同 Wails 的 Name 一起改。
 const AppDirName = "Foundation"
 
+// DataDirEnv 指定后，数据根目录直接使用该路径（不再拼 AppDirName）。
+// cryptox / logx 读取同名环境变量，三者保持同一根目录。
+const DataDirEnv = "FOUNDATION_DATA_DIR"
+
 // DBFileName 是 SQLite 主文件名（WAL/SHM 由 SQLite 自动管理为 .db-wal / .db-shm）。
 const DBFileName = "foundation.db"
 
@@ -33,6 +37,10 @@ var ErrNoUserDir = errors.New("storage: cannot resolve user data directory")
 //
 // 不创建目录，只算路径——是否落地交给调用方。
 func userDataDir() (string, error) {
+	// DataDirEnv 覆盖：便携版 / E2E 测试 / server 模式隔离数据（storage、cryptox 主密钥、logx 日志都遵循）
+	if v := os.Getenv(DataDirEnv); v != "" {
+		return v, nil
+	}
 	switch runtime.GOOS {
 	case "windows":
 		if v := os.Getenv("AppData"); v != "" {

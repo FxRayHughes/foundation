@@ -889,7 +889,7 @@ bindings 没有重新生成。执行 `wails3 generate bindings`。`ExportService
 ### 7.5 样式顺序不对：Mantine 默认样式盖住了自己写的样式，或者 global.css 不生效
 
 - `import '@/styles'` 必须放在入口文件里、`App` / 业务组件的 import **之前**（参考 `main.tsx`）。`styles/index.ts` 内部的顺序（core → charts → datatable → global）不要改。
-- 覆盖 Mantine 组件默认样式时，如果选择器权重不够，用双类选择器（`.item.item`，参考 `Sidebar.module.css`、`QuickActions.module.css`），或者用 `classNames={{ root, … }}` 指定具体元素，**不要**用 `!important`。
+- 覆盖 Mantine 组件默认样式时，如果选择器权重不够，用双类选择器（`.item.item`，参考 `Navigation/NavRail/NavRail.module.css`、`QuickActions.module.css`），或者用 `classNames={{ root, … }}` 指定具体元素，**不要**用 `!important`。
 - Mantine 默认会给 subtle 按钮设置 primary 文字色。想要中性色时，在 class 里覆盖 `color: var(--fd-text-primary)`。
 
 ### 7.6 图表颜色不对，或自绘 SVG 的 `fill="violet.5"` 不生效
@@ -925,3 +925,19 @@ bindings 没有重新生成。执行 `wails3 generate bindings`。`ExportService
 内容有更新的已有 skill：`foundation-theme`（改为 Mantine 版：`mantineOverrides` / `--fd-*`）、`foundation-systray`（`SystrayService` + 持久化 + 面板）、`foundation-i18n`（跨窗口同步 `appsettings:changed`）、`foundation-childwindow`、`foundation-persistence`、`foundation-utils`、`wails-upgrade-sop`；`wails-*` 系列已同步到 v3.1.0 文档。
 
 如果你的 fork 改过这些 skill，或者在自己的 `CLAUDE.md` / skill 里引用了 `foundation-mui*`，请把引用改成上表右列的名字。
+
+---
+
+## 9. 布局与 E2E（v2.0.0 新增）
+
+以下均为**新增 API，不破坏 v1.0.0 代码**，升级后无需改业务代码。
+
+- **布局预设**：`frontend/src/layouts/`（`LayoutPreset` = `nav.variant` × `nav.placement` × `frame`，9 个内置，默认 `classic` 与 v1.0.0 外观一致）；`layoutRegistry.register(preset)` 注册自定义预设，`useLayoutPreset()` 读写当前预设。偏好表新增键 `layout` / `navCollapsed` / `floatDockSide` / `floatDockY`（缺省即默认值，无需迁移）。设置页新增「布局」子项。详见 `.claude/skills/foundation-layout/SKILL.md`。
+- **导航组件**：新增 `@/components/Navigation`（`NavRail` / `NavSidebar` / `NavBar` / `NavDock` / `NavigationDrawerButton` / `useNavigation`）。`@/components/Sidebar` 保留为 `NavRail` 的别名（`Sidebar.module.css` 已删除；若你的 fork 改过旧 Sidebar，请把改动移到 `Navigation/NavRail/`）。
+- **AppLayout**：改为 CSS Grid，由预设的 `data-*` 属性切换；如果你的 fork 重写过 `AppLayout`，请保留 `useAppLayout()`（它现在还负责发出启动就绪信号）。
+- **TitleBar**：新增可选插槽 `leading` / `center`；高度改为 CSS 变量 `--fd-titlebar-h`（macOS 40px，`window_darwin.go` 改用 `MacToolbarStyleUnifiedCompact` + `InvisibleTitleBarHeight: 40` 让红绿灯垂直居中；其它平台仍 36px）。
+- **路由**：`navigate(id, params?)` + `useRouter().params`（`RouteParams`）；旧的 `navigate(id)` 调用不受影响。设置页支持 `navigate('settings', { section: '<子项 id>' })`。
+- **启动骨架**：`PreferencesProvider` 新增 `ready`；骨架等偏好读回后再淡出（`shared/appReady.ts`，兜底 1500ms）。
+- **后端**：环境变量 `FOUNDATION_DATA_DIR` 覆盖数据库 / 主密钥 / 日志根目录（便携版、E2E 隔离）；未设置时行为不变。
+- **E2E**：`frontend/playwright.config.ts` + `frontend/e2e/`，`wails3 task build:server` 后 `pnpm e2e` / `pnpm e2e:screenshots`（截图输出 `docs/screenshots/`）。
+- **Skill**：新增 `foundation-layout`。

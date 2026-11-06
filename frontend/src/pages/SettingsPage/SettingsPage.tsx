@@ -3,11 +3,12 @@ import { useT } from '@/i18n';
 import classes from './SettingsPage.module.css';
 import { useSettingsPage } from './useSettingsPage';
 import { Personalization } from './personalization';
+import { Layout } from './layout';
 import { Language } from './language';
 import { Database } from './database';
 
 // 设置页（两列）：
-//   左列：选项列表（personalization / language / database）
+//   左列：选项列表（personalization / layout / language / database）
 //   右列：根据 activeItemId 分发到对应子页面组件
 //
 // 每个子页面是一个独立目录（personalization / language / database），
@@ -56,6 +57,7 @@ export const SettingsPage = () => {
         </div>
 
         {vm.activeItem.id === 'personalization' && <Personalization />}
+        {vm.activeItem.id === 'layout' && <Layout />}
         {vm.activeItem.id === 'language' && <Language />}
         {vm.activeItem.id === 'database' && <Database />}
       </div>

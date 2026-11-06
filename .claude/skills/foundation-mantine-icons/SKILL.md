@@ -22,7 +22,7 @@ description: Foundation 项目图标规范（@tabler/icons-react 3.50）。Icon 
 | 16 | `size="xs"` 按钮 leftSection、Menu.Item、Tabs.Tab、表格工具栏 | `DataGridPremium` 的 `IconFileTypeCsv size={16}` |
 | 18 | `size="xs"/"sm"` 按钮、标题栏窗口控制 | `HomePage` 的 `IconExternalLink size={18}` |
 | 20 | 默认尺寸按钮 leftSection、行内图标 | `Database` 的 `IconFolderOpen size={20}` |
-| 24 | 主导航（Sidebar 48px 按钮） | `Sidebar` 的 `<Icon size={24} />` |
+| 24 | 主导航（NavRail 48px / NavDock 44px 按钮） | `Navigation/NavRail`、`NavDock` 的 `<Icon size={24} />` |
 | 36 | 子窗口 / 空状态的大插画式图标 | `ConfirmWindow` 的 `IconHelpCircle size={36}` |
 
 （MUI 迁移换算：fontSize small = 20、medium = 24。）
@@ -62,8 +62,9 @@ export interface RouteDefinition { icon?: Icon; /* … */ }
 import { IconHome, IconLayoutGrid, IconSettings } from '@tabler/icons-react';
 { id: 'home', icon: IconHome, … }
 
-// 消费方（Sidebar.tsx）
-const Icon = r.icon ?? IconHome;
+// 消费方（components/Navigation/useNavigation.ts 兜底 + NavRail.tsx 渲染）
+icon: r.icon ?? IconHome,   // useNavigation 的 toItem
+const Icon = item.icon;
 <Icon size={24} stroke={1.75} />
 ```
 

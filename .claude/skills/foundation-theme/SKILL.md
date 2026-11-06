@@ -127,7 +127,7 @@ export const MyCard = () => (
 );
 ```
 
-覆盖 Mantine 组件内部样式时，用 `className` 或 `classNames={{ root: classes.x, label: classes.y }}`；需要压过全局覆盖时提高选择器权重（如 `.item.item { ... }`，参考 `components/Sidebar/Sidebar.module.css`）。
+覆盖 Mantine 组件内部样式时，用 `className` 或 `classNames={{ root: classes.x, label: classes.y }}`；需要压过全局覆盖时提高选择器权重（如 `.item.item { ... }`，参考 `components/Navigation/NavRail/NavRail.module.css`）。
 
 ### 3.2 FOUNDATION_CSS_VARS（JS 引用变量）
 

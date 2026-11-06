@@ -1,0 +1,145 @@
+/* 浮动 Dock：
+   - 胶囊：56px 高、16px 圆角、surface 底 + divider 边 + 柔和阴影（阴影色由 text.primary 派生，随主题明暗）
+   - 条目：44px 图标按钮，12px 圆角（按钮圆角语言），hover 上浮 2px
+   - 选中：accent 图标 + bg.active + 底部 4px 圆点 */
+
+.root {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-inline: 6px;
+  border-radius: 16px;
+  background-color: var(--fd-bg-surface);
+  border: 1px solid var(--fd-divider);
+  box-shadow:
+    0 8px 24px color-mix(in srgb, var(--fd-text-primary) 12%, transparent),
+    0 2px 6px color-mix(in srgb, var(--fd-text-primary) 8%, transparent);
+}
+
+.itemWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item.item {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: var(--fd-text-secondary);
+  transition:
+    background-color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.item.item:hover {
+  background-color: var(--fd-bg-hover);
+  color: var(--fd-text-primary);
+  transform: translateY(-2px);
+}
+
+.item.item[data-active],
+.item.item[data-active]:hover {
+  background-color: var(--fd-bg-active);
+  color: var(--fd-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item.item:hover {
+    transform: none;
+  }
+}
+
+.dot {
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background-color: var(--fd-accent);
+  pointer-events: none;
+}
+
+.separator {
+  width: 1px;
+  height: 28px;
+  margin-inline: 4px;
+  flex-shrink: 0;
+  background-color: var(--fd-divider);
+}
+
+/* ---- 悬浮模式（floating）：竖向胶囊，绝对定位于内容区覆盖层 ---- */
+
+.root[data-floating] {
+  --dock-half-h: 120px; /* 实测值由 NavDock 写入；此处为首帧兜底 */
+  position: absolute;
+  height: auto;
+  width: 56px;
+  flex-direction: column;
+  padding-inline: 0;
+  padding-block: 4px 6px;
+  pointer-events: auto; /* 覆盖层本身不拦截点击 */
+  transition:
+    top 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    left 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    right 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 160ms ease;
+}
+
+.root[data-dragging] {
+  transition: none;
+  cursor: grabbing;
+  box-shadow:
+    0 16px 40px color-mix(in srgb, var(--fd-text-primary) 18%, transparent),
+    0 4px 10px color-mix(in srgb, var(--fd-text-primary) 10%, transparent);
+}
+
+.root[data-floating] .separator {
+  width: 28px;
+  height: 1px;
+  margin-inline: 0;
+  margin-block: 4px;
+}
+
+.root[data-floating] .item.item:hover {
+  transform: none;
+}
+
+.root[data-floating] .dot {
+  left: 2px;
+  top: 50%;
+  bottom: auto;
+  margin-left: 0;
+  margin-top: -2px;
+}
+
+.handle {
+  width: 44px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fd-text-muted);
+  cursor: grab;
+  touch-action: none;
+}
+.handle:hover {
+  background-color: var(--fd-bg-hover);
+  color: var(--fd-text-secondary);
+}
+.handle:focus-visible {
+  outline: 2px solid var(--fd-accent);
+  outline-offset: 1px;
+}
+.root[data-dragging] .handle {
+  cursor: grabbing;
+}

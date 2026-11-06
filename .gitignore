@@ -23,3 +23,8 @@ build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 # OS 元数据
 .DS_Store
 Thumbs.db
+
+# E2E (Playwright)
+.e2e-data
+frontend/test-results
+frontend/playwright-report

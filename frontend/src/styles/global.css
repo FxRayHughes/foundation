@@ -2,6 +2,15 @@
    必须在 @mantine/core/styles.css 之后引入（见 main.tsx / child.tsx）。
    颜色只用 --fd-* 变量（由 FoundationThemeProvider 注入）。 */
 
+/* 标题栏高度：macOS 与系统红绿灯垂直居中对齐（见 internal/app/window_darwin.go macTitleBar），
+   其它平台 36px（Windows Fluent caption 按钮高度）。data-platform 由 index.html 首帧前写入。 */
+:root {
+  --fd-titlebar-h: 36px;
+}
+:root[data-platform='darwin'] {
+  --fd-titlebar-h: 40px;
+}
+
 html,
 body {
   margin: 0;

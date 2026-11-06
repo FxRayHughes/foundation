@@ -18,6 +18,11 @@ export const enUS: Locale = {
     sidebar: {
       brand: 'F',
       navAriaLabel: 'Primary navigation',
+      collapse: 'Collapse sidebar',
+      expand: 'Expand sidebar',
+      openMenu: 'Open navigation menu',
+      closeMenu: 'Close navigation menu',
+      dragDock: 'Drag to move the dock (arrow keys to nudge, ←/→ to switch side)',
     },
     titleBar: {
       controls: {

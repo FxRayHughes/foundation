@@ -17,6 +17,11 @@
 
 **适用人群**：想跳过"造轮子两周"直接进入业务开发的团队 / 个人。
 
+<p align="center">
+  <img src="./docs/screenshots/macos-native.png" alt="Foundation 在 macOS 上运行（经典布局，原生红绿灯）" width="880">
+  <br><sub>macOS 原生窗口 · 经典布局 · 系统红绿灯与自绘标题栏垂直对齐</sub>
+</p>
+
 > **从 v0.0.3（MUI）升级？** 见 [v1.0.0 迁移指南](./docs/MIGRATION-v1.md)（Wails v3.1.0 + Mantine 9，含 MUI → Mantine 逐项对照与破坏性变更速查表）。
 
 ---
@@ -26,6 +31,11 @@
 - [Foundation](#foundation)
   - [目录](#目录)
   - [✨ 特性一览](#-特性一览)
+  - [🖼 截图](#-截图)
+    - [九种布局预设](#九种布局预设)
+    - [页面与组件](#页面与组件)
+    - [主题](#主题)
+    - [托盘面板与子窗口](#托盘面板与子窗口)
   - [🛠 安装 Wails CLI](#-安装-wails-cli)
     - [系统要求](#系统要求)
     - [必装依赖](#必装依赖)
@@ -38,6 +48,7 @@
     - [4. 跑起来](#4-跑起来)
   - [📂 项目结构](#-项目结构)
   - [⌨️ 常用命令速查](#️-常用命令速查)
+  - [🧪 E2E 测试与截图](#-e2e-测试与截图)
   - [📐 工程规范](#-工程规范)
   - [✏️ 把脚手架改名为你的项目](#️-把脚手架改名为你的项目)
   - [🧩 加新功能：常见路径](#-加新功能常见路径)
@@ -56,7 +67,7 @@
 | 类别 | 内容 |
 |-----|------|
 | **窗口** | Windows/Linux 完全无边框（前端自绘标题栏 + 窗口控制按钮）；macOS 沉浸式标题栏 + 系统红绿灯 |
-| **布局** | 左侧 64px Sidebar（自动从路由表渲染）+ 自定义 TitleBar + 主内容区，方圆设计语言（按钮 4–6px / 容器 8px） |
+| **布局** | 应用外壳为 **CSS Grid**，内置 **9 种布局预设**（经典图标栏 / 展开侧栏 / 顶部导航 / 融合标题栏 / 右侧栏 / 底部 Dock / 悬浮 Dock（可拖拽）/ 浮动卡片 / 专注抽屉），「设置 → 布局」实时切换并持久化；导航全部从路由表自动渲染；首页为响应式卡片网格 |
 | **路由** | 唯一事实源 `routes.tsx` + `<RouterOutlet />` + `useRouter()`；支持 `keepAlive` 页面缓存 |
 | **UI 栈** | Mantine 9（`@mantine/core` / `@mantine/hooks`）+ CSS Modules + `@tabler/icons-react`；图表 `@mantine/charts`（recharts）+ 自实现高级图表（`components/x-pro/charts`）；数据表格 `components/x-pro/data-grid`（基于 `mantine-datatable`） |
 | **主题** | `foundation-light` / `foundation-dark` / `foundation-obsidian` + 用户自定义调色板（16 个语义槽位），编译为 CSS 变量 `--fd-*` + Mantine 主色 `foundation` |
@@ -67,6 +78,59 @@
 | **工具层** | `httpx` HTTP / `procx` 子进程（Windows JobObject）/ `cryptox` AES-GCM / `logx` slog+rotate / `filex` 原子写 |
 | **子进程** | 严格白名单子进程 service：前端可调，命令必须在 `commands.go` 注册并通过 `ArgPattern` 校验 |
 | **原生对话框** | `NativeDialogs` 服务封装 Wails v3 `Dialogs.*`，禁用浏览器 `alert/confirm/prompt` |
+| **系统托盘** | 运行时启用 / 禁用（开关持久化、启动恢复）+ Mantine 托盘面板 + 托盘菜单 i18n |
+| **数据表格导出** | 原生「另存为」→ Go 后端写 CSV（UTF-8 BOM）/ 真 `.xlsx`（excelize，表头加粗冻结、数字保持数值） |
+| **跨窗口同步** | 主窗口 / 子窗口 / 托盘面板的主题与语言经 `appsettings:changed` 事件实时一致 |
+| **E2E** | Playwright 驱动 Wails server 模式（真实后端 + 隔离数据目录 `FOUNDATION_DATA_DIR`），本 README 截图即由它生成 |
+
+---
+
+## 🖼 截图
+
+> 以下截图（除顶部 macOS 原生截图外）由 [E2E 脚本](./frontend/e2e/screenshots.spec.ts) 自动生成：Wails server 模式运行真实后端，Chromium 渲染真实前端，标题栏按 Windows 样式（自绘最小化 / 最大化 / 关闭）。运行 `cd frontend && pnpm e2e:screenshots` 即可重新生成。
+
+### 九种布局预设
+
+外壳是一个 CSS Grid（`title / nav / main`），预设只声明「导航形态 × 导航位置 × 内容外框」三件事（[`src/layouts/presets.ts`](./frontend/src/layouts/presets.ts)），新增预设只需加一行。在「设置 → 布局」点选即时生效，选择存入 SQLite。
+
+| 经典（默认） | 展开侧栏 | 顶部导航 |
+|:---:|:---:|:---:|
+| <img src="./docs/screenshots/layout-classic.png" alt="经典布局"> | <img src="./docs/screenshots/layout-sidebar.png" alt="展开侧栏"> | <img src="./docs/screenshots/layout-topnav.png" alt="顶部导航"> |
+| 64px 左侧图标栏，紧凑 | 图标 + 文字，可折叠为图标栏 | 标题栏下方水平导航条 |
+| **融合标题栏** | **右侧栏** | **底部 Dock** |
+| <img src="./docs/screenshots/layout-titlebar.png" alt="融合标题栏"> | <img src="./docs/screenshots/layout-right.png" alt="右侧栏"> | <img src="./docs/screenshots/layout-dock.png" alt="底部 Dock"> |
+| 导航嵌入标题栏，省出一行 | 图标栏放到右侧 | 内容区底部居中浮动 |
+| **悬浮 Dock** | **浮动卡片** | **专注** |
+| <img src="./docs/screenshots/layout-floating.png" alt="悬浮 Dock"> | <img src="./docs/screenshots/layout-inset.png" alt="浮动卡片"> | <img src="./docs/screenshots/layout-focus-drawer.png" alt="专注（抽屉展开）"> |
+| 竖向悬浮，拖动手柄移动，松手吸附左 / 右边缘；永不进入标题栏 | 侧栏 + 四周留白的圆角内容卡片 | 无常驻导航，标题栏菜单按钮呼出抽屉 |
+
+### 页面与组件
+
+| 设置 → 布局 | 设置 → 个性化 |
+|:---:|:---:|
+| <img src="./docs/screenshots/page-settings-layout.png" alt="布局设置页"> | <img src="./docs/screenshots/page-settings-personalization.png" alt="个性化设置页"> |
+| 每个预设一张 CSS 绘制的示意缩略图，键盘可达 | 主题 / 显示偏好 / 自定义调色板（实时预览） |
+| **设置 → 数据存储** | **X-Pro：DataGrid** |
+| <img src="./docs/screenshots/page-settings-database.png" alt="数据存储页"> | <img src="./docs/screenshots/page-xpro-grid.png" alt="DataGrid Pro / Premium"> |
+| 数据库位置、占用空间、逐表统计图 | 列钉住 / 行拖拽 / 列菜单 / 列宽拖拽 / 钉住行 / 聚合 / 原生导出 |
+| **X-Pro：图表** | **首页** |
+| <img src="./docs/screenshots/page-xpro-charts.png" alt="X-Pro 图表"> | <img src="./docs/screenshots/layout-classic.png" alt="首页卡片网格"> |
+| 热力图 / 漏斗（纵 + 横）/ 雷达 / K 线 / 桑基 / 甘特 / 矩形树图 | 响应式卡片网格：后端往返、子窗口、托盘、当前布局 |
+
+### 主题
+
+| 黑暗 · 展开侧栏 | 黑曜 · 浮动卡片 |
+|:---:|:---:|
+| <img src="./docs/screenshots/theme-dark.png" alt="黑暗主题"> | <img src="./docs/screenshots/theme-obsidian.png" alt="黑曜主题"> |
+
+主题编译为 CSS 变量 `--fd-*`，组件样式只写 `var(--fd-*)`，切换主题零重渲染；另有「跟随系统」与用户自定义调色板。
+
+### 托盘面板与子窗口
+
+| 托盘面板 | 确认子窗口 |
+|:---:|:---:|
+| <img src="./docs/screenshots/tray-panel.png" alt="托盘面板" width="260"> | <img src="./docs/screenshots/child-confirm.png" alt="确认子窗口" width="340"> |
+| 点击托盘图标弹出；失焦 / Esc 隐藏；「打开设置」驱动主窗口路由 | 子窗口与主窗口共享主题 / 语言（跨窗口实时同步） |
 
 ---
 
@@ -273,6 +337,36 @@ foundation/
 | `cd frontend && pnpm build` | 单独构建前端（产物到 `frontend/dist`） |
 | `go build .` | 单独构建后端（需要 `frontend/dist` 已存在） |
 | `go vet ./...` | 后端静态检查 |
+| `go test ./internal/...` | 后端单元测试 |
+| `cd frontend && pnpm e2e` | E2E 测试（需先 `wails3 task build:server`） |
+| `cd frontend && pnpm e2e:screenshots` | 重新生成 `docs/screenshots/*.png` |
+
+---
+
+## 🧪 E2E 测试与截图
+
+E2E 用 [Playwright](https://playwright.dev) 驱动 **Wails server 模式**：`-tags server` 构建出的二进制不开原生窗口，直接以 HTTP 提供同一套前端 + 全部 Go service / 事件，所以测试覆盖的是真实后端，而不是 mock。
+
+```bash
+# 1. 构建 server 模式二进制（产物 bin/foundation-server）
+wails3 task build:server
+
+# 2. 跑全部 E2E（含悬浮 Dock 拖拽回归测试）
+cd frontend && pnpm e2e
+
+# 3. 只重新生成 README 截图（写到 docs/screenshots/）
+pnpm e2e:screenshots
+```
+
+| 设计点 | 说明 |
+|-------|------|
+| **数据隔离** | `playwright.config.ts` 每次以空目录启动后端，经 `FOUNDATION_DATA_DIR` 让数据库 / 主密钥 / 日志都写进仓库下的 `.e2e-data/`（已 gitignore），**绝不触碰你的真实数据** |
+| **确定性** | 截图脚本直接把布局 / 主题写入 E2E 数据库再刷新，不依赖点击路径；就绪以启动骨架移除为准（偏好已从后端读回） |
+| **浏览器** | 默认使用本机已装的 Microsoft Edge（`channel: 'msedge'`），免下载；CI 可设 `E2E_CHANNEL=chromium` 并先 `npx playwright install chromium` |
+| **端口** | 默认 `9346`，可用 `E2E_PORT` 覆盖（Wails 读取 `WAILS_SERVER_PORT`） |
+| **局限** | 浏览器里没有原生窗口：托盘图标、红绿灯、原生对话框需在桌面构建中手动验证 |
+
+`FOUNDATION_DATA_DIR` 同样适用于**便携版**：设置后应用把所有数据放在该目录下（不再使用系统用户目录）。
 
 ---
 

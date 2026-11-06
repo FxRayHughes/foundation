@@ -1,16 +1,113 @@
+/* 应用外壳：CSS Grid（grid-template-areas: title / nav / main）。
+   布局预设（src/layouts）经 data-placement / data-frame 切换网格区域，
+   新预设只需组合这些属性，不需要改这里的结构。 */
+
 .root {
   flex: 1;
   min-height: 0;
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'title'
+    'main';
   background-color: var(--fd-bg-content);
+  /* 导航组件读取的分隔线颜色（inset 外框下隐藏） */
+  --nav-divider: var(--fd-divider);
+}
+
+.title {
+  grid-area: title;
+  min-width: 0;
+}
+
+.nav {
+  grid-area: nav;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
 }
 
 .main {
-  flex: 1;
+  grid-area: main;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  background-color: var(--fd-bg-content);
   overflow: hidden;
+  position: relative;
+  background-color: var(--fd-bg-content);
+}
+
+/* ---- 导航位置 ---- */
+
+.root[data-placement='left'] {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'title title'
+    'nav main';
+}
+
+.root[data-placement='right'] {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'title title'
+    'main nav';
+}
+
+.root[data-placement='top'] {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas:
+    'title'
+    'nav'
+    'main';
+}
+
+/* 底部 Dock：与 main 共用网格单元，浮于内容之上，底部居中 */
+.root[data-placement='bottom'] .nav {
+  grid-area: main;
+  align-self: end;
+  justify-self: center;
+  z-index: 10;
+  margin-bottom: 16px;
+}
+.root[data-placement='bottom'] .main {
+  padding-bottom: 80px; /* Dock 高度 56 + 上下留白，避免遮挡页面底部内容 */
+}
+
+/* 悬浮 Dock：覆盖整个内容区的透明层（不拦截点击），Dock 自身在层内绝对定位、可拖拽 */
+.root[data-placement='float'] .nav {
+  grid-area: main;
+  position: relative;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Dock 宽 56 + 边距 16 + 留白 → 内容区在吸附侧让出 88px */
+.root[data-dock-side='right'] .main {
+  padding-right: 88px;
+}
+.root[data-dock-side='left'] .main {
+  padding-left: 88px;
+}
+
+/* ---- 内容外框：inset（浮动卡片） ---- */
+
+.root[data-frame='inset'] {
+  background-color: var(--fd-bg-sidebar);
+  --nav-divider: transparent;
+}
+.root[data-frame='inset'] .main {
+  margin: 8px;
+  border: 1px solid var(--fd-divider);
+  border-radius: 8px;
+}
+.root[data-frame='inset'][data-placement='left'] .main {
+  margin-left: 0;
+}
+.root[data-frame='inset'][data-placement='right'] .main {
+  margin-right: 0;
+}
+.root[data-frame='inset'][data-placement='top'] .main {
+  margin-top: 0;
 }

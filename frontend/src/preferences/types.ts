@@ -5,10 +5,16 @@
 export interface Preferences {
   showLogo: boolean;       // Sidebar 顶部品牌方块是否显示
   showTooltip: boolean;    // Sidebar 菜单按钮是否显示 Tooltip
+  layout: string;          // 布局预设 id（见 src/layouts；未知值回落到 'classic'）
+  navCollapsed: boolean;   // 展开侧栏（variant: 'sidebar'）是否折叠为图标栏
+  floatDockSide: string;   // 悬浮 Dock 吸附的边：'left' | 'right'
+  floatDockY: number;      // 悬浮 Dock 中心的垂直位置（占内容区高度的比例 0–1，窗口缩放后仍成立）
 }
 
 export interface PreferencesContextValue {
   preferences: Preferences;
+  // 后端值是否已读回（读失败也置 true —— 表示"不会再变了"，用默认值）
+  ready: boolean;
   setPreference: <K extends keyof Preferences>(key: K, value: Preferences[K]) => void;
   reset: () => void;
 }
@@ -16,4 +22,8 @@ export interface PreferencesContextValue {
 export const DEFAULT_PREFERENCES: Preferences = {
   showLogo: true,
   showTooltip: true,
+  layout: 'classic',
+  navCollapsed: false,
+  floatDockSide: 'right',
+  floatDockY: 0.5,
 };

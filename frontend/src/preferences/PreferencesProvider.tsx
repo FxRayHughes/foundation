@@ -54,6 +54,7 @@ export const PreferencesProvider = ({ children, initial }: PreferencesProviderPr
     ...DEFAULT_PREFERENCES,
     ...initial,
   }));
+  const [ready, setReady] = useState(false);
   // 防止已 unmount 后再 setState
   const aliveRef = useRef(true);
   useEffect(() => {
@@ -73,6 +74,9 @@ export const PreferencesProvider = ({ children, initial }: PreferencesProviderPr
       })
       .catch(() => {
         // 后端未就绪 / 网络异常 —— 保持默认值，不阻断 UI
+      })
+      .finally(() => {
+        if (!cancelled && aliveRef.current) setReady(true);
       });
     return () => {
       cancelled = true;
@@ -97,8 +101,8 @@ export const PreferencesProvider = ({ children, initial }: PreferencesProviderPr
   }, []);
 
   const value = useMemo<PreferencesContextValue>(
-    () => ({ preferences, setPreference, reset }),
-    [preferences, setPreference, reset],
+    () => ({ preferences, ready, setPreference, reset }),
+    [preferences, ready, setPreference, reset],
   );
 
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;

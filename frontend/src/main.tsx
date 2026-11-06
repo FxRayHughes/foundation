@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@/styles';
 import { App } from './App';
+import { APP_READY_EVENT } from '@/shared/appReady';
 
 const container = document.getElementById('root');
 if (!container) {
@@ -42,7 +43,17 @@ const removeStartupSkeleton = (): void => {
   skeleton.classList.add('fade-out');
 };
 
-// 等首帧绘制完再淡出 —— rAF 嵌套两层确保 React 已完成首次 commit + paint
-requestAnimationFrame(() => {
-  requestAnimationFrame(removeStartupSkeleton);
-});
+// 骨架覆盖层（fixed, z-index 9999）一直盖到"应用就绪"再淡出：
+// AppLayout 在用户偏好（含布局预设）从 SQLite 读回后派发 APP_READY_EVENT，
+// 避免非默认布局的用户先看到默认布局再跳变。兜底 1500ms（后端异常时也不会一直挡住）。
+// 就绪后 rAF 嵌套两层，确保 React 已完成该次 commit + paint 再淡出。
+let skeletonScheduled = false;
+const scheduleSkeletonRemoval = (): void => {
+  if (skeletonScheduled) return;
+  skeletonScheduled = true;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(removeStartupSkeleton);
+  });
+};
+window.addEventListener(APP_READY_EVENT, scheduleSkeletonRemoval, { once: true });
+window.setTimeout(scheduleSkeletonRemoval, 1500);

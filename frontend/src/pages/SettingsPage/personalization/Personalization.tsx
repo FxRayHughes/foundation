@@ -69,11 +69,16 @@ const ThemeSection = ({ vm }: { vm: Vm }) => {
   );
 };
 
+// 只有布尔型偏好能渲染成开关（Preferences 里还有 layout: string 等非布尔项）
+type BooleanPreferenceKey = {
+  [K in keyof Preferences]: Preferences[K] extends boolean ? K : never;
+}[keyof Preferences];
+
 const PreferencesSection = ({ vm }: { vm: Vm }) => {
   const t = useT();
 
   const switches: Array<{
-    key: keyof Preferences;
+    key: BooleanPreferenceKey;
     labelKey: string;
     descriptionKey: string;
   }> = [
@@ -110,10 +115,7 @@ const PreferencesSection = ({ vm }: { vm: Vm }) => {
             <Switch
               checked={vm.preferences[key]}
               onChange={(e) =>
-                vm.setPreference<keyof Preferences>(
-                  key,
-                  e.currentTarget.checked as Preferences[typeof key],
-                )
+                vm.setPreference(key, e.currentTarget.checked)
               }
               aria-label={label}
             />

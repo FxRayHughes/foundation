@@ -74,7 +74,8 @@ pages/PageName/
 
 ```
 src/
-├── components/         # 跨页面共享的组件
+├── components/         # 跨页面共享的组件（AppLayout 外壳 / TitleBar / Navigation 导航形态 等）
+├── layouts/            # 布局预设（LayoutPreset + layoutRegistry + useLayoutPreset），外壳布局唯一事实源
 ├── pages/              # 路由级页面（每页面一个文件夹）
 ├── services/           # 后端通信封装
 ├── shared/             # 跨层共享：types、hooks、工具、常量

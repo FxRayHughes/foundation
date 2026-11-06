@@ -32,6 +32,10 @@ export const homePageZhCN: Messages = {
       statusOff: '未启用',
       errorPrefix: '托盘操作失败：',
     },
+    layoutCard: {
+      title: '当前布局',
+      changeBtn: '前往设置更换',
+    },
     footer: {
       backendTick: '后端心跳：{{time}}',
       poweredBy: '由 Wails 3 · React 19 · Mantine 9 提供支持',

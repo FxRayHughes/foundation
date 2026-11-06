@@ -1,19 +1,25 @@
-/* Sidebar 扁平化设计：
-   - 未选中：完全透明，仅图标颜色（text.secondary），不喧宾夺主
-   - hover：bg.hover 半透明覆盖 + text.primary，让"可点"信号清晰
-   - 选中：bg.active 半透明底色 + accent 图标 + 左侧 3px accent indicator bar
-   - 颜色全部取 --fd-* 变量，三主题自动适配 */
+/* 图标栏（64px）扁平化设计：
+   - 未选中：透明，仅图标颜色（text.secondary）
+   - hover：bg.hover + text.primary
+   - 选中：bg.active + accent 图标 + 外侧边缘 3px accent indicator bar
+   - placement right：分隔线在左、指示条贴右边
+   - 分隔线颜色读 --nav-divider（AppLayout 在 inset 外框下置为透明） */
 
 .root {
   width: 64px;
   flex-shrink: 0;
   background-color: var(--fd-bg-sidebar);
-  border-right: 1px solid var(--fd-divider);
+  border-right: 1px solid var(--nav-divider, var(--fd-divider));
   display: flex;
   flex-direction: column;
   align-items: center;
   padding-block: 12px;
   gap: 8px;
+}
+
+.root[data-placement='right'] {
+  border-right: none;
+  border-left: 1px solid var(--nav-divider, var(--fd-divider));
 }
 
 .brand {
@@ -61,7 +67,7 @@
 
 .indicator {
   position: absolute;
-  left: -8px; /* 顶到 sidebar 左侧 8px gutter 的边 */
+  left: -8px; /* 顶到 rail 8px gutter 的外侧边 */
   top: 12px;
   bottom: 12px;
   width: 3px;
@@ -69,7 +75,13 @@
   background-color: var(--fd-accent);
 }
 
-/* ActionIcon 的 subtle 变体已有全局 hover 样式；这里提高选择器权重覆盖尺寸与选中态 */
+.root[data-placement='right'] .indicator {
+  left: auto;
+  right: -8px;
+  border-radius: 2px 0 0 2px;
+}
+
+/* ActionIcon 的 subtle 变体已有全局 hover 样式；双类选择器提高权重覆盖尺寸与选中态 */
 .item.item {
   width: 48px;
   height: 48px;

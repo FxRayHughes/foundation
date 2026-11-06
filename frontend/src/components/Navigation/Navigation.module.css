@@ -1,0 +1,24 @@
+/* 分发器外层：透明容器，只负责让具体形态填满 AppLayout 的 nav 网格单元。
+   rail / sidebar 纵向撑满；bar 横向撑满；dock 保持自身尺寸（由 AppLayout 居中）。 */
+
+.root {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
+.root[data-variant='rail'],
+.root[data-variant='sidebar'] {
+  align-self: stretch;
+}
+
+.root[data-variant='bar'] {
+  flex: 1;
+}
+
+/* 悬浮 Dock：外层撑满 AppLayout 的覆盖层，作为 Dock 绝对定位 / 拖拽的参照容器 */
+.root[data-placement='float'] {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
