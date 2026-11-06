@@ -1,11 +1,9 @@
 ---
-title: Clipboard Operations
-description: Copy and paste text with the system clipboard
-sidebar:
-  order: 1
+title: "Clipboard Operations"
+description: "Copy and paste text with the system clipboard"
+slug: "features/clipboard/basics"
+sourcePath: "features/clipboard/basics.md"
 ---
-
-import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Clipboard Operations
 
@@ -462,32 +460,32 @@ async function paste() {
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Bindings" icon="rocket">
-    Call Go functions from JavaScript.
-    
-    [Learn More →](/features/bindings/methods)
-  </Card>
+@cards{cols="2"}
+🚀 Bindings
+Call Go functions from JavaScript.
 
-  <Card title="Events" icon="star">
-    Use events for clipboard notifications.
-    
-    [Learn More →](/features/events/system)
-  </Card>
+[Learn More →](/features/bindings/methods/)
 
-  <Card title="dialogs" icon="information">
-    Show copy/paste feedback.
-    
-    [Learn More →](/features/dialogs/message)
-  </Card>
+---
+★ Events
+Use events for clipboard notifications.
 
-  <Card title="Services" icon="puzzle">
-    Organise clipboard code.
-    
-    [Learn More →](/features/bindings/services)
-  </Card>
-</CardGrid>
+[Learn More →](/features/events/system/)
+
+---
+ℹ dialogs
+Show copy/paste feedback.
+
+[Learn More →](/features/dialogs/message/)
+
+---
+◆ Services
+Organise clipboard code.
+
+[Learn More →](/features/bindings/services/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [clipboard examples](https://github.com/wailsapp/wails/tree/master/v3/examples).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [clipboard examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples).

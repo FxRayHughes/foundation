@@ -1,273 +1,231 @@
 ---
-title: Your First Application
-description: Create your first Wails desktop application step by step
-sidebar:
-  order: 20
+title: "Your First Application"
+description: "Create your first Wails desktop application step by step"
+slug: "getting-started/your-first-app"
+sourcePath: "getting-started/your-first-app.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
-import { Badge } from '@astrojs/starlight/components';
-import { Steps } from "@astrojs/starlight/components";
-import { FileTree } from '@astrojs/starlight/components';
-
-import wails_init from '../../../assets/wails_init.mp4';
-import wails_build from '../../../assets/wails_build.mp4';
-import wails_dev from '../../../assets/wails_dev.mp4';
-
 
 This guide shows you how to create your first Wails v3 application, covering project setup, building, and development workflow.
 
 <br/>
+
 <br/>
 
-<Steps>
+@steps
+### Creating a New Project
+Open your terminal and run the following command to create a new Wails project:
 
-1.  ## Creating a New Project
+```bash
+wails3 init -n myfirstapp -t vanilla-js
+```
 
-    Open your terminal and run the following command to create a new Wails
-    project:
+This lesson selects the JavaScript Vanilla template explicitly. The bare `vanilla` template uses TypeScript. The command creates `myfirstapp` with all the necessary files.
 
-    ```bash
-    wails3 init -n myfirstapp
-    ```
+   <video src="/assets/wails_init.mp4" controls></video>
 
-    This command creates a new directory called `myfirstapp` with all the
-    necessary files.
+### Exploring the Project Structure
+Navigate to the `myfirstapp` directory. You'll find several files and folders:
 
-      <video src={wails_init} controls></video> 
+@filetree
+- build/           Contains files used by the build process
+  - appicon.png  The application icon
+  - config.yml   Build configuration
+  - Taskfile.yml Build tasks
+  - darwin/      macOS specific build files
+    - Info.dev.plist Development configuration
+    - Info.plist    Production configuration
+    - Taskfile.yml  macOS build tasks
+    - icons.icns    macOS application icon
+  - linux/       Linux specific build files
+    - Taskfile.yml  Linux build tasks
+    - appimage/     AppImage packaging
+      - build.sh  AppImage build script
+    - nfpm/        NFPM packaging
+      - nfpm.yaml Package configuration
+      - scripts/  Build scripts
+  - windows/     Windows specific build files
+    - Taskfile.yml        Windows build tasks
+    - icon.ico           Windows application icon
+    - info.json          Application metadata
+    - wails.exe.manifest Windows manifest file
+    - nsis/              NSIS installer files
+      - project.nsi                    NSIS project file
+      - wails_tools.nsh               NSIS helper scripts
+- frontend/        Frontend application files
+  - index.html   Main HTML file
+  - src/         Frontend source
+    - main.js    Main JavaScript file
+  - package.json NPM package configuration
+  - public/      Static assets
+  - Inter Font License.txt Font license
+- .gitignore      Git ignore file
+- README.md       Project documentation
+- Taskfile.yml    Project tasks
+- go.mod          Go module file
+- go.sum          Go module checksums
+- greetservice.go Greeting service
+- main.go         Main application code
+@end
 
-2.  ## Exploring the Project Structure
+Take a moment to explore these files and familiarize yourself with the structure.
 
-    Navigate to the `myfirstapp` directory. You'll find several files and
-    folders:
+@note{type="info"}
+Although Wails v3 uses [Task](https://taskfile.dev/) as its default build system, there is nothing stopping you from using `make` or any other alternative build system.
 
-    <FileTree>
-    - build/           Contains files used by the build process
-        - appicon.png  The application icon
-        - config.yml   Build configuration
-        - Taskfile.yml Build tasks
-        - darwin/      macOS specific build files
-            - Info.dev.plist Development configuration
-            - Info.plist    Production configuration
-            - Taskfile.yml  macOS build tasks
-            - icons.icns    macOS application icon
-        - linux/       Linux specific build files
-            - Taskfile.yml  Linux build tasks
-            - appimage/     AppImage packaging
-                - build.sh  AppImage build script
-            - nfpm/        NFPM packaging
-                - nfpm.yaml Package configuration
-                - scripts/  Build scripts
-        - windows/     Windows specific build files
-            - Taskfile.yml        Windows build tasks
-            - icon.ico           Windows application icon
-            - info.json          Application metadata
-            - wails.exe.manifest Windows manifest file
-            - nsis/              NSIS installer files
-                - project.nsi                    NSIS project file
-                - wails_tools.nsh               NSIS helper scripts
-    - frontend/        Frontend application files
-        - index.html   Main HTML file
-        - main.js      Main JavaScript file
-        - package.json NPM package configuration
-        - public/      Static assets
-        - Inter Font License.txt Font license
-    - .gitignore      Git ignore file
-    - README.md       Project documentation
-    - Taskfile.yml    Project tasks
-    - go.mod          Go module file
-    - go.sum          Go module checksums
-    - greetservice.go Greeting service
-    - main.go         Main application code
-    </FileTree>
+@end
 
-    Take a moment to explore these files and familiarize yourself with the
-    structure.
+### Building Your Application
+To build your application, execute:
 
-    :::note
-    Although Wails v3 uses [Task](https://taskfile.dev/) as its
-    default build system, there is nothing stopping you from using `make` or any other
-    alternative build system.
-    :::
+```bash
+wails3 build
+```
 
-3.  ## Building Your Application
+With the generated Taskfiles, this command creates a production build in `bin`. Use `wails3 dev` for development mode, or `wails3 build DEV=true` for an explicit development build.
 
-    To build your application, execute:
+@note{type="info"}
+`wails3 build` is shorthand for `wails3 task build` and will run the `build` task in `Taskfile.yml`.
 
-    ```bash
-    wails3 build
-    ```
+@end
 
-    This command compiles a debug version of your application and saves it in a
-    new `bin` directory.
+     <video src="/assets/wails_build.mp4" controls></video>
 
-    :::note
-    `wails3 build` is shorthand for `wails3 task build` and will run the `build` task in `Taskfile.yml`.
-    :::
+Once built, you can run this like you would any normal application:
 
-        <video src={wails_build} controls></video> 
+@tabs{sync-key="platform"}
+[Mac]
+```sh
+./bin/myfirstapp
+```
+
+[Windows]
+```sh
+bin\myfirstapp.exe
+```
+
+[Linux]
+```sh
+./bin/myfirstapp
+```
+
+@end
+
+You'll see the starter UI. A production build does not promise development inspector or console behaviour; use development mode when debugging.
+
+### Dev Mode
+We can also run the application in development mode. This mode allows you to make changes to your frontend code and see the changes reflected in the running application without having to rebuild the entire application.
+
+1. Open a new terminal window.
+2. Run `wails3 dev`. The application will compile and run in debug mode.
+3. Open `frontend/index.html` in your editor of choice.
+4. Change the name input’s `placeholder="Your name"` to `placeholder="Your full name"` and save the file.
+5. Save the file.
+
+This change will reflect in your application immediately.
+
+Any changes to backend code will trigger a rebuild:
+
+1. Open `greetservice.go`.
+2. Change the line that has `return "Hello " + name + "!"` to `return "Hello there " + name + "!"`.
+3. Save the file.
+
+The application will update within a matter of seconds.
+
+     <video src="/assets/wails_dev.mp4" controls></video>
+
+### Packaging Your Application
+Once your application is ready for distribution, you can create     platform-specific packages:
+
+@tabs{sync-key="platform"}
+[Mac]
+To create a `.app` bundle:
+
+```bash
+wails3 package
+```
+
+This will create a production build and package it into a `.app` bundle in the `bin` directory.
+
+[Windows]
+To create an NSIS installer:
+
+```bash
+wails3 package
+```
+
+This will create a production build and package it into an NSIS installer in the `bin` directory.
+
+[Linux]
+Wails supports multiple package formats for Linux distribution:
+
+```bash
+# Create all package types (AppImage, deb, rpm, and Arch Linux)
+wails3 package
+
+# Or create specific package types
+wails3 task linux:create:appimage  # AppImage format
+wails3 task linux:create:deb       # Debian package
+wails3 task linux:create:rpm       # Red Hat package
+wails3 task linux:create:aur       # Arch Linux package
+```
+
+@end
+
+For more detailed information about packaging options and configuration,     check out our [Build and Packaging Guide](/guides/build/building/).
+
+### Setting up Version Control and Module Name
+Your project is created with the placeholder module name `changeme`. It's recommended to update this to match your repository URL:
+
+1. Create a new repository on GitHub (or your preferred Git host)
+2. Initialize git in your project directory:
+  ```bash
+  git init
+  git add .
+  git commit -m "Initial commit"
+  ```
+
+3. Set your remote repository (replace with your repository URL):
+  ```bash
+  git remote add origin https://github.com/username/myfirstapp.git
+  ```
+
+4. Update your module name in `go.mod` to match your repository URL:
+  ```bash
+  go mod edit -module github.com/username/myfirstapp
+  ```
+
+5. Push your code:
+  ```bash
+  git push -u origin main
+  ```
 
 
-    Once built, you can run this like you would any normal application:
+This ensures your Go module name aligns with Go's module naming conventions and makes it easier to share your code.
 
+@note{type="tip" title="Pro Tip"}
+You can automate all of the initialisation steps by using the `-git` flag when creating your project:
 
-    <Tabs syncKey="platform">
+```bash
+wails3 init -n myfirstapp -t vanilla-js -git github.com/username/myfirstapp
+```
 
-      <TabItem label="Mac" icon="apple">
+This supports various Git URL formats:
 
-        ```sh
-        ./bin/myfirstapp
-        ```
+- HTTPS: `https://github.com/username/project`
+- SSH: `git@github.com:username/project` or `ssh://git@github.com/username/project`
+- Git protocol: `git://github.com/username/project`
+- Filesystem: `file:///path/to/project.git`
 
-          </TabItem>
+@end
 
-      <TabItem label="Windows" icon="seti:windows">
-
-        ```sh
-        bin\myfirstapp.exe
-        ```
-
-          </TabItem>
-
-      <TabItem label="Linux" icon="linux">
-
-        ```sh
-        ./bin/myfirstapp
-        ```
-
-          </TabItem>
-
-    </Tabs>
-
-    You'll see a simple UI, the starting point for your application. As it is
-    the debug version, you'll also see logs in the console window. This is
-    useful for debugging purposes.
-
-4.  ## Dev Mode
-
-    We can also run the application in development mode. This mode allows you to
-    make changes to your frontend code and see the changes reflected in the
-    running application without having to rebuild the entire application.
-
-    1. Open a new terminal window.
-    2. Run `wails3 dev`. The application will compile and run in debug mode.
-    3. Open `frontend/index.html` in your editor of choice.
-    4. Edit the code and change `Please enter your name below` to
-       `Please enter your name below!!!`.
-    5. Save the file.
-
-    This change will reflect in your application immediately.
-
-    Any changes to backend code will trigger a rebuild:
-
-    1. Open `greetservice.go`.
-    2. Change the line that has `return "Hello " + name + "!"` to
-       `return "Hello there " + name + "!"`.
-    3. Save the file.
-
-    The application will update within a matter of seconds.
-
-        <video src={wails_dev} controls></video>
-
-5.  ## Packaging Your Application
-
-        Once your application is ready for distribution, you can create
-        platform-specific packages:
-
-          <Tabs syncKey="platform">
-
-    <TabItem label="Mac" icon="apple">
-
-              To create a `.app` bundle:
-
-              ```bash
-              wails3 package
-              ```
-
-              This will create a production build and package it into a `.app` bundle in the `bin` directory.
-
-            </TabItem>
-            <TabItem label="Windows" icon="seti:windows">
-
-              To create an NSIS installer:
-
-              ```bash
-              wails3 package
-              ```
-
-              This will create a production build and package it into an NSIS installer in the `bin` directory.
-
-            </TabItem>
-            <TabItem label="Linux" icon="linux">
-
-              Wails supports multiple package formats for Linux distribution:
-
-              ```bash
-              # Create all package types (AppImage, deb, rpm, and Arch Linux)
-              wails3 package
-
-              # Or create specific package types
-              wails3 task linux:create:appimage  # AppImage format
-              wails3 task linux:create:deb       # Debian package
-              wails3 task linux:create:rpm       # Red Hat package
-              wails3 task linux:create:aur       # Arch Linux package
-              ```
-
-            </TabItem>
-
-          </Tabs>
-
-        For more detailed information about packaging options and configuration,
-        check out our [Packaging Guide](/guides/packaging).
-
-6.  ## Setting up Version Control and Module Name
-
-    Your project is created with the placeholder module name `changeme`. It's recommended to update this to match your repository URL:
-
-    1. Create a new repository on GitHub (or your preferred Git host)
-    2. Initialize git in your project directory:
-       ```bash
-       git init
-       git add .
-       git commit -m "Initial commit"
-       ```
-    3. Set your remote repository (replace with your repository URL):
-       ```bash
-       git remote add origin https://github.com/username/myfirstapp.git
-       ```
-    4. Update your module name in `go.mod` to match your repository URL:
-       ```bash
-       go mod edit -module github.com/username/myfirstapp
-       ```
-    5. Push your code:
-       ```bash
-       git push -u origin main
-       ```
-
-    This ensures your Go module name aligns with Go's module naming conventions and makes it easier to share your code.
-
-    :::tip[Pro Tip]
-    You can automate all of the initialisation steps by using the `-git` flag when creating your project:
-    ```bash
-    wails3 init -n myfirstapp -git github.com/username/myfirstapp
-    ```
-    This supports various Git URL formats:
-    - HTTPS: `https://github.com/username/project`
-    - SSH: `git@github.com:username/project` or `ssh://git@github.com/username/project`
-    - Git protocol: `git://github.com/username/project`
-    - Filesystem: `file:///path/to/project.git`
-    :::
-
-</Steps>
+@end
 
 ## Congratulations!
 
-You've just created, developed and packaged your first Wails application.
-This is just the beginning of what you can achieve with Wails v3.
+You've just created, developed and packaged your first Wails application. This is just the beginning of what you can achieve with Wails v3.
 
 ## Next Steps
 
-If you are new to Wails, we recommend reading through our Tutorials next which will be a practical guide through
-the various features of Wails. The first tutorial is [Creating a Service](/tutorials/01-creating-a-service).
+If you are new to Wails, we recommend reading through our Tutorials next which will be a practical guide through the various features of Wails. The first tutorial is [Creating a Service](/tutorials/01-creating-a-service/).
 
-If you are a more advanced user, check out our [Guides](/guides) for more detailed information on how to use Wails.
+If you are a more advanced user, check out the [Build and Packaging Guide](/guides/build/building/) for more detailed information on how to use Wails.

@@ -1,15 +1,17 @@
 ---
-title: File dialogs
-description: Open, save, and folder selection dialogs
-sidebar:
-  order: 3
+title: "File dialogs"
+description: "Open, save, and folder selection dialogs"
+slug: "features/dialogs/file"
+sourcePath: "features/dialogs/file.md"
 ---
-
-import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## File dialogs
 
 Wails provides **native file dialogs** with platform-appropriate appearance for opening files, saving files, and selecting folders. Simple API with file type filtering, multiple selection support, and default locations.
+
+![A native macOS file picker opened by a Wails application](/assets/screenshots/file-dialog-macos.png)
+
+The Wails API delegates to the operating system's picker, so familiar navigation, filtering, and selection behaviour are retained.
 
 ## Creating File Dialogs
 
@@ -39,6 +41,7 @@ openFile(path)
 ```
 
 **Use cases:**
+
 - Open documents
 - Import files
 - Load images
@@ -108,6 +111,7 @@ saveFile(path, data)
 ```
 
 **Use cases:**
+
 - Save documents
 - Export data
 - Create new files
@@ -182,6 +186,7 @@ exportToFolder(path)
 ```
 
 **Use cases:**
+
 - Choose output directory
 - Select workspace
 - Pick backup location
@@ -537,32 +542,32 @@ func importConfiguration(app *application.App) {
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Message dialogs" icon="information">
-    Info, warning, and error dialogs.
-    
-    [Learn More →](/features/dialogs/message)
-  </Card>
+@cards{cols="2"}
+ℹ Message dialogs
+Info, warning, and error dialogs.
 
-  <Card title="Custom dialogs" icon="puzzle">
-    Create custom dialog windows.
-    
-    [Learn More →](/features/dialogs/custom)
-  </Card>
+[Learn More →](/features/dialogs/message/)
 
-  <Card title="Bindings" icon="rocket">
-    Call Go functions from JavaScript.
-    
-    [Learn More →](/features/bindings/methods)
-  </Card>
+---
+◆ Custom dialogs
+Create custom dialog windows.
 
-  <Card title="Events" icon="star">
-    Use events for progress updates.
-    
-    [Learn More →](/features/events/system)
-  </Card>
-</CardGrid>
+[Learn More →](/features/dialogs/custom/)
+
+---
+🚀 Bindings
+Call Go functions from JavaScript.
+
+[Learn More →](/features/bindings/methods/)
+
+---
+★ Events
+Use events for progress updates.
+
+[Learn More →](/features/events/system/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [file dialog examples](https://github.com/wailsapp/wails/tree/master/v3/examples/dialogs).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [file dialog examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/dialogs).

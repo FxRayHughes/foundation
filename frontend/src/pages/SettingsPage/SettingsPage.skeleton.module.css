@@ -1,0 +1,82 @@
+/* SettingsPage 骨架屏样式：从 SettingsPage.module.css 复制骨架所需的版式类。
+   独立成文件是为了分包 —— 骨架随首屏静态加载，若与懒加载页面共用同一个 CSS Module，
+   打包器会把页面 chunk（连同 recharts / mantine-datatable）拖进首屏预加载。改版式时两边同步。 */
+
+.root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  background-color: var(--fd-bg-content);
+  overflow: hidden;
+}
+
+.list {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--fd-divider);
+  background-color: var(--fd-bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.listHeader {
+  padding: 24px 20px 12px;
+}
+
+.listItems {
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.detailHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 720px;
+}
+
+.skeletonListItem {
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.skeletonToolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.skeletonPaletteGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}

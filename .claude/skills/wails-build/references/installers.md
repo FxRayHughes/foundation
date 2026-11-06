@@ -1,11 +1,9 @@
 ---
-title: Creating Installers
-description: Package your application for distribution
-sidebar:
-  order: 3
+title: "Creating Installers"
+description: "Package your application for distribution"
+slug: "guides/installers"
+sourcePath: "guides/installers.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## Overview
 
@@ -13,98 +11,97 @@ Create professional installers for your Wails application on all platforms.
 
 ## Platform Installers
 
-<Tabs syncKey="platform">
-  <TabItem label="Windows" icon="seti:windows">
-    ### NSIS Installer
-    
-    ```bash
-    # Install NSIS
-    # Download from: https://nsis.sourceforge.io/
-    
-    # Create installer script (installer.nsi)
-    makensis installer.nsi
-    ```
-    
-    **installer.nsi:**
-    ```nsis
-    !define APPNAME "MyApp"
-    !define VERSION "1.0.0"
-    
-    Name "${APPNAME}"
-    OutFile "MyApp-Setup.exe"
-    InstallDir "$PROGRAMFILES\${APPNAME}"
-    
-    Section "Install"
-        SetOutPath "$INSTDIR"
-        File "build\bin\myapp.exe"
-        CreateShortcut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\myapp.exe"
-    SectionEnd
-    ```
-    
-    ### WiX Toolset
-    
-    Alternative for MSI installers.
-  </TabItem>
+@tabs{sync-key="platform"}
+[Windows]
+### NSIS Installer
 
-  <TabItem label="macOS" icon="apple">
-    ### DMG Creation
-    
-    ```bash
-    # Create DMG
-    hdiutil create -volname "MyApp" -srcfolder bin/MyApp.app -ov -format UDZO MyApp.dmg
-    ```
-    
-    ### Code Signing
-    
-    ```bash
-    # Sign application
-    codesign --deep --force --verify --verbose --sign "Developer ID" MyApp.app
-    
-    # Notarize
-    xcrun notarytool submit MyApp.dmg --apple-id "email" --password "app-password"
-    ```
-    
-    ### App Store
-    
-    Use Xcode for App Store distribution.
-  </TabItem>
+```bash
+# Install NSIS
+# Download from: https://nsis.sourceforge.io/
 
-  <TabItem label="Linux" icon="linux">
-    ### DEB Package
-    
-    ```bash
-    # Create package structure
-    mkdir -p myapp_1.0.0/DEBIAN
-    mkdir -p myapp_1.0.0/usr/bin
-    
-    # Copy binary
-    cp bin/myapp myapp_1.0.0/usr/bin/
-    
-    # Create control file
-    cat > myapp_1.0.0/DEBIAN/control << EOF
-    Package: myapp
-    Version: 1.0.0
-    Architecture: amd64
-    Maintainer: Your Name
-    Description: My Application
-    EOF
-    
-    # Build package
-    dpkg-deb --build myapp_1.0.0
-    ```
-    
-    ### RPM Package
-    
-    Use `rpmbuild` for RPM-based distributions.
-    
-    ### AppImage
-    
-    ```bash
-    # Use appimagetool
-    appimagetool myapp.AppDir
-    ```
-  </TabItem>
-</Tabs>
+# Create installer script (installer.nsi)
+makensis installer.nsi
+```
+
+**installer.nsi:**
+
+```nsis
+!define APPNAME "MyApp"
+!define VERSION "1.0.0"
+
+Name "${APPNAME}"
+OutFile "MyApp-Setup.exe"
+InstallDir "$PROGRAMFILES\${APPNAME}"
+
+Section "Install"
+    SetOutPath "$INSTDIR"
+    File "build\bin\myapp.exe"
+    CreateShortcut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\myapp.exe"
+SectionEnd
+```
+
+### WiX Toolset
+
+Alternative for MSI installers.
+
+[macOS]
+### DMG Creation
+
+```bash
+# Create DMG
+hdiutil create -volname "MyApp" -srcfolder bin/MyApp.app -ov -format UDZO MyApp.dmg
+```
+
+### Code Signing
+
+```bash
+# Sign application
+codesign --deep --force --verify --verbose --sign "Developer ID" MyApp.app
+
+# Notarize
+xcrun notarytool submit MyApp.dmg --apple-id "email" --password "app-password"
+```
+
+### App Store
+
+Use Xcode for App Store distribution.
+
+[Linux]
+### DEB Package
+
+```bash
+# Create package structure
+mkdir -p myapp_1.0.0/DEBIAN
+mkdir -p myapp_1.0.0/usr/bin
+
+# Copy binary
+cp bin/myapp myapp_1.0.0/usr/bin/
+
+# Create control file
+cat > myapp_1.0.0/DEBIAN/control << EOF
+Package: myapp
+Version: 1.0.0
+Architecture: amd64
+Maintainer: Your Name
+Description: My Application
+EOF
+
+# Build package
+dpkg-deb --build myapp_1.0.0
+```
+
+### RPM Package
+
+Use `rpmbuild` for RPM-based distributions.
+
+### AppImage
+
+```bash
+# Use appimagetool
+appimagetool myapp.AppDir
+```
+
+@end
 
 ## Automated Packaging
 
@@ -156,5 +153,5 @@ nfpms:
 
 ## Next Steps
 
-- [In-App Updater](/guides/updater) - Add self-updates to your app
-- [Cross-Platform Building](/guides/cross-platform) - Build for multiple platforms
+- [In-App Updater](/guides/updater/) - Add self-updates to your app
+- [Cross-Platform Building](/guides/build/cross-platform/) - Build for multiple platforms

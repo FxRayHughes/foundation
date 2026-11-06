@@ -1,11 +1,9 @@
 ---
-title: Custom dialogs
-description: Create custom dialogs in your Wails applications
-sidebar:
-  order: 4
+title: "Custom dialogs"
+description: "Create custom dialogs in your Wails applications"
+slug: "features/dialogs/custom"
+sourcePath: "features/dialogs/custom.md"
 ---
-
-import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Custom dialogs
 
@@ -598,32 +596,32 @@ button.secondary {
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Message dialogs" icon="information">
-    Standard info, warning, error dialogs.
-    
-    [Learn More →](/features/dialogs/message)
-  </Card>
+@cards{cols="2"}
+ℹ Message dialogs
+Standard info, warning, error dialogs.
 
-  <Card title="File dialogs" icon="document">
-    Open, save, folder selection.
-    
-    [Learn More →](/features/dialogs/file)
-  </Card>
+[Learn More →](/features/dialogs/message/)
 
-  <Card title="Windows" icon="laptop">
-    Learn about window management.
-    
-    [Learn More →](/features/windows/basics)
-  </Card>
+---
+📖 File dialogs
+Open, save, folder selection.
 
-  <Card title="Events" icon="star">
-    Use events for dialog communication.
-    
-    [Learn More →](/features/events/system)
-  </Card>
-</CardGrid>
+[Learn More →](/features/dialogs/file/)
+
+---
+▣ Windows
+Learn about window management.
+
+[Learn More →](/features/windows/basics/)
+
+---
+★ Events
+Use events for dialog communication.
+
+[Learn More →](/features/events/system/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [custom dialog examples](https://github.com/wailsapp/wails/tree/master/v3/examples/dialogs).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [custom dialog examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/dialogs).

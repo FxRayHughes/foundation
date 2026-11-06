@@ -1,6 +1,6 @@
 ---
 name: wails-build
-description: Wails v3 构建系统 (Task)：本地构建、跨平台编译（Docker）、平台特定打包（NSIS/MSI/dmg/AppImage/deb/rpm）、代码签名（Windows/macOS notarization）、Garble 混淆、安装器（NSIS/Windows installer）、服务器模式构建（无 GUI）、Windows UAC。当用户问到「wails3 build / package / GOOS GOARCH / Task / Docker setup / signing / notarytool / NSIS / dmg / AppImage / nfpm / obfuscation / server build / UAC manifest / wails.exe.manifest」时使用。
+description: Wails v3 构建系统 (Task)：本地构建、跨平台编译（Docker）、平台特定打包（NSIS/MSIX/dmg/AppImage/deb/rpm）、代码签名（Windows/macOS notarization）、Garble 混淆、安装器、服务器模式构建（无 GUI）、Windows UAC、实验性 CGO-free 后端（purego）、实验性原生 YAML 构建（wails.yaml / Wake）、macOS 私有 API（private_mac_apis tag）、Linux GTK4 默认 / GTK3 旧栈、移动端（iOS / Android，实验性）、WebView2 RDP 故障。当用户问到「wails3 build / package / GOOS GOARCH / Task / Docker setup / signing / notarytool / NSIS / MSIX / dmg / AppImage / nfpm / obfuscation / server build / UAC manifest / wails.exe.manifest / purego / CGO_ENABLED=0 / WAILS_PUREGO / wails.yaml / WAILS_EXP_USE_WAKE / wails3 run / private_mac_apis / Liquid Glass 透明 / gtk3 / WebKitGTK 6.0 / iOS / Android / 移动端 / RDP 远程桌面卡死」时使用。
 ---
 
 # Wails v3 - 构建与分发
@@ -18,6 +18,9 @@ Wails v3 用 [Task](https://taskfile.dev) 作为构建系统。`wails3 build / p
 - 服务器模式构建（无 GUI、CGO-free）
 - Windows UAC manifest（提权）
 - Linux 旧 GTK3 栈兼容
+- 实验性 CGO-free 构建（`purego`）/ 实验性 YAML 构建（`wails.yaml`）
+- macOS 私有 API（透明 / 毛玻璃 / Liquid Glass webview、程序化打开 inspector）
+- 移动端（iOS / Android，实验性）
 
 ## 关键摘要
 
@@ -56,10 +59,30 @@ wails3 build GOOS=linux
 ```sh
 wails3 build -tags gtk3                  # Linux 旧 GTK3 + WebKit2GTK 4.1
 wails3 build -tags server                # 服务器模式（无 GUI、CGO-free）
+wails3 build -tags purego                # v3.1.0 实验性：macOS / Linux CGO-free 后端
+wails3 build -tags private_mac_apis      # macOS 私有 WebKit/AppKit API（beta.19 起需显式 opt-in）
 wails3 build -tags gtk3,customtag        # 多个
+WAILS_MCP=1 wails3 build                 # 自动加 mcp tag（见 wails-advanced）
+WAILS_PUREGO=1 wails3 dev                # 自动加 purego tag（build/package/dev 都生效）
 ```
 
 `-tags` 转 `EXTRA_TAGS` 到 Taskfile。
+
+### 实验性 CGO-free 后端（v3.1.0 新增，`purego`）
+
+- `-tags purego` 或 `WAILS_PUREGO=1`（取值 `1/true/on/yes`）：macOS / Linux 改用纯 Go（purego 动态加载系统库）后端，**不需要 C 工具链**，可在任意主机原生构建（stock Taskfile：darwin 带 purego 时走 `build:native` 而不是 Docker；linux 在 `CGO_ENABLED!=1` 时走 native）。
+- 防呆：macOS / Linux 上 `CGO_ENABLED=0` 且**没有** `purego`（也不是 `server`）会被 `internal/buildguard` 编译期报错（`requires_CGO_ENABLED_1_or_build_tag_purego`）。
+- 运行时仍需目标机装有 GTK4/WebKitGTK（Linux）。实验性：Foundation 默认不要开。
+
+### macOS 私有 API（beta.19 起 opt-in）
+
+默认只用公开 API。`Mac.Backdrop` 的 `MacBackdropTransparent` / `MacBackdropTranslucent` / `MacBackdropLiquidGlass`、notch window 的**透明 webview**、`Mac.LiquidGlass.GroupID/GroupSpacing`、`window.OpenDevTools()`、`OpenInspectorOnStartup` 都需要 `-tags private_mac_apis`；不带 tag 时 native 层照样配置，但 **WKWebView 保持不透明**（看不到毛玻璃）/ inspector 调用为 no-op。dev 用 `EXTRA_TAGS=private_mac_apis wails3 dev`。详见 `private-macos-apis.md`。
+
+### 实验性原生 YAML 构建（v3.1.0 新增，「Wake」）
+
+- 需设 `WAILS_EXP_USE_WAKE`（**只看是否存在**，空值也算开启），否则 CLI 走传统 Taskfile 流程。
+- 开启后：项目根 `wails.yaml` 描述 targets / profiles / packages / signing；新增 `wails3 run`（无 `wails.yaml` 时退化为 `go run .`，不需开关）、`wails3 config check`、`wails3 eject`（写出完整解析后的 `wails.ejected.yaml`）、`wails3 migrate`（Taskfile 项目一次性迁移草稿）、`wails3 clean`；`wails3 package` 标为 deprecated（改用 `build` + profile / `--formats`）；`wails3 init -ui` 可交互生成 `wails.yaml`。
+- 字段全表 `wails-yaml-fields.md`，`wails3 run` 语义 `wails-yaml-run.md`。**Foundation 仍用 Taskfile 体系，不要迁移**。
 
 ### 打包
 
@@ -90,7 +113,9 @@ wails3 package GOOS=linux            # AppImage + deb + rpm → bin/
 - AppImage：`build/linux/appimage/build.sh` + `wails3 generate appimage`
 - nfpm（deb / rpm / archlinux）：`build/linux/nfpm/nfpm.yaml`
 - `.desktop` 文件：`wails3 generate .desktop`
-- GTK4（默认） vs GTK3（`-tags gtk3`）
+- GTK4 + WebKitGTK 6.0（默认，Ubuntu 24.04+ / Debian 13+ / Fedora 40+）vs GTK3 + WebKit2GTK 4.1（`-tags gtk3`，Ubuntu 22.04 / Debian 12 / RHEL 9）。官方文档说 gtk3「v3.0.x 保留、v3.1 移除」，但 **v3.1.0 源码中 `gtk3` tag 仍可用**——当作随时可能删除的过渡选项
+- 暗色模式检测（v3.1.0）：两个后端统一走 `org.freedesktop.appearance` portal，修复启动时误报浅色 / GTK4 下 `linux:SystemThemeChanged` 不触发
+- GTK application id：`LinuxOptions.ApplicationID`（flatpak 沙盒构建必须设置，见 `wails-application`）
 
 ### 代码签名
 
@@ -159,6 +184,17 @@ wails3 generate webview2bootstrapper  # Windows WebView2 引导
 wails3 update build-assets -name "MyApp" -config build/config.yml -dir build
 ```
 
+### Windows 补充
+
+- 原生 WebView2 loader 已移除（beta.20），只剩纯 Go loader；`native_webview2loader` tag 仍被接受但无效果。
+- MSIX：`wails3 tool msix` / `wails3 tool msix-install-tools`，详见 `windows.md#msix-package`。
+- 通过远程桌面（RDP）时 WebView2 卡死 → `troubleshooting-windows-rdp.md`。
+- 通知：WinRT toast 失败时不再回退 PowerShell，直接返回 error（beta.31）。
+
+### 移动端（实验性，不在稳定性承诺内）
+
+同一份 `main.go` + 前端可跑 iOS / Android：`wails3 ios overlay:gen` / `ios xcode:gen`、`wails3 android overlay:gen`；`android devices` / `android run` 仅在 `WAILS_EXP_USE_WAKE` 开启时可用。Android 上 `window.wails` bridge 暴露给所有 frame（3.0.1 计划修复），不要嵌入不可信内容。见 `mobile-*.md`。
+
 ### 构建产物路径
 
 | 类型 | 路径 |
@@ -184,6 +220,14 @@ wails3 update build-assets -name "MyApp" -config build/config.yml -dir build
 | 服务器模式（无 GUI） | [server-build.md](./references/server-build.md) |
 | Windows UAC manifest | [windows-uac.md](./references/windows-uac.md) |
 | 故障排查：macOS Syso 错误 | [troubleshooting-mac-syso.md](./references/troubleshooting-mac-syso.md) |
+| 故障排查：WebView2 在 RDP 下卡死 | [troubleshooting-windows-rdp.md](./references/troubleshooting-windows-rdp.md) |
+| macOS 私有 API（`private_mac_apis`） | [private-macos-apis.md](./references/private-macos-apis.md) |
+| 实验性 YAML 构建：`wails.yaml` 字段全表 | [wails-yaml-fields.md](./references/wails-yaml-fields.md) |
+| 实验性 YAML 构建：`wails3 run` 配置 | [wails-yaml-run.md](./references/wails-yaml-run.md) |
+| 移动端总览（实验性） | [mobile-index.md](./references/mobile-index.md) |
+| 第一个移动端应用 | [mobile-first-mobile-app.md](./references/mobile-first-mobile-app.md) |
+| Android / iOS 平台指南 | [mobile-android.md](./references/mobile-android.md) / [mobile-ios.md](./references/mobile-ios.md) |
+| Mobile API | [mobile-mobile-api.md](./references/mobile-mobile-api.md) |
 
 ## 链接到其他 SKILL
 

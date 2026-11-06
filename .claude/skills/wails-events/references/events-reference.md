@@ -1,22 +1,22 @@
 ---
-title: Events API
-description: Complete reference for the Events API
-sidebar:
-  order: 4
+title: "Events API"
+description: "Complete reference for the Events API"
+slug: "reference/events"
+sourcePath: "reference/events.md"
 ---
-
-import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Overview
 
 The Events API provides methods to emit and listen to events, enabling communication between different parts of your application.
 
 **Event Types:**
+
 - **Application Events** - App lifecycle events (startup, shutdown)
 - **Window Events** - Window state changes (focus, blur, resize)
 - **Custom Events** - User-defined events for app-specific communication
 
 **Communication Patterns:**
+
 - **Go to Frontend** - Emit events from Go, listen in JavaScript
 - **Frontend to Go** - Not directly (use service bindings instead)
 - **Frontend to Frontend** - Via Go or local runtime events
@@ -33,10 +33,12 @@ func (em *EventManager) Emit(name string, data ...any) bool
 ```
 
 **Parameters:**
+
 - `name` - Event name
 - `data` - Optional data to send with the event
 
 **Example:**
+
 ```go
 // Emit simple event
 app.Event.Emit("user-logged-in")
@@ -60,12 +62,14 @@ func (em *EventManager) On(name string, callback func(*CustomEvent)) func()
 ```
 
 **Parameters:**
+
 - `name` - Event name to listen for
 - `callback` - Function called when event is emitted
 
 **Returns:** Cleanup function to remove the event listener
 
 **Example:**
+
 ```go
 // Listen for events
 cleanup := app.Event.On("user-action", func(e *application.CustomEvent) {
@@ -103,12 +107,14 @@ Events.On(eventName, callback)
 ```
 
 **Parameters:**
+
 - `eventName` - Name of the event to listen for
 - `callback` - Function called when event is received
 
 **Returns:** Cleanup function
 
 **Example:**
+
 ```javascript
 import { Events } from '@wailsio/runtime'
 
@@ -134,6 +140,7 @@ Events.Once(eventName, callback)
 ```
 
 **Example:**
+
 ```javascript
 import { Events } from '@wailsio/runtime'
 
@@ -155,6 +162,7 @@ Events.Off(...eventNames: string[]): void
 ```
 
 **Example:**
+
 ```javascript
 import { Events } from '@wailsio/runtime'
 
@@ -181,6 +189,7 @@ Events.OffAll(): void
 ```
 
 **Example:**
+
 ```javascript
 import { Events } from '@wailsio/runtime'
 
@@ -197,6 +206,7 @@ Events.OnMultiple(eventName: string, callback, max: number): () => void
 ```
 
 **Example:**
+
 ```javascript
 Events.OnMultiple('progress', (data) => {
     console.log('progress', data)
@@ -219,6 +229,7 @@ func (em *EventManager) OnApplicationEvent(
 Event constants live in the `events` package — `events.Common.*` for cross-platform events, `events.Mac.*` / `events.Windows.*` / `events.Linux.*` for platform-specific ones.
 
 **Common application events:**
+
 - `events.Common.ApplicationStarted` - Application has finished launching.
 - `events.Common.ThemeChanged` - System theme switched between light and dark.
 - `events.Common.ApplicationOpenedWithFile` - Launched via a file association.
@@ -227,6 +238,7 @@ Event constants live in the `events` package — `events.Common.*` for cross-pla
 There is **no** generic "application shutdown" event constant — register shutdown cleanup via `application.Options.OnShutdown` or `app.OnShutdown(func())`.
 
 **Example:**
+
 ```go
 import "github.com/wailsapp/wails/v3/pkg/events"
 
@@ -265,6 +277,7 @@ func (w *WebviewWindow) OnWindowEvent(
 Window event constants live in the `events` package: `events.Common.*` for cross-platform events (and `events.Mac.*` / `events.Windows.*` / `events.Linux.*` for platform-specific ones).
 
 **Common window events:**
+
 - `events.Common.WindowFocus` - Window gained focus.
 - `events.Common.WindowLostFocus` - Window lost focus.
 - `events.Common.WindowClosing` - Window is about to close (cancellable via `RegisterHook`).
@@ -274,6 +287,7 @@ Window event constants live in the `events` package: `events.Common.*` for cross
 - `events.Common.WindowRuntimeReady` - Safe to emit events to the in-window runtime.
 
 **Example:**
+
 ```go
 import "github.com/wailsapp/wails/v3/pkg/events"
 
@@ -709,7 +723,7 @@ This mapping happens automatically in the background, so when you listen for `ev
 ### Application Events
 
 | Event | Description | When Emitted | Cancellable |
-|-------|-------------|--------------|-------------|
+| --- | --- | --- | --- |
 | `ApplicationOpenedWithFile` | Application opened with a file | When app is launched with a file (e.g., from file association) | No |
 | `ApplicationStarted` | Application has finished launching | After app initialization is complete and app is ready | No |
 | `ApplicationLaunchedWithUrl` | Application launched with a URL | When app is launched via URL scheme | No |
@@ -734,7 +748,7 @@ app.Event.OnApplicationEvent(events.Common.ThemeChanged, func(e *application.App
 ### Window Events
 
 | Event | Description | When Emitted | Cancellable |
-|-------|-------------|--------------|-------------|
+| --- | --- | --- | --- |
 | `WindowClosing` | Window is about to close | Before window closes (user clicked X, Close() called) | Yes |
 | `WindowDidMove` | Window moved to new position | After window position changes (debounced) | No |
 | `WindowDidResize` | Window was resized | After window size changes | No |

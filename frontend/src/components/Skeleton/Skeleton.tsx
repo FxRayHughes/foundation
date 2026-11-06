@@ -1,7 +1,6 @@
-import { Box, useTheme } from '@mui/material';
-import type { SxProps, Theme } from '@mui/material';
+import clsx from 'clsx';
 import type { CSSProperties } from 'react';
-import { skeletonStyles } from './Skeleton.styles';
+import classes from './Skeleton.module.css';
 
 // 三种基础形状，覆盖 80% 场景。
 // 复杂版式（卡片 / 列表行）用多个 Skeleton 组合，View 层各自实现。
@@ -11,41 +10,38 @@ export interface SkeletonProps {
   variant?: Variant;            // 默认 'rect'
   width?: number | string;
   height?: number | string;
-  // 透传 sx 让消费方覆盖位置 / 圆角等；不要用它改 backgroundColor，否则破坏主题适配
-  sx?: SxProps<Theme>;
-  // 透传 style 给原生 div（用于 width/height 的快速覆盖，避免 sx 重渲）
+  // 透传 style 给原生 div：覆盖尺寸 / 位置 / 圆角（如 { flex: 1, borderRadius: 4, marginTop: 4 }）。
+  // 不要用它改 background，否则破坏主题适配。
   style?: CSSProperties;
-  // 自定义 className（如需调试）
+  // 自定义 className（CSS Modules 覆盖用）
   className?: string;
   ariaLabel?: string;
 }
 
+const variantClass: Record<Variant, string | undefined> = {
+  rect: classes.rect,
+  text: classes.text,
+  circle: classes.circle,
+};
+
 // 单个骨架占位块。
-// - 颜色 / 动画走 theme.palette.foundation，自动跟随主题
+// - 颜色 / 动画走 --fd-* 变量，自动跟随主题
 // - aria-busy + role="status" 让屏幕阅读器宣告"加载中"
 // - prefers-reduced-motion 时自动停止扫光
 export const Skeleton = ({
   variant = 'rect',
   width,
   height,
-  sx,
   style,
   className,
   ariaLabel,
 }: SkeletonProps) => {
-  const theme = useTheme();
-  const styles = skeletonStyles(theme);
-
-  const variantSx: SxProps<Theme> =
-    variant === 'text' ? styles.text! : variant === 'circle' ? styles.circle! : styles.rect!;
-
   return (
-    <Box
+    <div
       role="status"
       aria-busy
       aria-label={ariaLabel ?? 'Loading'}
-      className={className}
-      sx={[styles.base!, variantSx, ...(Array.isArray(sx) ? sx : [sx])] as SxProps<Theme>}
+      className={clsx(classes.base, variantClass[variant], className)}
       style={{
         width: width ?? '100%',
         height: height ?? (variant === 'text' ? 12 : variant === 'circle' ? 40 : 16),
@@ -63,7 +59,8 @@ export interface SkeletonTextProps {
   gap?: number;            // 行距 px，默认 8
   lastLineWidth?: string;  // 末行宽度，默认 '60%'
   width?: number | string;
-  sx?: SxProps<Theme>;
+  style?: CSSProperties;
+  className?: string;
 }
 
 export const SkeletonText = ({
@@ -72,10 +69,14 @@ export const SkeletonText = ({
   gap = 8,
   lastLineWidth = '60%',
   width,
-  sx,
+  style,
+  className,
 }: SkeletonTextProps) => {
   return (
-    <Box sx={[{ display: 'flex', flexDirection: 'column', gap: `${gap}px`, width: width ?? '100%' }, ...(Array.isArray(sx) ? sx : [sx])] as SxProps<Theme>}>
+    <div
+      className={clsx(classes.textGroup, className)}
+      style={{ gap: `${gap}px`, width: width ?? '100%', ...style }}
+    >
       {Array.from({ length: lines }).map((_, i) => {
         const isLast = i === lines - 1 && lines > 1;
         return (
@@ -87,6 +88,6 @@ export const SkeletonText = ({
           />
         );
       })}
-    </Box>
+    </div>
   );
 };

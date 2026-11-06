@@ -1,4 +1,5 @@
 export { HeatmapChart } from './HeatmapChart';
+export type { HeatmapChartProps } from './HeatmapChart';
 export { FunnelChart } from './FunnelChart';
 export type { FunnelChartProps, FunnelDataItem } from './FunnelChart';
 export { RadarChart } from './RadarChart';
@@ -12,20 +13,7 @@ export type { GanttChartProps, GanttTask } from './GanttChart';
 export { TreemapChart } from './TreemapChart';
 export type { TreemapChartProps, TreemapNode } from './TreemapChart';
 export { ZoomableChart } from './ZoomableChart';
-export type { ZoomableChartProps } from './ZoomableChart';
-export type {
-  ChartMargin,
-  ChartDimensions,
-  TooltipData,
-  LegendItem,
-  ChartContainerProps,
-} from './shared/types';
-export {
-  useChartColors,
-  useChartDimensions,
-  useChartTooltip,
-  ChartContainer,
-  Tooltip,
-  Legend,
-} from './shared';
-export type { TooltipState } from './shared';
+export type { ZoomableChartProps, ZoomableSeries } from './ZoomableChart';
+export { useChartColors } from './shared';
+export type { ChartMargin } from './shared';
+export { registerXProChartsLocales } from './lang';

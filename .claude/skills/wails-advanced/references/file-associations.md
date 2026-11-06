@@ -1,20 +1,15 @@
 ---
-title: File Associations
-description: Configure file associations for your Wails application
-sidebar:
-  order: 20
+title: "File Associations"
+description: "Configure file associations for your Wails application"
+slug: "guides/file-associations"
+sourcePath: "guides/file-associations.md"
 ---
 
-import { Steps } from "@astrojs/starlight/components";
-import {Badge} from '@astrojs/starlight/components';
+Relevant Platforms: <span class="mpress-badge mpress-badge-note">Windows</span> <span class="mpress-badge mpress-badge-success">macOS</span>
 
-Relevant Platforms: <Badge text="Windows" variant="note" /> <Badge text="macOS" variant="success" />
 <br/>
 
-File associations allow your application to handle specific file types when
-users open them. This is particularly useful for text editors, image viewers, or
-any application that works with specific file formats. This guide explains how
-to implement file associations in your Wails v3 application.
+File associations allow your application to handle specific file types when users open them. This is particularly useful for text editors, image viewers, or any application that works with specific file formats. This guide explains how to implement file associations in your Wails v3 application.
 
 ## Overview
 
@@ -25,8 +20,7 @@ File association support in Wails v3 is currently available for:
 
 ## Configuration
 
-File associations are configured in the `config.yml` file located in your
-project's `build` directory.
+File associations are configured in the `config.yml` file located in your project's `build` directory.
 
 ### Basic Configuration
 
@@ -56,21 +50,20 @@ fileAssociations:
 
 ### Configuration Properties
 
-| Property    | Description                                                      | Platform |
-|-------------|------------------------------------------------------------------|----------|
-| ext         | File extension without the leading period (e.g., `txt`)          | All      |
-| name        | Display name for the file type                                   | All      |
-| description | Description shown in file properties                             | Windows  |
-| iconName    | Name of the icon file (without extension) in the build folder    | All      |
-| role        | Application's role for this file type (e.g., `Editor`, `Viewer`) | macOS    |
-| mimeType    | MIME type for the file (e.g., `image/jpeg`)                      | macOS    |
+| Property | Description | Platform |
+| --- | --- | --- |
+| ext | File extension without the leading period (e.g., `txt`) | All |
+| name | Display name for the file type | All |
+| description | Description shown in file properties | Windows |
+| iconName | Name of the icon file (without extension) in the build folder | All |
+| role | Application's role for this file type (e.g., `Editor`, `Viewer`) | macOS |
+| mimeType | MIME type for the file (e.g., `image/jpeg`) | macOS |
 
 ## Listening for File Open Events
 
-To handle file open events in your application, you can listen for the
-`events.Common.ApplicationOpenedWithFile` event:
+To handle file open events in your application, you can listen for the `events.Common.ApplicationOpenedWithFile` event:
 
-```go title="main.go"
+```go {title="main.go"}
 package main
 
 import (
@@ -99,81 +92,66 @@ func main() {
 
 Let's walk through setting up file associations for a simple text editor:
 
-<Steps>
+@steps
+### Create Icons
+- Create icons for your file type (recommended sizes: 16x16, 32x32, 48x48, 256x256)
+- Save the icons in your project's `build` folder
+- Name them according to your `iconName` configuration (e.g., `textFileIcon.png`)
 
-1. ### Create Icons
+@note{type="tip"}
+You can use `wails3 generate icons` to generate the required icons for you. Run `wails3 generate icons --help` for more information.
 
-    - Create icons for your file type (recommended sizes: 16x16, 32x32, 48x48,
-      256x256)
-    - Save the icons in your project's `build` folder
-    - Name them according to your `iconName` configuration (e.g.,
-      `textFileIcon.png`)
+@end
 
-    :::tip
-    You can use `wails3 generate icons` to generate the required icons for you.
-    Run `wails3 generate icons --help` for more information.
-    :::
+- For macOS add copy statement like `cp build/darwin/documenticon.icns {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Resources` in the `create:app:bundle:` task.
 
-    - For macOS add copy statement like `cp build/darwin/documenticon.icns {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Resources` in the `create:app:bundle:` task.
+### Configure File Associations
+Edit the `build/config.yml` file to add your file associations:
 
-2. ### Configure File Associations
+```yaml
+# build/config.yml
+fileAssociations:
+  - ext: txt
+    name: Text Document
+    description: Plain Text Document
+    iconName: textFileIcon
+    role: Editor
+```
 
-    Edit the `build/config.yml` file to add your file associations:
+### Update Build Assets
+Run the following command to update the build assets:
 
-    ```yaml
-    # build/config.yml
-    fileAssociations:
-      - ext: txt
-        name: Text Document
-        description: Plain Text Document
-        iconName: textFileIcon
-        role: Editor
-    ```
+```bash
+wails3 update build-assets
+```
 
-3. ### Update Build Assets
+### Set File Associations in the Application Options
+In your `main.go` file, set the `FileAssociations` field in the application options:
 
-    Run the following command to update the build assets:
+```go
+app := application.New(application.Options{
+  Name: "MyApp",
+  FileAssociations: []string{".txt", ".md"}, // Specify supported extensions
+})
+```
 
-    ```bash
-    wails3 update build-assets
-    ```
+@note{type="tip" title="Why are file extensions required in both the application config and config.yml?"}
+On Windows, when a file is opened with a file association, the application is launched with the filename as the first argument to the application. The application has no way of knowing if the first argument is a file or a command line argument, so it uses the `FileAssociations` field in the application options to determine if the first argument is an associated file or not.
 
-4. ### Set File Associations in the Application Options
+@end
 
-    In your `main.go` file, set the `FileAssociations` field in the application
-    options:
+### Package Your Application
+Package your application using the following command:
 
-    ```go
-    app := application.New(application.Options{
-      Name: "MyApp",
-      FileAssociations: []string{".txt", ".md"}, // Specify supported extensions
-    })
-    ```
+```bash
+wails3 package
+```
 
-    :::tip[Why are file extensions required in both the application config and config.yml?]
+The packaged application will be created in the `bin` directory. You can then install and test the application.
 
-    On Windows, when a file is opened with a file association, the application is
-    launched with the filename as the first argument to the application. The
-    application has no way of knowing if the first argument is a file or a command
-    line argument, so it uses the `FileAssociations` field in the application
-    options to determine if the first argument is an associated file or not.
+## Additional Notes
 
-    :::
+- Icons should be provided in PNG format in the build folder
+- Testing file associations requires installing the packaged application
 
-5. ### Package Your Application
-
-    Package your application using the following command:
-
-    ```bash
-    wails3 package
-    ```
-
-    The packaged application will be created in the `bin` directory. You can then
-    install and test the application.
-
-    ## Additional Notes
-
-    - Icons should be provided in PNG format in the build folder
-    - Testing file associations requires installing the packaged application
-
-</Steps>
+@end

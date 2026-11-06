@@ -1,29 +1,27 @@
-import { Box, Typography, useTheme } from '@mui/material';
-import type { SxProps, Theme } from '@mui/material';
-import StorageRoundedIcon from '@mui/icons-material/StorageRounded';
-import FolderOpenRoundedIcon from '@mui/icons-material/FolderOpenRounded';
-import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import LockRoundedIcon from '@mui/icons-material/LockRounded';
-import { PieChart } from '@mui/x-charts/PieChart';
-import { BarChart } from '@mui/x-charts/BarChart';
+import { Button, Text, UnstyledButton } from '@mantine/core';
+import { BarChart, DonutChart } from '@mantine/charts';
+import {
+  IconDatabase,
+  IconFolderOpen,
+  IconLock,
+  IconRestore,
+  IconTrash,
+} from '@tabler/icons-react';
 import { useT } from '@/i18n';
 import { NativeDialogs, type TableInfo } from '@/services';
+import { FOUNDATION_CSS_VARS } from '@/styles/themes';
 import { useDatabase, type DatabaseStatus } from './useDatabase';
-import { databaseStyles } from './Database.styles';
-import { settingsPageStyles } from '../SettingsPage.styles';
+import classes from './Database.module.css';
+import shared from '../SettingsPage.module.css';
 
 // 数据库子页面：
 //   1) 路径与总占用 + 切换 / 重置（原生 dialog）
-//   2) 双图：环形图（占比）+ 水平条形图（精确字节）
+//   2) 双图：环形图（占比）+ 水平条形图（精确字节）—— @mantine/charts
 //   3) 表清单：行展示 行数 / 字节，clearable=true 的允许逐项清空（带原生确认）
 //
 // 文案 namespace：settings.database.*。
 // 表名 → 标签 key 映射：i18n 路径为 settings.database.tables.<labelKey>.{label,description}。
 export const Database = () => {
-  const theme = useTheme();
-  const shared = settingsPageStyles(theme);
-  const styles = databaseStyles(theme);
   const vm = useDatabase();
   const t = useT();
 
@@ -79,125 +77,116 @@ export const Database = () => {
   };
 
   return (
-    <Box sx={shared.section}>
-      <Box sx={shared.sectionHeader}>
-        <Typography sx={shared.sectionTitle}>{t('settings.database.title')}</Typography>
-        <Typography sx={shared.sectionHint}>{t('settings.database.hint')}</Typography>
-      </Box>
+    <div className={shared.section}>
+      <div className={shared.sectionHeader}>
+        <Text className={shared.sectionTitle}>{t('settings.database.title')}</Text>
+        <Text className={shared.sectionHint}>{t('settings.database.hint')}</Text>
+      </div>
 
       {/* —— 路径与总占用 —— */}
-      <Box sx={styles.infoCard}>
-        <Box sx={styles.infoRow}>
-          <Typography sx={styles.infoLabel}>{t('settings.database.currentPathLabel')}</Typography>
-          <Typography sx={styles.infoValue}>
+      <div className={classes.infoCard}>
+        <div className={classes.infoRow}>
+          <Text className={classes.infoLabel}>{t('settings.database.currentPathLabel')}</Text>
+          <Text className={classes.infoValue}>
             {vm.stats?.path ?? '…'}
             {vm.stats && (
-              <Box
-                component="span"
-                sx={
-                  [
-                    styles.badge,
-                    vm.stats.isCustom ? styles.badgeCustom : styles.badgeDefault,
-                  ] as SxProps<Theme>
-                }
+              <span
+                className={classes.badge}
+                data-kind={vm.stats.isCustom ? 'custom' : 'default'}
               >
                 {vm.stats.isCustom
                   ? t('settings.database.customBadge')
                   : t('settings.database.defaultBadge')}
-              </Box>
+              </span>
             )}
-          </Typography>
-        </Box>
-        <Box sx={styles.infoRow}>
-          <Typography sx={styles.infoLabel}>{t('settings.database.defaultPathLabel')}</Typography>
-          <Typography sx={styles.infoValue}>{vm.stats?.defaultPath ?? '…'}</Typography>
-        </Box>
-        <Box sx={styles.infoRow}>
-          <Typography sx={styles.infoLabel}>{t('settings.database.sizeLabel')}</Typography>
-          <Typography sx={styles.infoValue}>
+          </Text>
+        </div>
+        <div className={classes.infoRow}>
+          <Text className={classes.infoLabel}>{t('settings.database.defaultPathLabel')}</Text>
+          <Text className={classes.infoValue}>{vm.stats?.defaultPath ?? '…'}</Text>
+        </div>
+        <div className={classes.infoRow}>
+          <Text className={classes.infoLabel}>{t('settings.database.sizeLabel')}</Text>
+          <Text className={classes.infoValue}>
             {vm.stats ? formatBytes(vm.stats.sizeBytes) : '…'}
-          </Typography>
-        </Box>
+          </Text>
+        </div>
 
-        <Box sx={styles.actions}>
-          <Box
-            component="button"
-            type="button"
-            sx={styles.actionPrimary}
+        <div className={classes.actions}>
+          <Button
+            variant="filled"
+            className={classes.actionPrimary}
+            leftSection={<IconFolderOpen size={20} stroke={1.75} />}
             disabled={busy}
             onClick={handleChange}
           >
-            <FolderOpenRoundedIcon fontSize="small" />
             {t('settings.database.actions.change')}
-          </Box>
-          <Box
-            component="button"
-            type="button"
-            sx={styles.actionSecondary}
+          </Button>
+          <Button
+            variant="default"
+            className={classes.actionSecondary}
+            leftSection={<IconRestore size={20} stroke={1.75} />}
             disabled={busy || (vm.stats !== null && !vm.stats.isCustom)}
             onClick={handleReset}
           >
-            <RestartAltRoundedIcon fontSize="small" />
             {t('settings.database.actions.reset')}
-          </Box>
-        </Box>
+          </Button>
+        </div>
 
-        <StatusLine status={vm.status} styles={styles} t={t} />
-      </Box>
+        <StatusLine status={vm.status} t={t} />
+      </div>
 
       {/* —— 双图：占比 + 字节 —— */}
-      <ChartsBlock vm={vm} styles={styles} t={t} />
+      <ChartsBlock vm={vm} t={t} />
 
       {/* —— 表清单 —— */}
-      <TableListBlock vm={vm} styles={styles} t={t} busy={busy} onClear={handleClear} />
-    </Box>
+      <TableListBlock vm={vm} t={t} busy={busy} onClear={handleClear} />
+    </div>
   );
 };
 
 type Vm = ReturnType<typeof useDatabase>;
-type Styles = ReturnType<typeof databaseStyles>;
 type T = ReturnType<typeof useT>;
 
 interface StatusLineProps {
   status: DatabaseStatus;
-  styles: Styles;
   t: T;
 }
 
 // 把每种 status.kind 显式列出，TS 才能在 'failed' 分支收敛到 message 字段。
-const StatusLine = ({ status, styles, t }: StatusLineProps) => {
+const StatusLine = ({ status, t }: StatusLineProps) => {
   switch (status.kind) {
     case 'idle':
       return null;
     case 'changing':
-      return <Typography sx={styles.status}>{t('settings.database.feedback.changing')}</Typography>;
+      return <Text className={classes.status}>{t('settings.database.feedback.changing')}</Text>;
     case 'resetting':
-      return <Typography sx={styles.status}>{t('settings.database.feedback.resetting')}</Typography>;
+      return <Text className={classes.status}>{t('settings.database.feedback.resetting')}</Text>;
     case 'clearing':
       return (
-        <Typography sx={styles.status}>
+        <Text className={classes.status}>
           {t('settings.database.feedback.clearing', {
             label: t(`settings.database.tables.${tableKeyOf(status.tableName)}.label`),
           })}
-        </Typography>
+        </Text>
       );
     case 'changed':
-      return <Typography sx={styles.status}>{t('settings.database.feedback.changed')}</Typography>;
+      return <Text className={classes.status}>{t('settings.database.feedback.changed')}</Text>;
     case 'reset':
-      return <Typography sx={styles.status}>{t('settings.database.feedback.reset')}</Typography>;
+      return <Text className={classes.status}>{t('settings.database.feedback.reset')}</Text>;
     case 'cleared':
       return (
-        <Typography sx={styles.status}>
+        <Text className={classes.status}>
           {t('settings.database.feedback.cleared', {
             label: t(`settings.database.tables.${tableKeyOf(status.tableName)}.label`),
           })}
-        </Typography>
+        </Text>
       );
     case 'failed':
       return (
-        <Typography sx={styles.statusError}>
+        <Text className={classes.statusError}>
           {t('settings.database.feedback.failed', { message: status.message })}
-        </Typography>
+        </Text>
       );
   }
 };
@@ -210,26 +199,30 @@ const TABLE_NAME_TO_KEY: Record<string, string> = {
 };
 const tableKeyOf = (name: string): string => TABLE_NAME_TO_KEY[name] ?? name;
 
+// 同一组颜色喂两张图，让占比与条形图视觉对齐。取调色板中常用的辅助色。
+// 用 CSS 变量引用（而非取值），主题切换时图表零重渲染即可跟随。
+const CHART_COLORS: readonly string[] = [
+  FOUNDATION_CSS_VARS.accent,
+  FOUNDATION_CSS_VARS.status.success,
+  FOUNDATION_CSS_VARS.status.warning,
+  FOUNDATION_CSS_VARS.status.danger,
+  FOUNDATION_CSS_VARS.text.muted,
+];
+const colorOf = (idx: number): string =>
+  CHART_COLORS[idx % CHART_COLORS.length] ?? FOUNDATION_CSS_VARS.accent;
+
+// 条形图数据行字段名（BarChart 的 dataKey / series.name）
+const BAR_LABEL_KEY = 'label';
+const BAR_VALUE_KEY = 'sizeBytes';
+
 interface ChartsBlockProps {
   vm: Vm;
-  styles: Styles;
   t: T;
 }
 
-const ChartsBlock = ({ vm, styles, t }: ChartsBlockProps) => {
-  const theme = useTheme();
+const ChartsBlock = ({ vm, t }: ChartsBlockProps) => {
   const tables = vm.tableStats?.tables ?? [];
   const hasData = tables.some((tb) => tb.sizeBytes > 0);
-
-  // 同一组颜色喂两张图，让占比与条形图视觉对齐。取调色板中常用的辅助色。
-  const palette: string[] = [
-    theme.palette.foundation.accent,
-    theme.palette.foundation.status.success,
-    theme.palette.foundation.status.warning,
-    theme.palette.foundation.status.danger,
-    theme.palette.foundation.text.muted,
-  ];
-  const colorOf = (idx: number): string => palette[idx % palette.length] ?? palette[0]!;
 
   const labelOf = (tb: TableInfo): string =>
     t(`settings.database.tables.${tb.labelKey}.label`);
@@ -237,124 +230,122 @@ const ChartsBlock = ({ vm, styles, t }: ChartsBlockProps) => {
   // 任一表是 estimated → 整图加注释
   const anyEstimated = tables.some((tb) => tb.estimated);
 
+  // 环形：每段一张表
+  const donutData = tables.map((tb, idx) => ({
+    name: labelOf(tb),
+    value: tb.sizeBytes,
+    color: colorOf(idx),
+  }));
+
+  // 条形：每行一张表；行内 color 字段让每根柱子单独着色（BarChart 支持 per-entry color）
+  const barData = tables.map((tb, idx) => ({
+    [BAR_LABEL_KEY]: labelOf(tb),
+    [BAR_VALUE_KEY]: tb.sizeBytes,
+    color: colorOf(idx),
+  }));
+
   return (
-    <Box sx={styles.chartsRow}>
+    <div className={classes.chartsRow}>
       {/* 环形：占比 */}
-      <Box sx={styles.chartCard}>
-        <Typography sx={styles.chartTitle}>
-          {t('settings.database.charts.share.title')}
-        </Typography>
-        <Typography sx={styles.chartHint}>
+      <div className={classes.chartCard}>
+        <Text className={classes.chartTitle}>{t('settings.database.charts.share.title')}</Text>
+        <Text className={classes.chartHint}>
           {anyEstimated
             ? t('settings.database.charts.estimatedNote')
             : t('settings.database.charts.share.hint')}
-        </Typography>
+        </Text>
         {hasData ? (
-          <Box sx={styles.chartHost}>
-            <PieChart
-              series={[
-                {
-                  data: tables.map((tb, idx) => ({
-                    id: tb.name,
-                    value: tb.sizeBytes,
-                    label: labelOf(tb),
-                    color: colorOf(idx),
-                  })),
-                  innerRadius: 48,
-                  paddingAngle: 1,
-                  cornerRadius: 2,
-                  // tooltip 用字节大小精确展示
-                  valueFormatter: (item) => formatBytes(item.value),
-                },
-              ]}
-              height={220}
-              hideLegend
+          <div className={`${classes.chartHost} ${classes.chartHostCentered}`}>
+            <DonutChart
+              data={donutData}
+              size={200}
+              thickness={52}
+              paddingAngle={1}
+              strokeWidth={0}
+              pieProps={{ cornerRadius: 2 }}
+              // tooltip 只展示悬停的那一段，用字节大小精确展示
+              withTooltip
+              tooltipDataSource="segment"
+              valueFormatter={formatBytes}
             />
-          </Box>
+          </div>
         ) : (
-          <Box sx={styles.emptyChart}>{t('settings.database.charts.empty')}</Box>
+          <div className={classes.emptyChart}>{t('settings.database.charts.empty')}</div>
         )}
-      </Box>
+      </div>
 
       {/* 条形：字节 */}
-      <Box sx={styles.chartCard}>
-        <Typography sx={styles.chartTitle}>
-          {t('settings.database.charts.bytes.title')}
-        </Typography>
-        <Typography sx={styles.chartHint}>
+      <div className={classes.chartCard}>
+        <Text className={classes.chartTitle}>{t('settings.database.charts.bytes.title')}</Text>
+        <Text className={classes.chartHint}>
           {anyEstimated
             ? t('settings.database.charts.estimatedNote')
             : t('settings.database.charts.bytes.hint')}
-        </Typography>
+        </Text>
         {hasData ? (
-          <Box sx={styles.chartHost}>
+          <div className={classes.chartHost}>
             <BarChart
-              layout="horizontal"
-              yAxis={[
-                {
-                  scaleType: 'band',
-                  data: tables.map(labelOf),
-                },
-              ]}
-              xAxis={[
-                {
-                  // 横轴：字节数，自动单位
-                  valueFormatter: (v: number | null) =>
-                    formatBytes(typeof v === 'number' ? v : 0),
-                },
-              ]}
+              h={220}
+              data={barData}
+              dataKey={BAR_LABEL_KEY}
+              // vertical = 类目在 Y 轴、数值在 X 轴（即水平条形）
+              orientation="vertical"
               series={[
                 {
-                  data: tables.map((tb) => tb.sizeBytes),
-                  valueFormatter: (v: number | null) => formatBytes(v ?? 0),
+                  name: BAR_VALUE_KEY,
+                  label: t('settings.database.charts.bytes.title'),
+                  color: FOUNDATION_CSS_VARS.accent,
                 },
               ]}
-              colors={tables.map((_, idx) => colorOf(idx))}
-              height={220}
-              hideLegend
+              // 横轴刻度 + tooltip：字节数，自动单位
+              valueFormatter={formatBytes}
+              yAxisProps={{ width: 96 }}
+              gridAxis="x"
+              gridColor={FOUNDATION_CSS_VARS.divider}
+              textColor={FOUNDATION_CSS_VARS.text.muted}
+              cursorFill={FOUNDATION_CSS_VARS.bg.hover}
+              maxBarWidth={28}
             />
-          </Box>
+          </div>
         ) : (
-          <Box sx={styles.emptyChart}>{t('settings.database.charts.empty')}</Box>
+          <div className={classes.emptyChart}>{t('settings.database.charts.empty')}</div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 
 interface TableListBlockProps {
   vm: Vm;
-  styles: Styles;
   t: T;
   busy: boolean;
   onClear: (table: TableInfo) => void;
 }
 
-const TableListBlock = ({ vm, styles, t, busy, onClear }: TableListBlockProps) => {
+const TableListBlock = ({ vm, t, busy, onClear }: TableListBlockProps) => {
   const tables = vm.tableStats?.tables ?? [];
   return (
-    <Box sx={styles.tableList}>
-      <Typography sx={styles.chartTitle}>{t('settings.database.tables.title')}</Typography>
+    <div className={classes.tableList}>
+      <Text className={classes.chartTitle}>{t('settings.database.tables.title')}</Text>
       {tables.length === 0 ? (
-        <Typography sx={styles.chartHint}>{t('settings.database.tables.empty')}</Typography>
+        <Text className={classes.chartHint}>{t('settings.database.tables.empty')}</Text>
       ) : (
         tables.map((tb) => (
-          <TableRow key={tb.name} table={tb} styles={styles} t={t} busy={busy} onClear={onClear} />
+          <TableRow key={tb.name} table={tb} t={t} busy={busy} onClear={onClear} />
         ))
       )}
-    </Box>
+    </div>
   );
 };
 
 interface TableRowProps {
   table: TableInfo;
-  styles: Styles;
   t: T;
   busy: boolean;
   onClear: (table: TableInfo) => void;
 }
 
-const TableRow = ({ table, styles, t, busy, onClear }: TableRowProps) => {
+const TableRow = ({ table, t, busy, onClear }: TableRowProps) => {
   const label = t(`settings.database.tables.${table.labelKey}.label`);
   const descRaw = t(`settings.database.tables.${table.labelKey}.description`);
   // i18n 缺失时返回 key 本身——退化为不展示描述，避免 UI 显示长 key
@@ -363,48 +354,45 @@ const TableRow = ({ table, styles, t, busy, onClear }: TableRowProps) => {
     : descRaw;
 
   return (
-    <Box sx={styles.tableRow}>
-      <StorageRoundedIcon fontSize="small" />
-      <Box sx={styles.tableRowMain}>
-        <Box sx={styles.tableRowLabel}>
+    <div className={classes.tableRow}>
+      <IconDatabase size={20} stroke={1.75} className={classes.tableRowIcon} />
+      <div className={classes.tableRowMain}>
+        <div className={classes.tableRowLabel}>
           {label}
           {table.estimated && (
-            <Box component="span" sx={[styles.badge, styles.badgeEstimated] as SxProps<Theme>}>
+            <span className={classes.badge} data-kind="estimated">
               {t('settings.database.tables.estimatedTag')}
-            </Box>
+            </span>
           )}
-        </Box>
-        {description && <Typography sx={styles.chartHint}>{description}</Typography>}
-        <Typography sx={styles.tableRowMeta}>
+        </div>
+        {description && <Text className={classes.chartHint}>{description}</Text>}
+        <Text className={classes.tableRowMeta}>
           {t('settings.database.tables.meta', {
             rows: table.rowCount,
             size: formatBytes(table.sizeBytes),
           })}
-        </Typography>
-      </Box>
+        </Text>
+      </div>
       {table.clearable ? (
-        <Box
-          component="button"
-          type="button"
-          sx={styles.tableRowAction}
+        <UnstyledButton
+          className={classes.tableRowAction}
           disabled={busy}
           onClick={() => onClear(table)}
           aria-label={t('settings.database.tables.clearAria', { label })}
         >
-          <DeleteOutlineRoundedIcon fontSize="small" />
+          <IconTrash size={20} stroke={1.75} />
           {t('settings.database.tables.clear')}
-        </Box>
+        </UnstyledButton>
       ) : (
-        <Box
-          component="span"
-          sx={styles.tableRowActionDisabled}
+        <span
+          className={classes.tableRowActionDisabled}
           aria-label={t('settings.database.tables.protectedAria', { label })}
         >
-          <LockRoundedIcon fontSize="small" />
+          <IconLock size={20} stroke={1.75} />
           {t('settings.database.tables.protected')}
-        </Box>
+        </span>
       )}
-    </Box>
+    </div>
   );
 };
 

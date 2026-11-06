@@ -1,6 +1,4 @@
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
-import WidgetsRoundedIcon from '@mui/icons-material/WidgetsRounded';
+import { IconHome, IconLayoutGrid, IconSettings } from '@tabler/icons-react';
 import { lazy } from 'react';
 import { HomePage } from '@/pages/HomePage/HomePage';
 import { HomePageSkeleton } from '@/pages/HomePage/HomePage.skeleton';
@@ -36,7 +34,7 @@ export const routes: RouteDefinition[] = [
     id: 'home',
     labelKey: 'route.home',
     label: 'Home',
-    icon: HomeRoundedIcon,
+    icon: IconHome,
     element: <HomePage />,
     fallback: <HomePageSkeleton />,
     slot: 'primary',
@@ -46,7 +44,7 @@ export const routes: RouteDefinition[] = [
     id: 'x-pro-demo',
     labelKey: 'route.xProDemo',
     label: 'X-Pro Demo',
-    icon: WidgetsRoundedIcon,
+    icon: IconLayoutGrid,
     element: <XProDemoPage />,
     fallback: <XProDemoPageSkeleton />,
     slot: 'primary',
@@ -55,7 +53,7 @@ export const routes: RouteDefinition[] = [
     id: 'settings',
     labelKey: 'route.settings',
     label: 'Settings',
-    icon: SettingsRoundedIcon,
+    icon: IconSettings,
     element: <SettingsPage />,
     fallback: <SettingsPageSkeleton />,
     slot: 'footer',

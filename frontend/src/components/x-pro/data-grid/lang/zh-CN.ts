@@ -1,0 +1,56 @@
+import type { Messages } from '@/i18n';
+
+// DataGrid Pro / Premium 组件文案。挂在 dataGrid.* 命名空间下。
+export const dataGridZhCN: Messages = {
+  dataGrid: {
+    noRecords: '暂无数据',
+    loading: '加载中…',
+    groupColumn: '分组',
+    filterPlaceholder: '筛选…',
+    filterAriaLabel: '筛选列 {{column}}',
+    dragColumnAriaLabel: '拖动以调整列顺序：{{column}}',
+    dragRowAriaLabel: '拖动以调整行顺序',
+    resizeColumnAriaLabel: '拖动以调整列宽：{{column}}（双击恢复）',
+    columnMenu: {
+      ariaLabel: '列菜单：{{column}}',
+      sortAsc: '升序排列',
+      sortDesc: '降序排列',
+      sortClear: '取消排序',
+      pinLeft: '固定到左侧',
+      pinRight: '固定到右侧',
+      unpin: '取消固定',
+      hide: '隐藏此列',
+      manageColumns: '管理列',
+      showAll: '全部显示',
+      hideAll: '全部隐藏',
+    },
+    export: {
+      csvDialogTitle: '导出为 CSV',
+      excelDialogTitle: '导出为 Excel',
+      errorTitle: '导出失败',
+      csvFilter: 'CSV 文件 (*.csv)',
+      excelFilter: 'Excel 工作簿 (*.xlsx)',
+    },
+    expandRow: '展开明细',
+    collapseRow: '收起明细',
+    expand: '展开',
+    collapse: '收起',
+    pinnedRow: '固定行',
+    paginationText: '第 {{from}}–{{to}} 条，共 {{total}} 条',
+    recordsPerPage: '每页行数',
+    aggregation: {
+      sum: '合计',
+      avg: '平均',
+      min: '最小',
+      max: '最大',
+      count: '计数',
+      custom: '聚合',
+    },
+    toolbar: {
+      ariaLabel: '表格工具栏',
+      exportCsv: '导出 CSV',
+      exportExcel: '导出 Excel',
+      selectedCells: '已选 {{count}} 个单元格',
+    },
+  },
+};

@@ -1,11 +1,13 @@
 ---
-title: Events Guide
-description: A practical guide to using events in Wails v3 for application communication and lifecycle management
+title: "Events Guide"
+description: "A practical guide to using events in Wails v3 for application communication and lifecycle management"
+slug: "guides/events-reference"
+sourcePath: "guides/events-reference.md"
 ---
 
 **NOTE: This guide is a work in progress**
 
-# Events Guide
+## Events Guide
 
 Events are the heartbeat of communication in Wails applications. They allow different parts of your application to talk to each other without being tightly coupled. This guide will walk you through everything you need to know about using events effectively in your Wails application.
 
@@ -24,10 +26,11 @@ All Wails events follow a namespace pattern to clearly indicate their origin:
 
 - `common:` - Cross-platform events that work on Windows, macOS, and Linux
 - `windows:` - Windows-specific events
-- `mac:` - macOS-specific events  
+- `mac:` - macOS-specific events\
 - `linux:` - Linux-specific events
 
 For example:
+
 - `common:WindowFocus` - Window gained focus (works everywhere)
 - `windows:APMSuspend` - System is suspending (Windows only)
 - `mac:ApplicationDidBecomeActive` - App became active (macOS only)
@@ -100,7 +103,7 @@ Events.Emit('myapp:close-window')
 Events.Emit('myapp:disconnect-requested', 'id-123')
 ```
 
-If you are using TypeScript in your frontend and [registering typed events](#typed-events-with-typecheck) in your Go code, you will get event name autocomplete/checking and data type checking.
+If you are using TypeScript in your frontend and [registering typed events](#typed-events-with-type-safety) in your Go code, you will get event name autocomplete/checking and data type checking.
 
 ### Removing Event Listeners
 
@@ -326,19 +329,23 @@ func init() {
 }
 ```
 
-:::caution
+@note{type="caution"}
 `RegisterEvent` is meant to be called at init time and will panic if:
+
 - Arguments are not valid
 - The same event name is registered twice with different data types
-:::
 
-:::note
+@end
+
+@note{type="info"}
 It is safe to register the same event multiple times as long as the data type is always the same. This can be useful to ensure an event is registered when any of multiple packages is loaded.
-:::
+
+@end
 
 ### Benefits of Event Registration
 
 Once registered, data arguments passed to `Event.Emit` are type-checked against the specified type. On mismatch:
+
 - An error is emitted and logged (or passed to the registered error handler)
 - The offending event will not be propagated
 - This ensures the data field of registered events is always assignable to the declared type
@@ -378,7 +385,7 @@ Run the binding generator:
 wails3 generate bindings
 ```
 
-This creates TypeScript files in your frontend directory with typed event creators and data interfaces.
+This creates TypeScript files in your frontend directory with typed event data definitions, plus a `bindings/events` module that exports one constant per registered event name that is a compile-time constant discoverable by the generator (for example `user:login` becomes `UserLogin`).
 
 #### 3. Use Typed Events in Frontend
 
@@ -387,11 +394,11 @@ import { Events } from '@wailsio/runtime'
 import { UserLogin, MonitorStats } from './bindings/events'
 
 // Type-safe event emission with autocomplete
-Events.Emit(UserLogin({
+Events.Emit(UserLogin, {
     UserID: "123",
     Username: "john_doe",
     LoginTime: new Date().toISOString()
-}))
+})
 
 // Type-safe event listening
 Events.On(UserLogin, (event) => {
@@ -409,6 +416,7 @@ Events.On(MonitorStats, (event) => {
 ```
 
 The typed events provide:
+
 - **Autocomplete** for event names
 - **Type checking** for event data
 - **Compile-time errors** for mismatched data types
@@ -421,7 +429,7 @@ The typed events provide:
 These events work on all platforms:
 
 | Event | Description | When to Use |
-|-------|-------------|-------------|
+| --- | --- | --- |
 | `common:ApplicationStarted` | Application has fully started | Initialize your app, load saved state |
 | `common:WindowRuntimeReady` | Wails runtime is ready | Start making Wails API calls |
 | `common:ThemeChanged` | System theme changed | Update app appearance |
@@ -444,7 +452,7 @@ These events work on all platforms:
 Key events for Windows applications:
 
 | Event | Description | Use Case |
-|-------|-------------|----------|
+| --- | --- | --- |
 | `windows:SystemThemeChanged` | Windows theme changed | Update app colors |
 | `windows:APMSuspend` | System suspending | Save state, pause operations |
 | `windows:APMResumeAutomatic` | System resumed (always fires on resume) | Restore state, refresh data |
@@ -456,7 +464,7 @@ Key events for Windows applications:
 Important macOS application events:
 
 | Event | Description | Use Case |
-|-------|-------------|----------|
+| --- | --- | --- |
 | `mac:ApplicationDidBecomeActive` | App became active | Resume operations |
 | `mac:ApplicationDidResignActive` | App became inactive | Pause operations |
 | `mac:ApplicationWillTerminate` | App will quit | Final cleanup |
@@ -472,7 +480,7 @@ Important macOS application events:
 Core Linux window events:
 
 | Event | Description | Use Case |
-|-------|-------------|----------|
+| --- | --- | --- |
 | `linux:SystemThemeChanged` | Desktop theme changed | Update app theme |
 | `linux:SystemWillSleep` | System about to suspend (logind) | Save state |
 | `linux:SystemDidWake` | System resumed (logind) | Reconnect, refresh |
@@ -567,8 +575,9 @@ if (isDevelopment) {
 ## Source of Truth
 
 The complete list of available events can be found in the Wails source code:
-- Frontend events: [`v3/internal/runtime/desktop/@wailsio/runtime/src/event_types.ts`](https://github.com/wailsapp/wails/blob/main/v3/internal/runtime/desktop/@wailsio/runtime/src/event_types.ts)
-- Backend events: [`v3/pkg/events/events.go`](https://github.com/wailsapp/wails/blob/main/v3/pkg/events/events.go)
+
+- Frontend events: [`v3/internal/runtime/desktop/@wailsio/runtime/src/event_types.ts`](https://github.com/wailsapp/wails/blob/master/v3/internal/runtime/desktop/@wailsio/runtime/src/event_types.ts)
+- Backend events: [`v3/pkg/events/events.go`](https://github.com/wailsapp/wails/blob/master/v3/pkg/events/events.go)
 
 Always refer to these files for the most up-to-date event names and availability.
 

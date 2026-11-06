@@ -234,6 +234,8 @@ await PreferencesService.reset();
 
 `<PreferencesProvider>` 已经基于这个服务封装了 React 上下文，组件层用 `usePreferences()` 即可（详见 `src/preferences/`）。**业务自定义键值优先用 PreferencesService**，避免重复造一张同形 KV 表。
 
+> 后端也可以复用 `preferences.Service` 存自己的开关：系统托盘的 `SystrayService` 把开关存为键 **`systray.enabled`**（值 `"true"` / `"false"`），启动时读回恢复（见 `foundation-systray`）。该键由后端独占写入，前端只经 `SystrayService.enable()` / `disable()` 改变，不要用 PreferencesService 直接改。
+
 ### 4.2 AppSettings（应用核心设置，单行表）
 
 固定字段：`themeChoice` / `customTheme`（JSON 字符串） / `localeChoice`。
@@ -249,6 +251,17 @@ await AppSettingsService.setLocaleChoice('zh-CN');
 ```
 
 `<FoundationThemeProvider>` 与 `<I18nProvider>` 已经异步对接到这里，业务**通常不需要**直接调用。
+
+**变更广播（跨窗口同步）**：后端每个 setter（`SetThemeChoice` / `SetCustomTheme` / `ResetCustomTheme` / `SetLocaleChoice`）写库成功后都会 `app.Event.Emit(events.AppSettingsChanged, <字段名>)`，事件名 `appsettings:changed`（`internal/events/events.go` 注册为 `RegisterEvent[string]`），payload 为 `"themeChoice" | "customTheme" | "localeChoice"`。前端订阅：
+
+```ts
+const off = AppSettingsService.onChanged((field) => {
+  // field: AppSettingsField = 'themeChoice' | 'customTheme' | 'localeChoice'
+});
+// 卸载时 off()
+```
+
+`FoundationThemeProvider`（`themeChoice` / `customTheme`，200ms 防抖）与 `I18nProvider`（`localeChoice`）已订阅并重新 `get()`，因此主窗口、子窗口、托盘面板始终一致。写失败不广播。
 
 ---
 
@@ -268,13 +281,18 @@ export const MyProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let cancelled = false;
-    MyService.get()
-      .then((data) => {
-        if (cancelled || !aliveRef.current) return;
-        setState(mergeWithDefaults(data));                     // 2) 异步覆盖
-      })
-      .catch(() => { /* 后端未就绪 → 保持默认值，UI 不阻塞 */ });
-    return () => { cancelled = true; };
+    const load = () => {
+      MyService.get()
+        .then((data) => {
+          if (cancelled || !aliveRef.current) return;
+          setState(mergeWithDefaults(data));                   // 2) 异步覆盖
+        })
+        .catch(() => { /* 后端未就绪 → 保持默认值，UI 不阻塞 */ });
+    };
+    load();
+    // 可选：多窗口共享的状态订阅后端变更广播后重拉（参考 AppSettingsService.onChanged）
+    const off = MyService.onChanged?.(load);
+    return () => { cancelled = true; off?.(); };
   }, []);
 
   const update = useCallback((patch: Partial<MyState>) => {
@@ -290,6 +308,7 @@ export const MyProvider = ({ children }: { children: ReactNode }) => {
 - 首屏永远拿默认值渲染，**不用 loading 阻塞 UI**（业务方真要等数据可在页面级用骨架屏）
 - 拉取期间用 `aliveRef` 防止已卸载后 setState
 - 写失败默认不回滚 UI（避免视觉抖动），可在 catch 里加业务级 toast / log
+- 多个 OS 窗口都要用到的状态，后端写成功后 Emit 一个已在 `internal/events/events.go` 注册的事件，前端 Provider 订阅后重拉（appsettings 即此模式）；高频写入（如取色器）加防抖
 
 ---
 
@@ -460,8 +479,10 @@ internal/storage/
 
 internal/services/
 ├── preferences/    # KV
-├── appsettings/    # 单行表
+├── appsettings/    # 单行表（setter 成功后 Emit appsettings:changed）
 └── storagesvc/     # 路径管理 + 表统计 + 清空
+
+internal/events/events.go   # AppSettingsChanged = "appsettings:changed"
 
 frontend/src/services/
 ├── preferences/PreferencesService.ts

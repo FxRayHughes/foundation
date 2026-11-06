@@ -1,11 +1,9 @@
 ---
-title: Dock & Taskbar
-description: Manage dock icon visibility and display badges on macOS and Windows
-sidebar:
-  order: 1
+title: "Dock \u0026 Taskbar"
+description: "Manage dock icon visibility and display badges on macOS and Windows"
+slug: "features/platform/dock"
+sourcePath: "features/platform/dock.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## Introduction
 
@@ -132,100 +130,100 @@ dockService.RemoveBadge()
 ```
 
 ### Getting the set badge
+
 ```go
 dockService.GetBadge()
-``` 
+```
 
 ## Platform Considerations
 
-<Tabs>
-  <TabItem label="macOS" icon="fa-brands:apple">
-    
-    On macOS:
-    
-    - The dock icon can be **hidden** and **shown**
-    - Badges are displayed directly on the dock icon
-    - Badge options are **not customizable** (any options passed to `NewWithOptions`/`SetCustomBadge` are ignored)
-    - The standard macOS dock badge styling is used and automatically adapts to appearance
-    - Label overflow is handled by the system
-    - Providing an empty label displays a default badge of "●"
-    
-  </TabItem>
-  
-  <TabItem label="Windows" icon="fa-brands:windows">
-    
-    On Windows:
-    
-    - Hiding/showing the taskbar icon is not currently supported by this service
-    - Badges are displayed as an overlay icon in the taskbar
-    - Badges support text values
-    - Badge appearance can be customized via `BadgeOptions`
-    - The application must have a window for badges to display
-    - A smaller font size is automatically used for multi-character labels
-    - Label overflow is not handled
-    - Customization options:
-      - **TextColour**: Text color (default: white)
-      - **BackgroundColour**: Badge background color (default: red)
-      - **FontName**: Font file name (default: "segoeuib.ttf")
-      - **FontSize**: Font size for single character (default: 18)
-      - **SmallFontSize**: Font size for multiple characters (default: 14)
-    
-  </TabItem>
-  
-  <TabItem label="Linux" icon="fa-brands:linux">
-    
-    On Linux:
-    
-    - Dock icon visibility and badge functionality are not available
-    
-  </TabItem>
-</Tabs>
+@tabs
+[macOS]
+On macOS:
+
+- The dock icon can be **hidden** and **shown**
+- Badges are displayed directly on the dock icon
+- Badge options are **not customizable** (any options passed to `NewWithOptions`/`SetCustomBadge` are ignored)
+- The standard macOS dock badge styling is used and automatically adapts to appearance
+- Label overflow is handled by the system
+- Providing an empty label displays a default badge of "●"
+
+[Windows]
+On Windows:
+
+- Hiding/showing the taskbar icon is not currently supported by this service
+- Badges are displayed as an overlay icon in the taskbar
+- Badges support text values
+- Badge appearance can be customized via `BadgeOptions`
+- The application must have a window for badges to display
+- A smaller font size is automatically used for multi-character labels
+- Label overflow is not handled
+- Customization options:
+  - **TextColour**: Text color (default: white)
+  - **BackgroundColour**: Badge background color (default: red)
+  - **FontName**: Font file name (default: "segoeuib.ttf")
+  - **FontSize**: Font size for single character (default: 18)
+  - **SmallFontSize**: Font size for multiple characters (default: 14)
+
+
+[Linux]
+On Linux:
+
+- Dock icon visibility and badge functionality are not available
+
+@end
 
 ## Best Practices
 
 1. **When hiding the dock icon (macOS):**
-   - Ensure users can still access your app (e.g., via [system tray](https://v3.wails.io/learn/systray/))
-   - Include a "Quit" option in your alternative UI
-   - The app won't appear in Command+Tab switcher
-   - Open windows remain visible and functional
-   - Closing all windows may not quit the app (macOS behavior varies)
-   - Users lose the standard way to quit via Dock right-click
+  - Ensure users can still access your app (e.g., via [system tray](/features/menus/systray/))
+  - Include a "Quit" option in your alternative UI
+  - The app won't appear in Command+Tab switcher
+  - Open windows remain visible and functional
+  - Closing all windows may not quit the app (macOS behavior varies)
+  - Users lose the standard way to quit via Dock right-click
+
 
 2. **Use badges sparingly:**
-   - Too many badge updates can distract users
-   - Reserve badges for important notifications
+  - Too many badge updates can distract users
+  - Reserve badges for important notifications
+
 
 3. **Keep badge text short:**
-   - Numeric badges are most effective
-   - On macOS, text badges should be brief
+  - Numeric badges are most effective
+  - On macOS, text badges should be brief
+
 
 4. **For Windows badge customization:**
-   - Ensure high contrast between text and background colors
-   - Test with different text lengths as font size decreases with length
-   - Use common system fonts to ensure availability
+  - Ensure high contrast between text and background colors
+  - Test with different text lengths as font size decreases with length
+  - Use common system fonts to ensure availability
 
 
 ## API Reference
 
 ### Service Management
-| Method                                     | Description                                           |
-|--------------------------------------------|-------------------------------------------------------|
-| `New()`                                    | Creates a new dock service                            |
-| `NewWithOptions(options BadgeOptions)`     | Creates a new dock service with custom badge options (Windows only; options are ignored on macOS and Linux) |
+
+| Method | Description |
+| --- | --- |
+| `New()` | Creates a new dock service |
+| `NewWithOptions(options BadgeOptions)` | Creates a new dock service with custom badge options (Windows only; options are ignored on macOS and Linux) |
 
 ### Dock Operations
-| Method                                       | Description                                                |
-|--------------------------------|-------------------------------------------------------------|
-| `HideAppIcon()`                | Hides the app icon from the macOS Dock (macOS only)         |
-| `ShowAppIcon()`                | Shows the app icon in the macOS Dock (macOS only)           |
+
+| Method | Description |
+| --- | --- |
+| `HideAppIcon()` | Hides the app icon from the macOS Dock (macOS only) |
+| `ShowAppIcon()` | Shows the app icon in the macOS Dock (macOS only) |
 
 ### Badge Operations
-| Method                                            | Description                                                |
-|---------------------------------------------------|------------------------------------------------------------|
-| `SetBadge(label string) error`                    | Sets a badge with the specified label                      |
+
+| Method | Description |
+| --- | --- |
+| `SetBadge(label string) error` | Sets a badge with the specified label |
 | `SetCustomBadge(label string, options BadgeOptions) error` | Sets a badge with the specified label and custom styling options (Windows only) |
-| `RemoveBadge() error`                             | Removes the badge from the application icon                |
-| `GetBadge() *string`                             | Gets the current badge                |
+| `RemoveBadge() error` | Removes the badge from the application icon |
+| `GetBadge() *string` | Gets the current badge |
 
 ### Structs and Types
 

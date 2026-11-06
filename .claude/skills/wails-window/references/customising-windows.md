@@ -1,18 +1,15 @@
 ---
-title: Customising Windows in Wails
-description: Customize window appearance and behavior in your Wails applications
-sidebar:
-  order: 10
+title: "Customising Windows in Wails"
+description: "Customize window appearance and behavior in your Wails applications"
+slug: "guides/customising-windows"
+sourcePath: "guides/customising-windows.md"
 ---
 
-import {Badge} from '@astrojs/starlight/components';
+Relevant Platforms: <span class="mpress-badge mpress-badge-note">Windows</span> <span class="mpress-badge mpress-badge-success">macOS</span>
 
-Relevant Platforms: <Badge text="Windows" variant="note" /> <Badge text="macOS" variant="success" />
 <br/>
 
-Wails provides an API to control the appearance and functionality of the
-controls of a window. This functionality is available on Windows and macOS, but
-not on Linux.
+Wails provides an API to control the appearance and functionality of the controls of a window. This functionality is available on Windows and macOS, but not on Linux.
 
 ## Setting the Window Button States
 
@@ -36,10 +33,9 @@ The button states can be set during window creation or at runtime.
 
 ### Setting Button States During Window Creation
 
-When creating a new window, you can set the initial state of the buttons using
-the `WebviewWindowOptions` struct:
+When creating a new window, you can set the initial state of the buttons using the `WebviewWindowOptions` struct:
 
-```go title="main.go"
+```go {title="main.go"}
 package main
 
 import (
@@ -62,13 +58,11 @@ func main() {
 }
 ```
 
-In the example above, the minimise button is hidden, the maximise button is
-inactive (grayed out), and the close button is active.
+In the example above, the minimise button is hidden, the maximise button is inactive (grayed out), and the close button is active.
 
 ### Setting Button States at Runtime
 
-You can also change the button states at runtime using the following methods on
-the `Window` interface:
+You can also change the button states at runtime using the following methods on the `Window` interface:
 
 ```go
 window.SetMinimiseButtonState(wails.ButtonHidden)
@@ -79,50 +73,40 @@ window.SetFullscreenButtonState(wails.ButtonEnabled)
 
 ### macOS: MaximiseButtonState and FullscreenButtonState share a button
 
-On macOS the green traffic-light button (`NSWindowZoomButton`) is the same
-physical control for both maximise and fullscreen. Setting
-`MaximiseButtonState` and `FullscreenButtonState` to different values during
-window creation would otherwise produce a silent last-writer-wins override.
+On macOS the green traffic-light button (`NSWindowZoomButton`) is the same physical control for both maximise and fullscreen. Setting `MaximiseButtonState` and `FullscreenButtonState` to different values during window creation would otherwise produce a silent last-writer-wins override.
 
-To avoid this, Wails applies the **more restrictive** of the two states at
-initialisation, in the order `ButtonEnabled` < `ButtonDisabled` < `ButtonHidden`.
+To avoid this, Wails applies the **more restrictive** of the two states at initialisation, in the order `ButtonEnabled` < `ButtonDisabled` < `ButtonHidden`.
 
 | `MaximiseButtonState` | `FullscreenButtonState` | Effective state on macOS |
-|-----------------------|-------------------------|--------------------------|
-| `ButtonEnabled`       | `ButtonEnabled`         | `ButtonEnabled`          |
-| `ButtonDisabled`      | `ButtonEnabled`         | `ButtonDisabled`         |
-| `ButtonEnabled`       | `ButtonHidden`          | `ButtonHidden`           |
-| `ButtonDisabled`      | `ButtonHidden`          | `ButtonHidden`           |
+| --- | --- | --- |
+| `ButtonEnabled` | `ButtonEnabled` | `ButtonEnabled` |
+| `ButtonDisabled` | `ButtonEnabled` | `ButtonDisabled` |
+| `ButtonEnabled` | `ButtonHidden` | `ButtonHidden` |
+| `ButtonDisabled` | `ButtonHidden` | `ButtonHidden` |
 
-At runtime, `SetMaximiseButtonState` and `SetFullscreenButtonState` both target
-`NSWindowZoomButton` on macOS, so the last call wins.
+At runtime, `SetMaximiseButtonState` and `SetFullscreenButtonState` both target `NSWindowZoomButton` on macOS, so the last call wins.
 
 ### Platform Differences
 
-The button state functionality behaves slightly differently on Windows and
-macOS:
+The button state functionality behaves slightly differently on Windows and macOS:
 
-|                          | Windows                | Mac                            |
-|--------------------------|------------------------|--------------------------------|
-| Disable Min/Max/Close    | Disables Min/Max/Close | Disables Min/Max/Close         |
-| Hide Min                 | Disables Min           | Hides Min button               |
-| Hide Max                 | Disables Max           | Hides Max button               |
-| Hide Close               | Hides all controls     | Hides Close                    |
-| `FullscreenButtonState`  | No-op                  | Targets the zoom (green) button |
+|  | Windows | Mac |
+| --- | --- | --- |
+| Disable Min/Max/Close | Disables Min/Max/Close | Disables Min/Max/Close |
+| Hide Min | Disables Min | Hides Min button |
+| Hide Max | Disables Max | Hides Max button |
+| Hide Close | Hides all controls | Hides Close |
+| `FullscreenButtonState` | No-op | Targets the zoom (green) button |
 
-Note: On Windows, it is not possible to hide the Min/Max buttons individually.
-However, disabling both will hide both of the controls and only show the close
-button. Windows has no dedicated fullscreen button in the standard title bar,
-so `FullscreenButtonState` is a no-op there.
+Note: On Windows, it is not possible to hide the Min/Max buttons individually. However, disabling both will hide both of the controls and only show the close button. Windows has no dedicated fullscreen button in the standard title bar, so `FullscreenButtonState` is a no-op there.
 
 ### Controlling Window Style (Windows)
 
-To control the style of the titlebar on Windows, you can use the `ExStyle` field
-in the `WebviewWindowOptions` struct:
+To control the style of the titlebar on Windows, you can use the `ExStyle` field in the `WebviewWindowOptions` struct:
 
 Example:
 
-```go title="main.go"
+```go {title="main.go"}
 package main
 
 import (
@@ -145,8 +129,7 @@ func main() {
 }
 ```
 
-Other options that affect the Extended Style of a window will be overridden by
-this setting:
+Other options that affect the Extended Style of a window will be overridden by this setting:
 
 - HiddenOnTaskbar
 - AlwaysOnTop

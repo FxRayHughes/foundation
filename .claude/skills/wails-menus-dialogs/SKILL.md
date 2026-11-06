@@ -1,6 +1,6 @@
 ---
 name: wails-menus-dialogs
-description: 应用菜单（菜单栏）、上下文菜单（右键）、系统托盘（systray）、对话框（消息/文件/自定义）。当用户问到「app.NewMenu / app.Menu.Set / Submenu / AddRole / FileMenu EditMenu / OnClick / SystemTray / app.SystemTray.New / app.Dialog / OpenFile / SaveFile / Question / Info / Custom Dialog」时使用。
+description: 应用菜单（菜单栏）、上下文菜单（右键）、系统托盘（systray）、对话框（消息/文件/自定义）。当用户问到「app.NewMenu / app.Menu.Set / Submenu / AddRole / FileMenu EditMenu / OnClick / AddSectionHeader 菜单分组标题 / --custom-contextmenu / app.ContextMenu.Add / SystemTray / app.SystemTray.New / SetTooltip / app.Dialog / OpenFile / SaveFile / Question / Info / Custom Dialog / Linux portal 文件对话框」时使用。
 ---
 
 # Wails v3 - 菜单与对话框
@@ -69,6 +69,12 @@ item.SetTooltip("Open a file from disk")
 item.SetIcon(iconBytes)
 ```
 
+#### 分组标题（beta.32 新增，macOS 14+）
+
+```go
+menu.AddSectionHeader("Recent")   // macOS 14+ 原生、不可交互的分组标题；旧 macOS 与其他平台为 no-op
+```
+
 #### 内置 Roles
 
 | Role | 说明 |
@@ -85,21 +91,16 @@ item.SetIcon(iconBytes)
 
 ```go
 ctxMenu := app.ContextMenu.New()
-ctxMenu.Add("Copy").OnClick(func(ctx *application.Context) { /* */ })
-ctxMenu.Add("Paste").OnClick(func(ctx *application.Context) { /* */ })
+ctxMenu.Add("Copy").OnClick(func(ctx *application.Context) {
+    data := ctx.ContextMenuData()   // 前端 --custom-contextmenu-data 的值
+})
 ctxMenu.AddSeparator()
-ctxMenu.Add("Properties").OnClick(...)
+app.ContextMenu.Add("my-menu", ctxMenu)   // 按名字注册（另有 Remove / Get / GetAll）
 ```
 
-前端触发：
+前端用 **CSS 自定义属性**绑定（不是 data 属性，也没有 JS `OpenContextMenu`）：
 ```html
-<div data-contextmenu="my-menu">右键打开菜单</div>
-```
-
-或 JS：
-```js
-import { Application } from '@wailsio/runtime'
-Application.OpenContextMenu('my-menu', {x: e.x, y: e.y, data: 'value'})
+<div style="--custom-contextmenu: my-menu; --custom-contextmenu-data: file-123">右键打开菜单</div>
 ```
 
 ### 系统托盘（SystemTray）
@@ -107,7 +108,7 @@ Application.OpenContextMenu('my-menu', {x: e.x, y: e.y, data: 'value'})
 ```go
 tray := app.SystemTray.New()
 tray.SetIcon(iconBytes)        // PNG/ICO bytes（macOS 推荐 ICNS template）
-tray.SetTooltip("My App")
+tray.SetTooltip("My App")      // v3.1.0 补齐 SetTooltip 实现（#6017）
 tray.SetLabel("Status: OK")    // macOS 文本标签
 
 trayMenu := app.NewMenu()
@@ -119,7 +120,10 @@ tray.SetMenu(trayMenu)
 tray.OnClick(func() { ... })
 tray.OnRightClick(func() { ... })
 tray.OnDoubleClick(func() { ... })
+// 另有 OnRightDoubleClick / OnMouseEnter / OnMouseLeave
 ```
+
+托盘行为修复：Linux 上 `Run()` 之后创建的托盘不再丢失（v3.1.0）；Windows 右键（`WM_CONTEXTMENU`）可正常弹菜单（beta.30）；macOS 点击类型判定修正（beta.16）。
 
 ### 消息对话框
 
@@ -137,6 +141,8 @@ d.SetDefaultButton(yes)
 d.SetCancelButton(no)
 d.Show()
 ```
+
+⚠️ **在 `app.Run()` 之前弹对话框什么都不做**（v3.1.0 起；旧版会永久阻塞）。放到 `ApplicationStarted` 或服务 `ServiceStartup` 之后。
 
 ### 文件对话框
 
@@ -186,8 +192,10 @@ dialog := app.Window.NewWithOptions(application.WebviewWindowOptions{
 
 ```go
 fileMenu.Add("Open").OnClick(func(ctx *application.Context) {
-    win := ctx.ClickedWindow()  // 触发菜单的窗口
-    item := ctx.MenuItem()      // 被点击的菜单项
+    item := ctx.ClickedMenuItem()   // 被点击的菜单项
+    checked := ctx.IsChecked()      // checkbox / radio 状态
+    data := ctx.ContextMenuData()   // 上下文菜单附带数据
+    // 当前窗口用 app.Window.Current()
 })
 ```
 
@@ -211,5 +219,6 @@ fileMenu.Add("Open").OnClick(func(ctx *application.Context) {
 
 - 应用入口（注册菜单） → `wails-application`
 - 窗口选项 `UseApplicationMenu` → `wails-window`
-- 全局快捷键（KeyBinding） → `wails-runtime-features`
+- 应用级 / 系统级快捷键（KeyBinding / GlobalShortcut） → `wails-runtime-features`
+- Linux GTK4 文件对话框走 xdg-desktop-portal（默认目录 / 过滤器展示与 GTK3 不同） → `dialogs-reference.md` 的 Linux Dialog Behavior
 - 菜单点击事件流 → `wails-events`

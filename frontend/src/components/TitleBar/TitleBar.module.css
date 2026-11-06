@@ -1,0 +1,65 @@
+/* TitleBar 样式：颜色全部取 --fd-* 变量，避免硬编码。
+   控制按钮遵循 Windows Fluent caption button 规范（46×36、0 圆角、透明），
+   标题文字偏轻量，不抢主内容焦点。
+   拖拽区由 TitleBar.tsx 内联 --wails-draggable 声明（drag / no-drag）。 */
+
+.root {
+  height: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  padding-right: 0;
+  background-color: var(--fd-bg-base);
+  border-bottom: 1px solid var(--fd-divider);
+  flex-shrink: 0;
+  color: var(--fd-text-muted);
+}
+
+.macSpacer {
+  width: 72px;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  line-height: 1.66;
+  color: var(--fd-text-secondary);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding-left: 8px;
+}
+
+/* Windows Fluent caption buttons：46×36、0 圆角、透明。
+   双类选择器提高权重，覆盖全局 ActionIcon subtle 变体的圆角 / hover 底色。 */
+.controlBtn.controlBtn,
+.closeBtn.closeBtn {
+  width: 46px;
+  min-width: 46px;
+  height: 36px;
+  min-height: 36px;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+  color: var(--fd-text-secondary);
+}
+
+.controlBtn.controlBtn:hover {
+  background-color: var(--fd-bg-hover);
+  color: var(--fd-text-primary);
+}
+
+.closeBtn.closeBtn:hover {
+  background-color: var(--fd-danger);
+  color: var(--mantine-color-white);
+}

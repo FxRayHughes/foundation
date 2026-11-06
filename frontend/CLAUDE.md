@@ -1,20 +1,21 @@
 [根目录](../CLAUDE.md) > **frontend**
 
-# frontend - React 19 + MUI 9 前端模块
+# frontend - React 19 + Mantine 9 前端模块
 
 ## 模块职责
 
-提供应用的用户界面。技术栈 React 19 + TypeScript（strict）+ MUI 9 + Vite 8，按 MVVM 分层（View / ViewModel hook / Style / Service）。提供干净的两栏布局（侧边栏 + 主内容）、自绘标题栏、方形圆角按钮主题、注册式多主题系统。生产构建产物 `frontend/dist` 由 `main.go` 通过 `embed.FS` 打入 Go 二进制。
+提供应用的用户界面。技术栈 React 19 + TypeScript（strict）+ Mantine 9 + CSS Modules + Vite 8，按 MVVM 分层（View / ViewModel hook / Style / Service）。提供干净的两栏布局（侧边栏 + 主内容）、自绘标题栏、方形圆角按钮主题、注册式多主题系统。生产构建产物 `frontend/dist` 由 `main.go` 通过 `embed.FS` 打入 Go 二进制。
 
 ## 入口与启动
 
 - HTML 入口：`frontend/index.html`
-- TS 入口：`frontend/src/main.tsx`（创建 React 19 root）
-- 应用根：`frontend/src/App.tsx`（注册主题预设 + `<FoundationThemeProvider>` + `AppLayout` + `HomePage`）
+- TS 入口：`frontend/src/main.tsx`（`import '@/styles'` 引入全局样式 + 创建 React 19 root）；子窗口入口 `frontend/child.html` + `src/child.tsx`；托盘面板入口 `frontend/systray.html` + `src/systrayEntry.tsx`。三个入口都挂 `<I18nProvider><FoundationThemeProvider>`，经 `appsettings:changed` 事件保持主题 / 语言同步
+- 应用根：`frontend/src/App.tsx`（注册主题预设 / locale + `<I18nProvider>` + `<FoundationThemeProvider>`（内含 `MantineProvider`）+ `PreferencesProvider` + `RouterProvider` + `AppLayout`）
 - Vite 配置：`frontend/vite.config.ts`
   - dev server 绑定 `127.0.0.1:9245`（可通过 `WAILS_VITE_PORT` 覆盖）
   - 别名：`@ → src/`、`@bindings → bindings/`
   - 启用 `@vitejs/plugin-react` + `@wailsio/runtime/plugins/vite`
+  - 多入口：`build.rolldownOptions.input = { main: index.html, child: child.html, systray: systray.html }`（Vite 8 用 `rolldownOptions`，见「骨架屏与首屏优化」的分包规则）
 
 ## 对外接口
 
@@ -24,10 +25,15 @@
 |----------|----------|----------|
 | 方法调用 | `GreetService.greet(name)` | `src/services/greet/GreetService.ts` 包装 `@bindings/foundation/internal/services/greet` |
 | 偏好读写 | `PreferencesService.{get/set/list/delete/reset}` | `src/services/preferences/PreferencesService.ts` |
-| 应用设置 | `AppSettingsService.{get,setThemeChoice,setCustomTheme,setLocaleChoice,...}` | `src/services/appsettings/AppSettingsService.ts` |
+| 应用设置 | `AppSettingsService.{get,setThemeChoice,setCustomTheme,resetCustomTheme,setLocaleChoice,onChanged}` | `src/services/appsettings/AppSettingsService.ts` |
 | 数据存储 | `StorageService.{getStats,setCustomPath,resetPath}` | `src/services/storage/StorageService.ts` |
 | 原生对话框 | `NativeDialogs.{openFile,openFiles,openDirectory,saveFile,confirm,info,warning,error}` | `src/services/dialogs/NativeDialogs.ts` |
+| 表格导出 | `ExportService.saveCSV({ defaultFilename, content, title?, filterLabel? })` / `saveXLSX({ defaultFilename, table, title?, filterLabel? })`：原生「另存为」→ 后端 `exportsvc.WriteCSV`（UTF-8 BOM）/ `WriteXLSX`（excelize，表头加粗冻结、数字保持数值），统一 `filex.WriteAtomic` 落盘；取消返回 `null`，写失败 reject；`title` / `filterLabel` 由调用方传 `t()` 结果 | `src/services/export/ExportService.ts` 包装 `@bindings/foundation/internal/services/exportsvc` |
+| 子进程 | `SubprocessService`（白名单命令） | `src/services/subprocess/SubprocessService.ts` |
+| 子窗口 | `ChildWindowService.{open,close,list}` + 事件总线 `broadcast` / `onBroadcast` / `sendToWindow` | `src/services/childwindow/` |
+| 系统托盘 | `SystrayService.{enable,disable,isEnabled,setMenuLabels}`（开关由后端持久化到 preferences `systray.enabled`，启动自动恢复） | `src/services/systray/SystrayService.ts` 包装 `@bindings/foundation/internal/app/systrayservice` |
 | 事件订阅 | `time` 事件 → `useTimeEvent()` | `src/shared/hooks/useTimeEvent.ts` |
+| 事件订阅 | `appsettings:changed`（payload = 字段名）→ `AppSettingsService.onChanged(cb)`，`FoundationThemeProvider`（200ms 防抖）/ `I18nProvider` 据此重拉 | `src/services/appsettings/AppSettingsService.ts` |
 | 窗口控制 | 最小化 / 最大化 / 关闭 | `src/components/TitleBar/useWindowControls.ts` 调用 `Window.Minimise/Maximise/Close` |
 
 ## 关键依赖与配置
@@ -35,7 +41,7 @@
 `frontend/package.json` 关键字段：
 
 - `type: module`
-- 运行时依赖：`react ^19.2.6`、`react-dom ^19.2.6`、`@mui/material ^9.0.1`、`@mui/icons-material ^9.0.1`、`@emotion/react`、`@emotion/styled`、`@wailsio/runtime` (latest)
+- 运行时依赖：`react ^19.2.6`、`react-dom ^19.2.6`、`@mantine/core 9.7.5`、`@mantine/hooks 9.7.5`、`@mantine/charts 9.7.5`（+ `recharts 3.10.1`）、`mantine-datatable 9.4.0`、`@tabler/icons-react 3.50.0`、`clsx`、`@wailsio/runtime 3.1.0`（锁定版本，不用 latest）
 - 开发依赖：`vite ^8.0.14`、`@vitejs/plugin-react ^6.0.2`、`typescript ^6.0.3`、`@types/react`、`@types/react-dom`
 - 脚本：`dev` / `build` / `build:dev` / `preview` / `typecheck`
 
@@ -45,7 +51,7 @@
 
 完整规范见 [DEVELOPMENT.md](./DEVELOPMENT.md)。核心四条铁律：
 
-1. **每个组件 / 页面独立文件夹**，至少含 `<Name>.tsx`（View）、`use<Name>.ts`（ViewModel）、`<Name>.styles.ts`（Style）、`index.ts`（出口）。带文案的页面再补 `lang/{<code>.ts, index.ts}`。
+1. **每个组件 / 页面独立文件夹**，至少含 `<Name>.tsx`（View）、`use<Name>.ts`（ViewModel）、`<Name>.module.css`（Style，CSS Modules）、`index.ts`（出口）。带文案的页面再补 `lang/{<code>.ts, index.ts}`。Style 文件标准范例：`src/components/Sidebar/Sidebar.module.css`（Sidebar 状态全部来自 `useRouter()` / `usePreferences()`，因此省略了 ViewModel）。
 2. **View 不写业务**（仅消费 ViewModel），**ViewModel 不返回 JSX**（仅返回数据 + 回调）。
 3. **ViewModel 不直接 import** `@wailsio/runtime` 或 `@bindings/*`，必须经 `services/` 层。**ViewModel 不持有翻译后的字符串** —— 暴露 i18n key 给 View，由 View 调 `t()`。
 4. **任何人类可见字符串必须走 `t()`** —— 见下方"i18n 规范"小节。
@@ -58,18 +64,18 @@
 
 1. **路由表是唯一事实源** —— 所有页面必须在 `src/routes.tsx` 注册一条 `RouteDefinition`，禁止在任何组件里硬编码 `if (page === 'xxx')` 或独立的页面切换 state。
 2. **导航只能通过 `useRouter().navigate(id)`** —— 不允许传递 `onNavigate` 回调、不允许直接读写"当前页"的全局状态、不允许新建并行的路由系统。
-3. **页面 = pages/<Name>/ 文件夹，三件齐全** —— `<Name>.tsx` + `use<Name>.ts`（即使空也要有，便于扩展）+ `<Name>.styles.ts` + `index.ts`，与其他组件相同 MVVM 结构。
+3. **页面 = pages/<Name>/ 文件夹，三件齐全** —— `<Name>.tsx` + `use<Name>.ts`（即使空也要有，便于扩展）+ `<Name>.module.css` + `index.ts`，与其他组件相同 MVVM 结构。
 4. **`AppLayout` 不接收 `children`** —— 主内容由 `<RouterOutlet />` 从路由表渲染。新增页面**绝不**改 `AppLayout`。
 5. **Sidebar 不维护菜单数组** —— 它从 `useRouter()` 的 `primary` / `footer` 自动读取，新增带导航的页面只需在 `routes.tsx` 设置 `slot`。
 
 ### 添加一个新页面（标准操作）
 
 ```tsx
-// 1. 写页面：pages/AccountPage/{AccountPage.tsx, useAccountPage.ts, AccountPage.styles.ts, index.ts}
+// 1. 写页面：pages/AccountPage/{AccountPage.tsx, useAccountPage.ts, AccountPage.module.css, index.ts}
 //    若有人类可见文案，再加 pages/AccountPage/lang/{zh-CN.ts, en-US.ts, index.ts}
 
 // 2. 在 src/routes.tsx 追加一项
-import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
+import { IconUser } from '@tabler/icons-react';
 import { AccountPage } from '@/pages/AccountPage';
 
 export const routes: RouteDefinition[] = [
@@ -78,7 +84,7 @@ export const routes: RouteDefinition[] = [
     id: 'account',           // 唯一；导航用 navigate('account')
     labelKey: 'route.account', // i18n key（公用 locale 已注册），Sidebar tooltip 等读这个
     label: 'Account',         // 兜底字面量（labelKey 缺失时用）
-    icon: PersonRoundedIcon,  // Sidebar 图标
+    icon: IconUser,           // Sidebar 图标（@tabler/icons-react 的 Icon 组件）
     element: <AccountPage />,
     slot: 'primary',          // 'primary' 顶部 / 'footer' 底部 / 'hidden' 不上 Sidebar
     keepAlive: false,         // 可选；默认 false。true 表示离开后保留页面 state
@@ -167,10 +173,14 @@ src/routes.tsx            # 路由表（唯一事实源）
   - `presets/dark.ts`：暗色预设（`foundation-dark`）
   - `presets/obsidian.ts`：纯黑紫调预设（`foundation-obsidian`）
   - `registry.ts`：单例 `themeRegistry`（`register` / `list` / `subscribe`）
-  - `buildMuiTheme.ts`：preset → MUI Theme 编译器（含 MUI palette/components 全套覆盖）
-  - `ThemeProvider.tsx`：`<FoundationThemeProvider>` + `useFoundationTheme()`（运行时切换；mount 时异步从 `AppSettingsService` 拉 themeChoice + customTheme，hydrate 进 registry）
+  - `buildMantineTheme.ts`：preset → Mantine theme 编译器。① `cssVariablesResolver` 把 `FoundationPalette` 注入为 CSS 变量 `--fd-*`；② `accent` 生成 10 级色阶注册为 Mantine 主色 `foundation`（`primaryColor`）；③ Mantine 语义变量（`--mantine-color-body/text/dimmed/default*/error/anchor`）映射到 `--fd-*`；④ 导出 `FOUNDATION_CSS_VARS`（槽位 → `'var(--fd-xxx)'` 字符串对照表）
+  - `mantineComponents.module.css`：Mantine 原生组件（Button / ActionIcon / Paper / Card / Popover / Menu / Input / Tooltip）的全局样式覆盖，由 `buildMantineTheme` 经 `classNames` 注入
+  - `useFoundationPalette.ts`：JS 侧读取当前预设的真实色值（仅 canvas / 算透明度等必须拿具体色值的场景）
+  - `ThemeProvider.tsx`：`<FoundationThemeProvider>`（渲染 `MantineProvider`，`forceColorScheme={preset.mode}`）+ `useFoundationTheme()`（运行时切换；mount 时异步从 `AppSettingsService` 拉 themeChoice + customTheme，hydrate 进 registry）
   - `customTheme.ts`：用户自定义主题（`foundation-custom`）—— `seedFromPreset` / `previewCustomTheme` / `hydrateCustomTheme` / `unregisterCustomTheme` / `parseStoredCustomTheme`。**持久化已迁到 SQLite**（`appsettings.custom_theme` JSON 字段），不再走 localStorage
   - `index.ts`：`registerFoundationThemes()` 启动时调用一次（幂等）
+  - 预设可选字段 `mantineOverrides`（`MantineThemeOverride`）：对单个预设深合并覆盖 Mantine theme（字号 / 圆角 / 组件 defaultProps），颜色仍只通过 `palette` 表达
+- 全局样式：`src/styles/index.ts`（按序 import `@mantine/core/styles.css` → `@mantine/charts/styles.css` → `mantine-datatable/styles.css` → `global.css`），由 `main.tsx` / `child.tsx` 以 `import '@/styles'` 引入一次；`global.css` 替代原 CssBaseline（body 底色 / 滚动条），颜色只用 `--fd-*`。
 - 用户偏好系统：`src/preferences/`（与主题分离 —— 主题管"配色"，偏好管"行为/显隐"）。`<PreferencesProvider>` + `usePreferences()`，**持久化走 SQLite**（`preferences` 表，每键一行）。mount 时异步拉取，UI 用默认值兜底首屏。
 - 国际化系统：`src/i18n/`（注册式 + 页面级语言包；详见 `.claude/skills/foundation-i18n/SKILL.md`）。
   - 公用 locale：`src/i18n/locales/<code>.ts`（仅放跨页面 keys：`app.*` / `sidebar.*` / `titleBar.*` / `route.*` / `common.*`）
@@ -178,11 +188,12 @@ src/routes.tsx            # 路由表（唯一事实源）
   - `<I18nProvider>` 在 Provider 链最外层；组件用 `useT()` / `useI18n()` 消费
   - localeChoice **走 SQLite**（`appsettings.locale_choice`），'auto' 跟随浏览器 `navigator.languages`
 - **i18n 铁律**：任何"人类可见字符串"必须经 `t('key')` 输出 —— 包括 JSX 文本、`aria-label`、`placeholder`、Tooltip title、按钮文字、错误文案、常量字符串。**禁止**在 `.tsx` / `.ts` 里硬编码中文 / 英文字面量给用户看。新增页面必须配套 `lang/{<code>.ts}`，已有 locale **必须** keys 完全对齐。
-- 颜色铁律：组件样式只能从 `theme.palette.foundation.*` 取值，禁止硬编码十六进制。
-- 圆角规则（**方形圆角设计**）：
-  - 按钮 / IconButton：`borderRadius: 6`
-  - Paper / 卡片 / 容器：`borderRadius: 8`
-  - 不再使用圆形按钮（`borderRadius: 999`）
+- 颜色铁律：组件样式（`<Name>.module.css`）只能用 `var(--fd-*)`；JS 侧需要引用颜色（`@mantine/charts` 的 `color`、内联 `style`、SVG `fill`）用 `FOUNDATION_CSS_VARS.*`；必须拿真实色值时才用 `useFoundationPalette()`。除 `styles/themes/presets/*.ts` 外禁止硬编码十六进制；Mantine 组件不传 `color` 即走主色 `foundation`，**不要**传内置色名（`color="blue"` 等），状态色用 `var(--fd-danger/success/warning)`。
+- 组件库铁律：UI 只用 Mantine（`@mantine/core` / `@mantine/hooks`）；图表用 `@mantine/charts`，高级图表（Heatmap / Funnel / Radar / Candlestick / Sankey / Gantt / Treemap / Zoomable）用 `src/components/x-pro/charts`；表格用 `src/components/x-pro/data-grid`（基于 `mantine-datatable`，列定义 `DataGridColumn<T>`）。**禁止**引入 `@mui/*` / `@emotion/*`、`sx` / `styled` 写法、CSS-in-JS。详见 `.claude/skills/foundation-mantine/SKILL.md`（及 `foundation-mantine-components` / `foundation-mantine-icons` / `foundation-mantine-charts` / `foundation-mantine-datatable`）。
+- 圆角规则（**方形圆角设计**）：theme `radius` 刻度为 xs 2 / sm 4 / md 8 / lg 12 / xl 16，`defaultRadius: 'sm'`
+  - 按钮 / ActionIcon：Mantine 默认 `radius="sm"`（4px）；自绘按钮 / 列表项写 `border-radius: 6px`
+  - Paper / 卡片 / 容器：`8px`（`radius="md"`）
+  - 不使用圆形按钮（`999` / `radius="xl"` 当胶囊）
 - 拖拽：`style={{ '--wails-draggable': 'drag' }}`；按钮区用 `'no-drag'` 阻止穿透。
 
 ## 骨架屏与首屏优化
@@ -190,10 +201,19 @@ src/routes.tsx            # 路由表（唯一事实源）
 启动 → React mount 之间的白屏在 wails 桌面应用上特别明显（Windows / Linux 无边框窗口尤甚）。本脚手架内置三层方案：
 
 1. **首屏静态骨架（消除白屏）** —— `frontend/index.html` 内联了一段 CSS + 静态 HTML 骨架（标题栏 36 + Sidebar 64 + 主内容三段），webview 拿到 HTML 立刻可见，色值与默认 light 主题对齐，`prefers-color-scheme: dark` 时切到 dark preset 颜色。React mount 完成后由 `main.tsx` 在 rAF 后给 `#startup-skeleton` 加 `.fade-out` 触发 160ms 淡出，再移除节点（兜底 800ms 强制移除）。**不要把骨架塞进 `#root`** —— `createRoot.render()` 会清空根节点，骨架就废了；它必须是 `#root` 的兄弟。
-2. **页面级骨架屏组件** —— `src/components/Skeleton/{Skeleton.tsx, .styles.ts}` 提供 `<Skeleton variant="rect|text|circle">` 与 `<SkeletonText lines={n} />`。颜色取 `theme.palette.foundation.bg.elevated/hover`，shimmer 用 emotion `keyframes`，自动尊重 `prefers-reduced-motion`。每个 page 同目录补一份 `<Name>.skeleton.tsx` 复刻版式（避免"骨架→真实"切换时跳动）。
+2. **页面级骨架屏组件** —— `src/components/Skeleton/{Skeleton.tsx, Skeleton.module.css}` 提供 `<Skeleton variant="rect|text|circle">` 与 `<SkeletonText lines={n} />`。颜色取 `var(--fd-bg-elevated)` / `var(--fd-bg-hover)`，shimmer 用 CSS `@keyframes`（写在 module.css 里），自动尊重 `prefers-reduced-motion`。每个 page 同目录补一份 `<Name>.skeleton.tsx` 复刻版式（避免"骨架→真实"切换时跳动）。
 3. **lazy import + Suspense 兜底** —— 在 `RouteDefinition` 上加 `fallback?: ReactNode`（推荐传该页面的骨架屏组件）。`<RouterOutlet />` 自动用 `<Suspense fallback={route.fallback}>` 包裹每个 element。重型页面（`SettingsPage` 含调色板编辑器）用 `React.lazy(() => import('@/pages/X/X'))` 按需加载；轻量页面（`HomePage`）保持同步即可。**lazy 必须 import 具体文件**（如 `@/pages/SettingsPage/SettingsPage`），不要走 `index.ts` —— 否则与其他静态 import 同 index 的代码合并到主 bundle，分包失效。
 
 新增页面时建议三件齐：`<Name>.tsx` + `<Name>.skeleton.tsx` + 在 `routes.tsx` 配 `fallback`。骨架屏不消费 `t()` —— 它是版式占位，不出文字。
+
+### 分包规则（首屏 chunk 不被懒加载页面污染）
+
+源自 `frontend/vite.config.ts` 注释，违反任何一条都会让懒加载页面的 chunk 在首屏被预加载：
+
+- **Vite 8（rolldown）用 `build.rolldownOptions`**：`rollupOptions` 只是兼容别名，两者同时写时 `rollupOptions` 会被忽略。多入口（main / child / systray）写在 `rolldownOptions.input`；分包交给 rolldown 默认策略。
+- **懒加载页面的骨架用独立样式**：`<Name>.skeleton.tsx` 配 `<Name>.skeleton.module.css`，**不要** import 懒加载页面自己的 `<Name>.module.css`。骨架随首屏（`routes.tsx` 静态 import）加载，共用 CSS Module 会把懒加载页面 chunk 拉进首屏预加载。参考 `SettingsPage.skeleton.module.css` / `XProDemoPage.skeleton.module.css`；同步加载的 `HomePage` 骨架可直接复用 `HomePage.module.css`。
+- **语言包注册从 `'<sub>/lang'` 导入**：`App.tsx` 用 `@/pages/<Name>/lang`，`SettingsPage/lang/index.ts` 用 `../<sub>/lang`，**不要**从 `'<sub>'` / `'<Name>'` 的 index 导入 —— index 会连带导出 View，把整个页面静态拉进来。
+- 首屏 chunk 变大时，优先排查"静态 import 链误把懒加载页面拉进来"。
 
 ## 持久化（SQLite + GORM，铁律）
 
@@ -271,46 +291,44 @@ await NativeDialogs.error(title, message);
 
 ## Icon 规范（铁律）
 
-**任何 UI 中的图标必须用 `@mui/icons-material` 提供的 React 组件**，禁止使用：
+**任何 UI 中的图标必须用 `@tabler/icons-react` 提供的 React 组件**，禁止使用：
 
 - ❌ Emoji 当 icon（`📁` `🗑️` `⚙️` `🌐` `❤️` 等）—— 跨平台渲染不一致（Windows / macOS / Linux 字形差异巨大）、不可换色、不能跟随 `currentColor`、屏幕阅读器朗读不可控、违反方圆设计语言
 - ❌ Unicode 几何符号（`✓` `✗` `←` `→` `★` 等）—— 字体可用性不稳，方圆几何不一致
-- ❌ 内联 `<svg>` 字面量（除非确实没有合适的 MUI Icon）—— 缺失统一尺寸 / 配色规范
-- ❌ 第三方 icon 包（`react-icons` / `lucide-react` / `heroicons` 等）—— 视觉语言会与 MUI 9 体系冲突
+- ❌ 内联 `<svg>` 字面量（除非 Tabler 确实没有合适图标）—— 缺失统一尺寸 / 描边规范
+- ❌ 其它 icon 包（`@mui/icons-material` / `react-icons` / `lucide-react` / `heroicons` 等）—— 线宽与几何语言会与 Tabler 体系冲突
 
 ✅ 正确写法：
 
 ```tsx
-import FolderOpenRoundedIcon from '@mui/icons-material/FolderOpenRounded';
-import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import { Button } from '@mantine/core';
+import { IconFolderOpen, IconRestore, IconTrash } from '@tabler/icons-react';
 
-<button>
-  <FolderOpenRoundedIcon fontSize="small" />
+<Button leftSection={<IconFolderOpen size={20} stroke={1.75} />}>
   {t('xxx.label')}
-</button>
+</Button>
 ```
 
-**风格选择**：脚手架统一使用 `*Rounded` 系列（与方圆设计语言对齐 —— `borderRadius: 6/8` 的圆角）。其他系列：
-- `*Outlined`：仅在需要"留白线条"对比 filled 时（如表格里的 favorite 切换态）
-- `*Filled`（默认无后缀）：在背景色卡片上做 emphasis 时用
-- 不要混用 `*Sharp`（直角，与圆角语言冲突）和 `*TwoTone`（彩色，与 monochrome 不兼容）
+**风格选择**：统一使用默认的 outline（线条）图标，`stroke={1.75}`（与方圆设计语言的圆角线条对齐）。`IconXxxFilled` 实心变体仅在需要强调 / 切换态对比时使用（如收藏已选中），不要在同一区域混用。
 
-**尺寸规则**：
-- `fontSize="small"` (20px)：行内 / 按钮内 / 表格行
-- `fontSize="medium"` (24px)：默认
-- `fontSize="large"` (35px)：状态卡片 / 空状态展示
-- 自定义尺寸用 `sx={{ fontSize: ... }}`，不要用 `style` 内联
+**尺寸规则**（`size` 单位 px）：
+- `16`–`18`：行内文本 / 小号按钮（`size="xs"`）/ 表格单元格
+- `20`：按钮 `leftSection` / ActionIcon / 表格行（默认首选）
+- `24`：Sidebar 导航图标
+- `32`–`40`：状态卡片 / 空状态 / 子窗口提示图标
+- 不要用 `style` 内联改尺寸，用 `size` prop；需要额外样式时给 `className`
 
 **色彩**：
-- 默认 `color="inherit"`（跟随 currentColor）—— 让按钮 / 文本颜色驱动 icon 颜色
-- 强语义状态可显式取 `theme.palette.foundation.status.danger / success / warning`
+- 默认跟随 `currentColor` —— 让按钮 / 文本颜色驱动 icon 颜色
+- 需要语义色时在 `*.module.css` 里写 `color: var(--fd-accent)` / `var(--fd-danger)` / `var(--fd-success)` / `var(--fd-warning)`，不要给 icon 传十六进制
+
+**类型**：路由 / 配置里存图标组件时用 `import type { Icon } from '@tabler/icons-react'`（如 `RouteDefinition.icon?: Icon`）。
 
 **aria**：
 - 装饰性 icon（旁边已有文字）→ 不需要 aria-label，让 screen reader 跳过即可
-- 纯 icon 按钮（无可见文字）→ 在外层按钮 / IconButton 上写 `aria-label={t('...')}`，不在 icon 本身写
+- 纯 icon 按钮（无可见文字）→ 在外层 `ActionIcon` / 按钮上写 `aria-label={t('...')}`，不在 icon 本身写
 
-**新增 Icon 时优先级**：先在 [@mui/icons-material 列表](https://mui.com/material-ui/material-icons/) 搜 → 找不到再考虑写自定义 SVG（放在 `src/components/icons/` 并按 MUI Icon 风格封装）。
+**新增 Icon 时优先级**：先在 [Tabler Icons](https://tabler.io/icons) 搜 → 找不到再考虑写自定义 SVG（放在 `src/components/icons/`，按 Tabler 风格封装：24 viewBox、`stroke="currentColor"`、接收 `size` / `stroke` props）。详见 `.claude/skills/foundation-mantine-icons/SKILL.md`。
 
 ## 设置页：子目录隔离规范
 
@@ -320,7 +338,7 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 SettingsPage/
 ├── SettingsPage.tsx           # 框架：左列入口列表 + 右列分发
 ├── SettingsPage.skeleton.tsx
-├── SettingsPage.styles.ts     # 仅"框架"样式：root / list / detail / 共享 section
+├── SettingsPage.module.css   # 仅"框架"样式：root / list / detail / 共享 section
 ├── useSettingsPage.ts         # 仅管 items + activeItemId（不持业务状态）
 ├── index.ts                   # 出口：SettingsPage / Skeleton / registerSettingsPageLocales
 ├── lang/                      # 顶层文案：eyebrow / title / list / themes
@@ -330,7 +348,7 @@ SettingsPage/
 ├── personalization/           # 子页面 1：主题 + 显示偏好 + 自定义主题
 │   ├── Personalization.tsx
 │   ├── usePersonalization.ts
-│   ├── Personalization.styles.ts
+│   ├── Personalization.module.css
 │   ├── lang/{zh-CN,en-US,index}.ts
 │   └── index.ts               # 出口：Personalization + registerPersonalizationLocales
 ├── language/                  # 子页面 2：语言选择
@@ -341,9 +359,9 @@ SettingsPage/
 
 ### 加新子页面（标准操作）
 
-1. 在 `SettingsPage/<sub>/` 下建一套 `<Sub>.tsx` + `use<Sub>.ts` + `<Sub>.styles.ts` + `index.ts` + `lang/{zh-CN,en-US,index}.ts`
+1. 在 `SettingsPage/<sub>/` 下建一套 `<Sub>.tsx` + `use<Sub>.ts` + `<Sub>.module.css` + `index.ts` + `lang/{zh-CN,en-US,index}.ts`
 2. `<Sub>/lang/index.ts` 实现 `register<Sub>Locales()`（参考 `database/lang/index.ts`）
-3. `SettingsPage/lang/index.ts` 内 `register<Sub>Locales()` 添加调用
+3. `SettingsPage/lang/index.ts` 内 `import { register<Sub>Locales } from '../<sub>/lang'`（从 `lang` 导入，不从 `../<sub>` index，避免把子页面 View 拉进首屏 chunk）并添加调用
 4. `SettingsPage/useSettingsPage.ts` 的 `items` 追加一项 `{ id, labelKey, descriptionKey }`
 5. `SettingsPage/lang/{zh-CN,en-US}.ts` 在 `settings.list.<id>.{label,description}` 加文案
 6. `SettingsPage.tsx` 右列分发处加 `{vm.activeItem.id === '<id>' && <Sub />}`
@@ -351,7 +369,7 @@ SettingsPage/
 **约束**：
 - 子页面**不向外暴露内部业务**（只导出顶层 View 组件 + register 函数）
 - 子页面文案 **namespace** 严格对应：`settings.<sub>.*`（不要塞顶层 `settings.sections.<sub>` 的扁平形态）
-- 子页面**专属样式**写在 `<Sub>.styles.ts`；**共享样式**（section 卡片标题等）走 `SettingsPage.styles.ts`，子页面 import 后混用
+- 子页面**专属样式**写在 `<Sub>.module.css`；**共享样式**（section 卡片标题 / hint 等）走 `SettingsPage.module.css`，子页面 `import shared from '../SettingsPage.module.css'` 后与自身 `classes` 混用（`className={clsx(shared.section, classes.card)}`）；颜色一律 `var(--fd-*)`
 - 子页面之间禁止互相 import —— 如有公共逻辑，提到 `services/` 或 `shared/`
 
 ### 反例
@@ -363,7 +381,7 @@ SettingsPage/
 
 ## 数据模型
 
-`src/components/Sidebar/useSidebar.ts` 内有占位的 `SidebarItem` 类型，仅作演示。真实业务接入时把 `items` 替换为路由表 / 模块清单。
+Sidebar 不持有数据模型 —— 导航项完全来自 `src/routes.tsx` 的 `RouteDefinition`（`icon?: Icon` 为 `@tabler/icons-react` 组件）。数据表格的列模型见 `src/components/x-pro/data-grid/types.ts`（`DataGridColumn<T>` / `DataGridRow`）。
 
 ## 测试与质量
 
@@ -382,16 +400,18 @@ SettingsPage/
 - Q：标题栏拖拽不工作？
   - A：检查根容器是否设置了 `'--wails-draggable': 'drag'`，且按钮区设置了 `'no-drag'`。Windows / Linux 无边框窗口完全依赖此 CSS 变量。
 - Q：macOS 上为什么标题栏左侧空了一块？
-  - A：那是给系统红绿灯按钮预留的 72px spacer（`TitleBar.tsx` 中 `isMac && <Box sx={styles.macSpacer} />`）。
+  - A：那是给系统红绿灯按钮预留的 72px spacer（`TitleBar.tsx` 中 `isMac && <div className={classes.macSpacer} />`）。
 
 ## 相关文件清单
 
 ```
 frontend/
 ├── DEVELOPMENT.md             # 前端开发规范（MVVM）
-├── index.html                 # HTML 入口
+├── index.html                 # HTML 入口（主窗口，含内联首屏骨架）
+├── child.html                 # 子窗口 HTML 入口
+├── systray.html               # 托盘面板 HTML 入口
 ├── package.json               # 依赖与脚本
-├── vite.config.ts             # Vite 配置 + 路径别名
+├── vite.config.ts             # Vite 配置 + 路径别名 + rolldownOptions 多入口（main / child / systray）
 ├── tsconfig.json              # TS strict + paths
 ├── public/                    # 静态资源
 │   ├── wails.png
@@ -399,7 +419,9 @@ frontend/
 │   └── Inter-Medium.ttf
 ├── bindings/                  # wails3 generate bindings 产物（.gitignore）
 └── src/
-    ├── main.tsx               # React 19 createRoot
+    ├── main.tsx               # import '@/styles' + React 19 createRoot
+    ├── child.tsx              # 子窗口入口（I18nProvider + FoundationThemeProvider，按 query 路由）
+    ├── systrayEntry.tsx       # 托盘面板入口（I18nProvider + FoundationThemeProvider + SystrayPanel）
     ├── App.tsx                # I18nProvider + ThemeProvider + PreferencesProvider + RouterProvider
     ├── vite-env.d.ts
     ├── routes.tsx             # 路由表（唯一事实源）
@@ -419,9 +441,13 @@ frontend/
     │   ├── PreferencesProvider.tsx
     │   └── index.ts
     ├── styles/
+    │   ├── index.ts           # 全局样式入口（Mantine core/charts/datatable 样式 + global.css）
+    │   ├── global.css         # 全局基础样式（替代 CssBaseline），只用 --fd-*
     │   └── themes/                # 注册式主题系统（详见 foundation-theme SKILL）
     │       ├── types.ts
-    │       ├── buildMuiTheme.ts
+    │       ├── buildMantineTheme.ts   # preset → Mantine theme + --fd-* CSS 变量 + FOUNDATION_CSS_VARS
+    │       ├── mantineComponents.module.css  # Mantine 原生组件全局覆盖
+    │       ├── useFoundationPalette.ts
     │       ├── registry.ts
     │       ├── ThemeProvider.tsx
     │       ├── customTheme.ts # 用户自定义主题（foundation-custom）
@@ -434,26 +460,41 @@ frontend/
     │       └── useTimeEvent.ts
     ├── services/
     │   ├── index.ts
-    │   └── greet/
-    │       └── GreetService.ts
+    │   ├── greet/GreetService.ts
+    │   ├── preferences/PreferencesService.ts
+    │   ├── appsettings/AppSettingsService.ts   # 含 onChanged（appsettings:changed）
+    │   ├── storage/StorageService.ts
+    │   ├── dialogs/NativeDialogs.ts
+    │   ├── export/ExportService.ts            # saveCSV / saveXLSX（原生「另存为」+ 后端 exportsvc）
+    │   ├── subprocess/SubprocessService.ts
+    │   ├── childwindow/                       # ChildWindowService + 事件总线 bus.ts
+    │   └── systray/SystrayService.ts          # enable / disable / isEnabled / setMenuLabels
     ├── components/
-    │   ├── AppLayout/         # 两栏外壳（TitleBar + Sidebar + RouterOutlet）
+    │   ├── AppLayout/         # 两栏外壳（TitleBar + Sidebar + RouterOutlet）；useAppLayout 推送托盘菜单文案 + 处理 app:open-settings
     │   ├── TitleBar/          # 自绘标题栏 + 三联控制按钮（按 OS 隐藏）
     │   ├── Sidebar/           # 左侧导航 + 底部 Settings 按钮
-    │   └── Skeleton/          # 骨架屏基础组件（Skeleton / SkeletonText）
+    │   ├── Skeleton/          # 骨架屏基础组件（Skeleton / SkeletonText）
+    │   ├── ChildTitleBar/     # 子窗口标题栏（关闭按钮 aria-label = t('titleBar.controls.close')）
+    │   └── x-pro/
+    │       ├── charts/        # 高级图表（Heatmap / Funnel / Radar / Candlestick / Sankey / Gantt / Treemap / Zoomable）
+    │       └── data-grid/     # 数据表格（mantine-datatable 封装，DataGridColumn<T> + Pro/Premium 功能）
+    ├── childwindows/          # 子窗口类型（Confirm / Message / Blank，详见 foundation-childwindow SKILL）
+    ├── systray/               # 托盘面板模块系统（详见 foundation-systray SKILL）
     └── pages/
         ├── HomePage/          # 示例页：Greet 调用 + Time 事件
         │   ├── HomePage.tsx
         │   ├── HomePage.skeleton.tsx  # ← 该页骨架屏
         │   ├── useHomePage.ts
-        │   ├── HomePage.styles.ts
+        │   ├── HomePage.module.css
         │   ├── lang/{zh-CN,en-US,index}.ts
         │   └── index.ts
         └── SettingsPage/      # 设置页：主题 / 显示偏好 / 自定义主题 / 语言
             ├── SettingsPage.tsx
             ├── SettingsPage.skeleton.tsx
+            ├── SettingsPage.skeleton.module.css   # 骨架独立样式（不与懒加载页面共用）
             ├── useSettingsPage.ts
-            ├── SettingsPage.styles.ts
+            ├── SettingsPage.module.css
+            ├── personalization/ language/ database/   # 子页面（各自 View / VM / module.css / lang）
             ├── lang/{zh-CN,en-US,index}.ts
             └── index.ts
 ```
@@ -468,3 +509,4 @@ frontend/
 - 2026-05-28（持久化迁移 SQLite）：后端引入 `internal/storage` 模块（modernc/sqlite + GORM AutoMigrate + WAL + 单连接池），暴露 `preferences` / `appsettings` / `storagesvc` 三个 Wails service；前端 `PreferencesProvider` / `FoundationThemeProvider` / `I18nProvider` 全部异步化，**移除 localStorage**，统一改走 `PreferencesService` / `AppSettingsService`；`customTheme` 不再写本地 storage（持久化由 `appsettings.custom_theme` 字段承担）；新增 `NativeDialogs` 服务封装 Wails v3 `Dialogs.*`，**禁止使用浏览器 alert/confirm/prompt**；设置页新增「数据存储」子项，支持原生「另存为」对话框切换数据库路径 + 重置回默认。
 - 2026-05-28（设置页子目录隔离）：`SettingsPage` 重构为「框架 + 子页面」结构 —— `personalization/` / `language/` / `database/` 三个子目录各自独立 `<Sub>.tsx` + `use<Sub>.ts` + `<Sub>.styles.ts` + `lang/`；顶层 `useSettingsPage` 仅管 items + activeItemId；新增子页面遵循同样规范（导出顶层 View + register 函数，文案命名空间 `settings.<sub>.*`）。
 - 2026-05-28（数据可视化 + 表清理 + Icon 规范）：升级 `@mui/x-charts@^9.3.0`；数据存储页新增双图（PieChart 占比 + 横向 BarChart 字节，颜色取自 `theme.palette.foundation.*`），表清单逐项清空（仅对 `Clearable=true` 的表启用，带原生确认对话框）；后端 `internal/storage/models.go` 引入 `ModelDescriptor`（labelKey / clearable），`storagesvc` 新增 `GetTableStats` / `ClearTable`；新增 Icon 规范铁律：禁止 emoji / Unicode / 第三方 icon 包，必须用 `@mui/icons-material` 的 `*Rounded` 系列（与方圆设计语言对齐）。
+- 2026-11-06（UI 库迁移 MUI → Mantine）：`@mui/*` / `@emotion/*` 全部移除，改用 `@mantine/core` 9.7.5 + `@mantine/hooks` + `@mantine/charts`（recharts 3.10.1）+ `mantine-datatable` 9.4.0 + `@tabler/icons-react` 3.50.0；主题编译器 `buildMuiTheme.ts` → `buildMantineTheme.ts`（`FoundationPalette` → CSS 变量 `--fd-*` + 主色 `foundation` 10 级色阶 + Mantine 语义变量映射，`FOUNDATION_CSS_VARS` / `useFoundationPalette()` 供 JS 侧），预设字段 `muiOverrides` → `mantineOverrides`；MVVM Style 文件由 `<Name>.styles.ts`（sx 工厂）改为 `<Name>.module.css`（CSS Modules），颜色一律 `var(--fd-*)`；全局样式 `src/styles/global.css` 经 `import '@/styles'` 引入；Icon 铁律改为 `@tabler/icons-react`；`@wailsio/runtime` 锁定 3.1.0。

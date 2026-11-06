@@ -1,11 +1,9 @@
 ---
-title: Multiple Windows
-description: Patterns and best practices for multi-window applications
-sidebar:
-  order: 3
+title: "Multiple Windows"
+description: "Patterns and best practices for multi-window applications"
+slug: "features/windows/multiple"
+sourcePath: "features/windows/multiple.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## Multi-Window Applications
 
@@ -61,6 +59,7 @@ func (a *App) ShowSettings() {
 ```
 
 **Key points:**
+
 - Main window always visible
 - Settings window created but hidden
 - Show settings on demand
@@ -358,6 +357,7 @@ parentWindow.AttachModal(childWindow)
 ```
 
 **Behaviour:**
+
 - Child stays above parent
 - Child moves with parent
 - Child blocks interaction to parent
@@ -365,7 +365,7 @@ parentWindow.AttachModal(childWindow)
 **Platform support:**
 
 | macOS | Windows | Linux |
-|-------|---------|-------|
+| --- | --- | --- |
 | ✅ | ❌ | ❌ |
 
 ### Modal Behaviour
@@ -429,6 +429,7 @@ app := application.New(application.Options{
 ```
 
 **Use cases:**
+
 - System tray applications
 - Background services
 - Menu bar applications (macOS)
@@ -782,11 +783,11 @@ type WindowState struct {
 
 ## Next Steps
 
-- [Window Basics](/features/windows/basics) - Learn the fundamentals of window management
-- [Window Events](/features/windows/events) - Handle window lifecycle events
-- [Events System](/features/events/system) - Deep dive into the event system
-- [Frameless Windows](/features/windows/frameless) - Create custom window chrome
+- [Window Basics](/features/windows/basics/) - Learn the fundamentals of window management
+- [Window Events](/features/windows/events/) - Handle window lifecycle events
+- [Events System](/features/events/system/) - Deep dive into the event system
+- [Frameless Windows](/features/windows/frameless/) - Create custom window chrome
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [multi-window example](https://github.com/wailsapp/wails/tree/master/v3/examples/multi-window).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [multi-window example](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/window).

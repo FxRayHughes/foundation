@@ -1,0 +1,51 @@
+.root {
+  overflow: hidden;
+}
+
+.svg {
+  display: block;
+  user-select: none;
+}
+
+.header {
+  fill: var(--fd-bg-surface);
+}
+
+.gridLine {
+  stroke: var(--fd-divider);
+  stroke-width: 1;
+  stroke-dasharray: 4 2;
+}
+
+.tickLabel {
+  font-size: 11px;
+  fill: var(--fd-text-secondary);
+}
+
+.dependency {
+  fill: none;
+  stroke: var(--fd-text-muted);
+  stroke-width: 1.5;
+}
+
+.arrowHead {
+  fill: var(--fd-text-muted);
+}
+
+.taskLabel {
+  font-size: 12px;
+  fill: var(--fd-text-primary);
+}
+
+.taskClickable {
+  cursor: pointer;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--fd-text-muted);
+  font-size: 13px;
+}

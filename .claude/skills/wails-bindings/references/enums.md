@@ -1,19 +1,18 @@
 ---
-title: Enums
-description: Automatic enum generation from Go constants
-sidebar:
-  order: 4
+title: "Enums"
+description: "Automatic enum generation from Go constants"
+slug: "features/bindings/enums"
+sourcePath: "features/bindings/enums.md"
 ---
-
-import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Enum Bindings
 
 The Wails v3 binding generator **automatically detects Go constant types and generates TypeScript enums or JavaScript const objects**. No registration, no configuration — just define your types and constants in Go, and the generator handles the rest.
 
-:::note
+@note{type="info"}
 Unlike Wails v2, there is **no need to call `EnumBind`** or register enums manually. The generator discovers them automatically from your source code.
-:::
+
+@end
 
 ## Quick Start
 
@@ -237,17 +236,17 @@ export const Age = {
 };
 ```
 
-:::tip
-**Named types** (`type Title string`) generate native TypeScript `enum` declarations with a `$zero` member.
-**Type aliases** (`type Age = int`) generate a `type` + `const` namespace pair without `$zero`.
-:::
+@note{type="tip"}
+**Named types** (`type Title string`) generate native TypeScript `enum` declarations with a `$zero` member. **Type aliases** (`type Age = int`) generate a `type` + `const` namespace pair without `$zero`.
+
+@end
 
 ## The `$zero` Value
 
 Every named-type enum includes a special `$zero` member representing the **Go zero value** for the underlying type:
 
 | Underlying Type | `$zero` Value |
-|----------------|---------------|
+| --- | --- |
 | `string` | `""` |
 | `int`, `int8`, `int16`, `int32`, `int64` | `0` |
 | `uint`, `uint8`, `uint16`, `uint32`, `uint64` | `0` |
@@ -384,7 +383,7 @@ This means your IDE will show documentation for enum values on hover.
 The binding generator supports enums with the following Go underlying types:
 
 | Go Type | Works as Enum |
-|---------|:---:|
+| --- | :---: |
 | `string` | Yes |
 | `int`, `int8`, `int16`, `int32`, `int64` | Yes |
 | `uint`, `uint8`, `uint16`, `uint32`, `uint64` | Yes |
@@ -498,32 +497,32 @@ switch (bg.type) {
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Data Models" icon="document">
-    Structs, type mapping, and model generation.
+@cards{cols="2"}
+📖 Data Models
+Structs, type mapping, and model generation.
 
-    [Learn More →](/features/bindings/models)
-  </Card>
+[Learn More →](/features/bindings/models/)
 
-  <Card title="Method Binding" icon="rocket">
-    Bind Go methods to the frontend.
+---
+🚀 Method Binding
+Bind Go methods to the frontend.
 
-    [Learn More →](/features/bindings/methods)
-  </Card>
+[Learn More →](/features/bindings/methods/)
 
-  <Card title="Advanced Binding" icon="setting">
-    Directives, code injection, and custom IDs.
+---
+⚙ Advanced Binding
+Directives, code injection, and custom IDs.
 
-    [Learn More →](/features/bindings/advanced)
-  </Card>
+[Learn More →](/features/bindings/advanced/)
 
-  <Card title="Best Practices" icon="approve-check">
-    Binding design patterns.
+---
+✓ Best Practices
+Binding design patterns.
 
-    [Learn More →](/features/bindings/best-practices)
-  </Card>
-</CardGrid>
+[Learn More →](/features/bindings/best-practices/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [binding examples](https://github.com/wailsapp/wails/tree/master/v3/examples/binding).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [binding examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/binding).

@@ -3,8 +3,11 @@ package storage
 import (
 	"errors"
 	"fmt"
+	stdlog "log"
+	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
@@ -43,8 +46,14 @@ func Open(path string) (*DB, error) {
 	}
 
 	gdb, err := gorm.Open(sqlite.Open(path), &gorm.Config{
-		// 静音 GORM 默认日志（debug 时改 logger.Info）
-		Logger: logger.Default.LogMode(logger.Warn),
+		// 静音 GORM 默认日志（debug 时改 logger.Info）。
+		// IgnoreRecordNotFoundError：First() 查不到是正常分支（如 preferences 缺省键），不当作错误打印。
+		Logger: logger.New(stdlog.New(os.Stderr, "\r\n", stdlog.LstdFlags), logger.Config{
+			SlowThreshold:             200 * time.Millisecond,
+			LogLevel:                  logger.Warn,
+			IgnoreRecordNotFoundError: true,
+			Colorful:                  true,
+		}),
 		// 禁用默认事务提交：单写场景用不到外层事务包裹
 		SkipDefaultTransaction: true,
 	})

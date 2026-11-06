@@ -1,0 +1,248 @@
+/* 数据库子页面专属样式：路径展示卡片 + 操作按钮 + 状态文案 + 图表 + 表行。
+   颜色全部取 --fd-* 变量。 */
+
+/* 信息卡片：单列垂直堆叠 */
+.infoCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--fd-divider);
+  background-color: var(--fd-bg-surface);
+}
+
+.infoRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.infoLabel {
+  font-size: 12px;
+  color: var(--fd-text-muted);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  font-weight: 600;
+  flex-shrink: 0;
+  width: 120px;
+}
+
+.infoValue {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  color: var(--fd-text-primary);
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+}
+
+.badge {
+  display: inline-block;
+  font-family: var(--mantine-font-family);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-left: 8px;
+}
+.badge[data-kind='custom'] {
+  background-color: var(--fd-bg-active);
+  color: var(--fd-accent);
+}
+.badge[data-kind='default'] {
+  background-color: var(--fd-bg-elevated);
+  color: var(--fd-text-secondary);
+}
+.badge[data-kind='estimated'] {
+  background-color: var(--fd-bg-elevated);
+  color: var(--fd-text-muted);
+}
+
+/* 操作行 */
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+/* 主按钮走 Mantine Button filled（foundation 色阶 = accent / accentHover）；这里只补字号 / 内距 */
+.actionPrimary {
+  font-size: 13px;
+  font-weight: 600;
+  padding-inline: 16px;
+}
+
+.actionSecondary {
+  font-size: 13px;
+  font-weight: 400;
+  padding-inline: 16px;
+  border-color: var(--fd-divider);
+  background-color: var(--fd-bg-surface);
+  color: var(--fd-text-primary);
+}
+.actionSecondary:hover:not([data-disabled]) {
+  background-color: var(--fd-bg-hover);
+}
+
+.actionPrimary[data-disabled] {
+  /* 覆盖 Mantine 默认的灰色禁用态：保持原色 + 半透明 */
+  border-color: var(--fd-accent);
+  background-color: var(--fd-accent);
+  color: var(--mantine-color-white);
+}
+.actionPrimary[data-disabled],
+.actionSecondary[data-disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.actionSecondary[data-disabled] {
+  border-color: var(--fd-divider);
+  background-color: var(--fd-bg-surface);
+  color: var(--fd-text-primary);
+}
+
+/* 状态提示 */
+.status {
+  font-size: 12px;
+  color: var(--fd-text-muted);
+  line-height: 1.5;
+}
+.statusError {
+  font-size: 12px;
+  color: var(--fd-danger);
+  line-height: 1.5;
+}
+
+/* —— 图表区 —— */
+.chartsRow {
+  display: grid;
+  /* 桌面双图并列；窄屏自动堆叠 */
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.chartCard {
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid var(--fd-divider);
+  background-color: var(--fd-bg-surface);
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chartTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fd-text-primary);
+}
+
+.chartHint {
+  font-size: 11px;
+  color: var(--fd-text-muted);
+}
+
+.chartHost {
+  flex: 1;
+  min-height: 220px;
+  min-width: 0;
+}
+
+/* 环形图是定宽正方形：居中放置 */
+.chartHostCentered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyChart {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fd-text-muted);
+  font-size: 12px;
+}
+
+/* —— 表清单（行式） —— */
+.tableList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tableRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--fd-divider);
+  background-color: var(--fd-bg-surface);
+}
+
+.tableRowIcon {
+  flex-shrink: 0;
+}
+
+.tableRowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tableRowLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fd-text-primary);
+}
+
+.tableRowMeta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--fd-text-muted);
+}
+
+.tableRowAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--fd-divider);
+  background-color: var(--fd-bg-surface);
+  color: var(--fd-danger);
+  cursor: pointer;
+}
+.tableRowAction:hover:not(:disabled) {
+  background-color: var(--fd-bg-hover);
+}
+.tableRowAction:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tableRowActionDisabled {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--fd-divider);
+  background-color: var(--fd-bg-elevated);
+  color: var(--fd-text-muted);
+  cursor: not-allowed;
+}

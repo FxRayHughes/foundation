@@ -1,11 +1,9 @@
 ---
-title: Message dialogs
-description: Display information, warnings, errors, and questions
-sidebar:
-  order: 2
+title: "Message dialogs"
+description: "Display information, warnings, errors, and questions"
+slug: "features/dialogs/message"
+sourcePath: "features/dialogs/message.md"
 ---
-
-import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Message dialogs
 
@@ -36,6 +34,7 @@ app.Dialog.Info().
 ```
 
 **Use cases:**
+
 - Success confirmations
 - Completion notices
 - Informational messages
@@ -70,6 +69,7 @@ app.Dialog.Warning().
 ```
 
 **Use cases:**
+
 - Non-critical warnings
 - Deprecation notices
 - Caution messages
@@ -102,6 +102,7 @@ app.Dialog.Error().
 ```
 
 **Use cases:**
+
 - Error messages
 - Failure notifications
 - Exception handling
@@ -155,6 +156,7 @@ dialog.Show()
 ```
 
 **Use cases:**
+
 - Confirm actions
 - Yes/No questions
 - Multiple choice
@@ -205,6 +207,7 @@ dialog := app.Dialog.Info().
 ```
 
 **Best practices:**
+
 - **Title:** Short, descriptive (2-5 words)
 - **Message:** Clear, specific, actionable
 - **Avoid jargon:** Use plain language
@@ -259,8 +262,7 @@ dialog.Show()
 
 **Default and Cancel buttons:**
 
-Use `SetDefaultButton()` to specify which button is highlighted and triggered by Enter.
-Use `SetCancelButton()` to specify which button is triggered by Escape.
+Use `SetDefaultButton()` to specify which button is highlighted and triggered by Enter. Use `SetCancelButton()` to specify which button is triggered by Escape.
 
 ```go
 dialog := app.Dialog.Question().
@@ -295,6 +297,7 @@ dialog.Show()
 ```
 
 **Best practices:**
+
 - **1-3 buttons:** Don't overwhelm users
 - **Clear labels:** "Save" not "OK"
 - **Safe default:** Non-destructive action
@@ -326,6 +329,7 @@ dialog.Show()
 ```
 
 **Benefits:**
+
 - dialog appears on correct window
 - Parent window disabled whilst shown
 - Better multi-window UX
@@ -486,32 +490,32 @@ func showCustomIconQuestion(app *application.App, iconBytes []byte) {
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="File dialogs" icon="document">
-    Open, save, and folder selection.
-    
-    [Learn More →](/features/dialogs/file)
-  </Card>
+@cards{cols="2"}
+📖 File dialogs
+Open, save, and folder selection.
 
-  <Card title="Custom dialogs" icon="puzzle">
-    Create custom dialog windows.
-    
-    [Learn More →](/features/dialogs/custom)
-  </Card>
+[Learn More →](/features/dialogs/file/)
 
-  <Card title="Notifications" icon="bell">
-    Non-intrusive notifications.
-    
-    [Learn More →](/features/notifications)
-  </Card>
+---
+◆ Custom dialogs
+Create custom dialog windows.
 
-  <Card title="Events" icon="star">
-    Use events for non-blocking communication.
-    
-    [Learn More →](/features/events/system)
-  </Card>
-</CardGrid>
+[Learn More →](/features/dialogs/custom/)
+
+---
+● Notifications
+Non-intrusive notifications.
+
+[Learn More →](/features/notifications/overview/)
+
+---
+★ Events
+Use events for non-blocking communication.
+
+[Learn More →](/features/events/system/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [dialog examples](https://github.com/wailsapp/wails/tree/master/v3/examples/dialogs).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [dialog examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/dialogs).

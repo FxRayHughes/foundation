@@ -1,15 +1,13 @@
 ---
-title: Window Options
-description: Complete reference for WebviewWindowOptions
-sidebar:
-  order: 2
+title: "Window Options"
+description: "Window options, defaults and platform constraints"
+slug: "features/windows/options"
+sourcePath: "features/windows/options.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## Window Configuration Options
 
-Wails provides comprehensive window configuration with dozens of options for size, position, appearance, and behaviour. This reference covers all available options across Windows, macOS, and Linux as the **complete reference** for `WebviewWindowOptions`. Every option, every platform, with examples and constraints.
+Wails provides comprehensive window configuration with dozens of options for size, position, appearance, and behaviour. This reference explains common `WebviewWindowOptions` fields across Windows, macOS and Linux. The structure below is a selected-field summary; consult the linked Go source for the complete type.
 
 ## WebviewWindowOptions Structure
 
@@ -54,10 +52,14 @@ type WebviewWindowOptions struct {
     EnableFileDrop              bool
     IgnoreMouseEvents           bool
     HideOnFocusLost             bool
+    HideOnEscape                bool
     DevToolsEnabled             bool
     DefaultContextMenuDisabled  bool
     ContentProtectionEnabled    bool
-    KeyBindings                 map[string]func(window *WebviewWindow)
+    KeyBindings                 map[string]func(window Window)
+
+    // Permissions
+    Permissions map[PermissionType]Permission
 
     // Window-control button states
     MinimiseButtonState ButtonState
@@ -74,17 +76,15 @@ type WebviewWindowOptions struct {
 }
 ```
 
-`WebviewWindowOptions` has **no** `Parent` field — for parent/modal relationships use `parentWindow.AttachModal(childWindow)`. It also has **no** `Assets` field — asset configuration lives on `application.Options` (`Assets AssetOptions`).
+`WebviewWindowOptions` has no `Parent` field — for parent/modal relationships use `parentWindow.AttachModal(childWindow)`. It also has no `Assets` field — asset configuration lives on `application.Options` (`Assets AssetOptions`).
 
-Full source: [`v3/pkg/application/webview_window_options.go`](https://github.com/wailsapp/wails/blob/master/v3/pkg/application/webview_window_options.go).
+Full source: [`v3/pkg/application/webview_window_options.go`](https://github.com/wailsapp/wails/blob/v3.0.0/v3/pkg/application/webview_window_options.go).
 
 ## Core Options
 
 ### Name
 
-**Type:** `string`  
-**Default:** Auto-generated UUID  
-**Platform:** All
+**Type:** `string` **Default:** `window-<numeric ID>` **Platform:** All
 
 ```go
 Name: "main-window"
@@ -93,6 +93,7 @@ Name: "main-window"
 **Purpose:** Unique identifier for finding windows later.
 
 **Best practices:**
+
 - Use descriptive names: `"main"`, `"settings"`, `"about"`
 - Use kebab-case: `"file-browser"`, `"color-picker"`
 - Keep it short and memorable
@@ -112,9 +113,7 @@ if settings, ok := app.Window.GetByName("settings-window"); ok {
 
 ### Title
 
-**Type:** `string`  
-**Default:** Application name  
-**Platform:** All
+**Type:** `string` **Default:** Application name **Platform:** All
 
 ```go
 Title: "My Application"
@@ -130,10 +129,7 @@ window.SetTitle("My Application - Document.txt")
 
 ### Width / Height
 
-**Type:** `int` (pixels)  
-**Default:** 800 x 600  
-**Platform:** All  
-**Constraints:** Must be positive
+**Type:** `int` (pixels) **Default:** 800 x 600 **Platform:** All **Constraints:** Must be positive
 
 ```go
 Width:  1200,
@@ -143,6 +139,7 @@ Height: 800,
 **Purpose:** Initial window size in logical pixels.
 
 **Notes:**
+
 - Wails handles DPI scaling automatically
 - Use logical pixels, not physical pixels
 - Consider minimum screen resolution (1024x768)
@@ -150,7 +147,7 @@ Height: 800,
 **Example sizes:**
 
 | Use Case | Width | Height |
-|----------|-------|--------|
+| --- | --- | --- |
 | Small utility | 400 | 300 |
 | Standard app | 1024 | 768 |
 | Large app | 1440 | 900 |
@@ -158,9 +155,7 @@ Height: 800,
 
 ### X / Y
 
-**Type:** `int` (pixels)  
-**Default:** Centred on screen  
-**Platform:** All
+**Type:** `int` (pixels) **Default:** Centred on screen **Platform:** All
 
 ```go
 X: 100,  // 100px from left edge
@@ -170,6 +165,7 @@ Y: 100,  // 100px from top edge
 **Purpose:** Initial window position.
 
 **Coordinate system:**
+
 - (0, 0) is top-left of primary screen
 - Positive X goes right
 - Positive Y goes down
@@ -196,9 +192,7 @@ window.Center()
 
 ### MinWidth / MinHeight
 
-**Type:** `int` (pixels)  
-**Default:** 0 (no minimum)  
-**Platform:** All
+**Type:** `int` (pixels) **Default:** 0 (no minimum) **Platform:** All
 
 ```go
 MinWidth:  400,
@@ -208,6 +202,7 @@ MinHeight: 300,
 **Purpose:** Prevent window from being too small.
 
 **Use cases:**
+
 - Prevent broken layouts
 - Ensure usability
 - Maintain aspect ratio
@@ -222,9 +217,7 @@ MinHeight: 300,
 
 ### MaxWidth / MaxHeight
 
-**Type:** `int` (pixels)  
-**Default:** 0 (no maximum)  
-**Platform:** All
+**Type:** `int` (pixels) **Default:** 0 (no maximum) **Platform:** All
 
 ```go
 MaxWidth:  1920,
@@ -234,6 +227,7 @@ MaxHeight: 1080,
 **Purpose:** Prevent window from being too large.
 
 **Use cases:**
+
 - Fixed-size applications
 - Prevent excessive resource usage
 - Maintain design constraints
@@ -242,9 +236,7 @@ MaxHeight: 1080,
 
 ### Hidden
 
-**Type:** `bool`
-**Default:** `false`
-**Platform:** All
+**Type:** `bool` **Default:** `false` **Platform:** All
 
 ```go
 Hidden: true,
@@ -253,12 +245,14 @@ Hidden: true,
 **Purpose:** Create window without showing it.
 
 **Use cases:**
+
 - Background windows
 - Windows shown on demand
 - Splash screens (create, load, then show)
 - Prevent white flash while loading content
 
 **Platform improvements:**
+
 - **Windows:** Fixed white window flash - window stays invisible until `Show()` is called
 - **macOS:** Full support
 - **Linux:** Full support
@@ -294,9 +288,7 @@ settings.Show()
 
 ### Frameless
 
-**Type:** `bool`  
-**Default:** `false`  
-**Platform:** All
+**Type:** `bool` **Default:** `false` **Platform:** All
 
 ```go
 Frameless: true,
@@ -305,23 +297,23 @@ Frameless: true,
 **Purpose:** Remove title bar and window borders.
 
 **Use cases:**
+
 - Custom window chrome
 - Splash screens
 - Kiosk applications
 - Custom-designed windows
 
 **Important:** You'll need to implement:
+
 - Window dragging
 - Close/minimise/maximise buttons
 - Resize handles (if resizable)
 
-**See [Frameless Windows](/features/windows/frameless) for details.**
+**See [Frameless Windows](/features/windows/frameless/) for details.**
 
 ### DisableResize
 
-**Type:** `bool`
-**Default:** `false` (window is resizable by default)
-**Platform:** All
+**Type:** `bool` **Default:** `false` (window is resizable by default) **Platform:** All
 
 ```go
 DisableResize: true,
@@ -330,6 +322,7 @@ DisableResize: true,
 **Purpose:** Prevent window resizing. Note that the field is the **inverse** of v2's `Resizable` — set `DisableResize: true` to make a window non-resizable.
 
 **Use cases:**
+
 - Fixed-size applications
 - Splash screens
 - Dialogs
@@ -338,9 +331,7 @@ DisableResize: true,
 
 ### AlwaysOnTop
 
-**Type:** `bool`  
-**Default:** `false`  
-**Platform:** All
+**Type:** `bool` **Default:** `false` **Platform:** All
 
 ```go
 AlwaysOnTop: true,
@@ -349,21 +340,21 @@ AlwaysOnTop: true,
 **Purpose:** Keep window above all other windows.
 
 **Use cases:**
+
 - Floating toolbars
 - Notifications
 - Picture-in-picture
 - Timers
 
 **Platform notes:**
+
 - **macOS:** Full support
 - **Windows:** Full support
 - **Linux:** Depends on window manager
 
 ### StartState
 
-**Type:** `WindowState` enum
-**Default:** `WindowStateNormal`
-**Platform:** All
+**Type:** `WindowState` enum **Default:** `WindowStateNormal` **Platform:** All
 
 ```go
 StartState: application.WindowStateMaximised,
@@ -372,6 +363,7 @@ StartState: application.WindowStateMaximised,
 **Purpose:** Initial state of the window when shown.
 
 **Values:**
+
 - `WindowStateNormal` - Normal window
 - `WindowStateMinimised` - Minimised
 - `WindowStateMaximised` - Maximised
@@ -391,9 +383,7 @@ window.ToggleFullscreen() // there is no SetFullscreen(bool)
 
 ### BackgroundColour
 
-**Type:** `RGBA` struct
-**Default:** White
-**Platform:** All
+**Type:** `RGBA` struct **Default:** White **Platform:** All
 
 ```go
 BackgroundColour: application.RGBA{Red: 0, Green: 0, Blue: 0, Alpha: 255},
@@ -404,6 +394,7 @@ BackgroundColour: application.RGBA{Red: 0, Green: 0, Blue: 0, Alpha: 255},
 **Purpose:** Window background colour before content loads.
 
 **Use cases:**
+
 - Match your app's theme
 - Prevent white flash on dark themes
 - Smooth loading experience
@@ -426,21 +417,21 @@ window.SetBackgroundColour(application.NewRGB(30, 30, 30))
 
 ### BackgroundType
 
-**Type:** `BackgroundType` enum  
-**Default:** `BackgroundTypeSolid`  
-**Platform:** macOS, Windows (partial)
+**Type:** `BackgroundType` enum **Default:** `BackgroundTypeSolid` **Platform:** macOS, Windows (partial)
 
 ```go
 BackgroundType: application.BackgroundTypeTranslucent,
 ```
 
 **Values:**
+
 - `BackgroundTypeSolid` - Solid colour
 - `BackgroundTypeTransparent` - Fully transparent
 - `BackgroundTypeTranslucent` - Semi-transparent blur
 
 **Platform support:**
-- **macOS:** All types supported
+
+- **macOS:** Configure `Mac.Backdrop`; webview transparency requires [`private_mac_apis`](/guides/build/private-macos-apis/#webview-transparency-and-background). Without it, the webview remains opaque.
 - **Windows:** Transparent and Translucent (Windows 11+)
 - **Linux:** Solid only
 
@@ -453,13 +444,15 @@ Mac: application.MacWindow{
 },
 ```
 
+### OpenInspectorOnStartup and OpenDevTools
+
+**Private API on macOS:** `OpenInspectorOnStartup: true`, Go `window.OpenDevTools()`, and JavaScript `Window.OpenDevTools()` require `private_mac_apis` to open the inspector programmatically. Without it, these operations are no-ops. Production builds also need `devtools`. Public Safari inspection on macOS 13.3+ does not need private APIs; older macOS inspector enablement does. See the [Web Inspector build matrix](/guides/build/private-macos-apis/#web-inspector).
+
 ## Content Options
 
 ### URL
 
-**Type:** `string`  
-**Default:** Empty (loads from Assets)  
-**Platform:** All
+**Type:** `string` **Default:** Empty (loads from Assets) **Platform:** All
 
 ```go
 URL: "https://example.com",
@@ -468,6 +461,7 @@ URL: "https://example.com",
 **Purpose:** Load external URL instead of embedded assets.
 
 **Use cases:**
+
 - Development (load from dev server)
 - Web-based applications
 - Hybrid applications
@@ -495,9 +489,7 @@ app := application.New(application.Options{
 
 ### HTML
 
-**Type:** `string`  
-**Default:** Empty  
-**Platform:** All
+**Type:** `string` **Default:** Empty **Platform:** All
 
 ```go
 HTML: "<h1>Hello World</h1>",
@@ -506,6 +498,7 @@ HTML: "<h1>Hello World</h1>",
 **Purpose:** Load HTML string directly.
 
 **Use cases:**
+
 - Simple windows
 - Generated content
 - Testing
@@ -534,13 +527,11 @@ app := application.New(application.Options{
 })
 ```
 
-**See [Build System](/concepts/build-system) for details.**
+**See [Build System](/concepts/build-system/) for details.**
 
 ### UseApplicationMenu
 
-**Type:** `bool`
-**Default:** `false`
-**Platform:** Windows, Linux (no effect on macOS)
+**Type:** `bool` **Default:** `false` **Platform:** Windows, Linux (no effect on macOS)
 
 ```go
 UseApplicationMenu: true,
@@ -574,17 +565,16 @@ app.Window.NewWithOptions(application.WebviewWindowOptions{
 ```
 
 **Notes:**
+
 - If both `UseApplicationMenu` and a window-specific menu are set, the window-specific menu takes priority
 - This simplifies cross-platform code by eliminating the need for runtime OS checks
-- See [Application Menus](/features/menus/application) for complete menu documentation
+- See [Application Menus](/features/menus/application/) for complete menu documentation
 
 ## Input Options
 
 ### EnableFileDrop
 
-**Type:** `bool`  
-**Default:** `false`  
-**Platform:** All
+**Type:** `bool` **Default:** `false` **Platform:** All
 
 ```go
 EnableFileDrop: true,
@@ -593,11 +583,13 @@ EnableFileDrop: true,
 **Purpose:** Enable drag-and-drop of files from the operating system into the window.
 
 When enabled:
+
 - Files dragged from file managers can be dropped into your application
 - The `WindowFilesDropped` event fires with the dropped file paths
 - Elements with `data-file-drop-target` attribute provide detailed drop information
 
 **Use cases:**
+
 - File upload interfaces
 - Document editors
 - Media importers
@@ -631,15 +623,13 @@ window.OnWindowEvent(events.Common.WindowFilesDropped, func(event *application.W
 </div>
 ```
 
-**See [File Drop](/features/drag-and-drop/files) for complete documentation.**
+**See [File Drop](/features/drag-and-drop/files/) for complete documentation.**
 
 ## Security Options
 
 ### ContentProtectionEnabled
 
-**Type:** `bool`  
-**Default:** `false`  
-**Platform:** Windows (10+), macOS
+**Type:** `bool` **Default:** `false` **Platform:** Windows (10+), macOS
 
 ```go
 ContentProtectionEnabled: true,
@@ -648,17 +638,20 @@ ContentProtectionEnabled: true,
 **Purpose:** Prevent screen capture of window contents.
 
 **Platform support:**
+
 - **Windows:** Windows 10 build 19041+ (full), older versions (partial)
 - **macOS:** Full support
 - **Linux:** Not supported
 
 **Use cases:**
+
 - Banking applications
 - Password managers
 - Medical records
 - Confidential documents
 
 **Important notes:**
+
 1. Doesn't prevent physical photography
 2. Some tools may bypass protection
 3. Part of comprehensive security, not sole protection
@@ -675,6 +668,31 @@ window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 // Toggle at runtime
 window.SetContentProtection(true)
 ```
+
+### Permissions
+
+**Type:** `map[PermissionType]Permission` **Default:** `nil` (platform default handling) **Platform:** Linux, Windows (macOS defers to TCC)
+
+```go
+Permissions: map[application.PermissionType]application.Permission{
+    application.PermissionMicrophone: application.PermissionAllow,
+    application.PermissionCamera:     application.PermissionAllow,
+},
+```
+
+**Purpose:** Declaratively control how capability requests (camera, microphone, geolocation, notifications, clipboard read) from the window's web content are handled, without platform-specific code.
+
+**PermissionType values:** `PermissionMicrophone`, `PermissionCamera`, `PermissionGeolocation`, `PermissionNotifications`, `PermissionClipboardRead`
+
+**Permission values:**
+
+- `PermissionDefault` (0) — platform's native handling: OS/WebView2 prompt on macOS/Windows; on Linux, camera/microphone are allowed, everything else is denied
+- `PermissionAllow` (1) — grant without prompting (Linux: only camera/microphone are implemented; other types remain denied)
+- `PermissionDeny` (2) — deny without prompting
+
+**Important — Windows:** Before this option existed, Wails silently granted all WebView2 capabilities. Now, setting any entry in `Permissions` disables that blanket grant. Capabilities not listed will show WebView2's native prompt rather than being auto-allowed. List every capability your app needs explicitly.
+
+**See [Permissions](/features/windows/permissions/) for the full guide, platform matrix, and examples.**
 
 ## Window Lifecycle Events
 
@@ -704,6 +722,7 @@ window.RegisterHook(events.Common.WindowClosing, func(event *application.WindowE
 ```
 
 **Key points:**
+
 - `RegisterHook` intercepts events before they occur
 - Call `event.Cancel()` to prevent the window from closing
 - The window will remain open after cancelling
@@ -716,18 +735,19 @@ To perform cleanup when a window closes, use `OnWindowEvent` with the `WindowClo
 window.OnWindowEvent(events.Common.WindowClosing, func(event *application.WindowEvent) {
     // Cleanup code runs here
     fmt.Printf("Window %s is closing\n", window.Name())
-    
+
     // Close database connection
     if db != nil {
         db.Close()
     }
-    
+
     // Remove from window list
     removeWindow(window.ID())
 })
 ```
 
 **Key points:**
+
 - `OnWindowEvent` handles events that are about to happen
 - Cleanup runs before the window is destroyed
 - Cannot cancel the close from here (use `RegisterHook` for that)
@@ -748,13 +768,13 @@ func ShowSettings(app *application.App) {
             Width: 600,
             Height: 400,
         })
-        
+
         // Cleanup on close
         settingsWindow.OnWindowEvent(events.Common.WindowClosing, func(event *application.WindowEvent) {
             settingsWindow = nil
         })
     }
-    
+
     // Show and focus
     settingsWindow.Show()
     settingsWindow.Focus()
@@ -775,28 +795,92 @@ Mac: application.MacWindow{
     },
     Backdrop:                application.MacBackdropTranslucent,
     InvisibleTitleBarHeight: 50,
-    WindowLevel:             application.MacWindowLevelNormal,
+    WindowClass:             application.MacWindowClassPanel,
+    PanelPreferences: application.MacPanelPreferences{
+        NonActivating:          true,
+        FloatingPanel:          true,
+        BecomesKeyOnlyIfNeeded: false,
+        UtilityWindow:          false,
+    },
+    WindowLevel:             application.MacWindowLevelFloating,
     CollectionBehavior:      application.MacWindowCollectionBehaviorDefault,
+    TabbingMode:             application.MacWindowTabbingModeDisallowed,
 },
 ```
 
 **TitleBar** (`MacTitleBar`)
+
 - `AppearsTransparent` - Makes title bar transparent, content extends into title bar area
 - `Hide` - Hides the title bar completely
 - `HideTitle` - Hides only the title text
 - `FullSizeContent` - Extends content to full window size
 
+On macOS, webview transparency and programmatic inspector opening require the `private_mac_apis` build tag. Without it, the same options remain valid but private-only operations are no-ops. Liquid Glass grouping is also ignored, and styles use public alternatives. See [Private macOS APIs](/guides/build/private-macos-apis/) for build commands and exact behavior.
+
 **Backdrop** (`MacBackdrop`)
+
 - `MacBackdropNormal` - Standard opaque background
-- `MacBackdropTranslucent` - Blurred translucent background
-- `MacBackdropTransparent` - Fully transparent background
+- `MacBackdropTranslucent` - **Private API required for webview transparency.** Native blur remains behind an opaque webview without the tag.
+- `MacBackdropTransparent` - **Private API required for webview transparency.** The webview remains opaque without the tag.
+- `MacBackdropLiquidGlass` - **Private API required for webview transparency.** The glass layer remains behind an opaque webview without the tag; styles use public alternatives.
+
+**LiquidGlass** (`MacLiquidGlass`)
+
+| Field or value | Private API dependency on macOS |
+| --- | --- |
+| `Style: LiquidGlassStyleAutomatic` | Native regular style is public; backdrop webview transparency requires `private_mac_apis`. |
+| `Style: LiquidGlassStyleLight` | The tag preserves the existing native clear-style mapping; without it, Wails uses regular glass with Aqua appearance. |
+| `Style: LiquidGlassStyleDark` | **Private API:** undocumented native style value `2`; without the tag, regular glass with Dark Aqua appearance. |
+| `Style: LiquidGlassStyleVibrant` | Native clear-style mapping is public; backdrop webview transparency requires the tag. |
+| `GroupID` | **Private API:** non-empty values request grouping; ignored without the tag. |
+| `GroupSpacing` | **Private API:** positive values request group spacing; ignored without the tag. |
+| `Material`, `CornerRadius`, `TintColor` | No private API dependency of their own. |
+
+See [Liquid Glass values](/guides/build/private-macos-apis/#liquid-glass-values) for native style values and OS availability.
 
 **InvisibleTitleBarHeight** (`int`)
+
 - Height of invisible title bar area (for dragging)
 - Only takes effect when the native title bar drag area is hidden — i.e. when the window is frameless (`Frameless: true`) or uses a transparent title bar (`AppearsTransparent: true`)
 - Has no effect on standard windows with a visible title bar
 
+**WindowClass** (`MacWindowClass`)
+
+- `MacWindowClassWindow` - Standard `NSWindow` behaviour (default)
+- `MacWindowClassPanel` - An auxiliary `NSPanel` that never becomes the application's main window
+
+`PanelPreferences` applies only to `MacWindowClassPanel`:
+
+- `NonActivating` adds `NSWindowStyleMaskNonactivatingPanel`. Showing or focusing the panel does not activate the Wails application, but the panel can still become key for controls and text input.
+- `FloatingPanel` enables AppKit's floating-panel behaviour.
+- `BecomesKeyOnlyIfNeeded` takes key status only when the clicked view requests keyboard input.
+- `UtilityWindow` applies the native utility-window style.
+
+Wails panels remain visible when the application deactivates and are released when closed, matching the lifecycle expected by `WebviewWindow`. These are intentional overrides of the opposite `NSPanel` defaults.
+
+Window class, level, activation policy, and collection behaviour solve separate problems:
+
+- `WindowClass` selects `NSWindow` or `NSPanel` and controls main/key-window semantics.
+- `WindowLevel` controls z-order. Use `MacWindowLevelPopUpMenu` for menu-bar overlays.
+- `MacOptions.ActivationPolicy` controls the application as a whole, including Dock and menu-bar presentation. A non-activating panel does not require accessory activation policy, although an app may still use it to hide its Dock icon.
+- `CollectionBehavior` controls Spaces and fullscreen participation.
+
+```go
+// Spotlight/menu-bar panel that leaves the current application active.
+Mac: application.MacWindow{
+    WindowClass: application.MacWindowClassPanel,
+    PanelPreferences: application.MacPanelPreferences{
+        NonActivating: true,
+    },
+    WindowLevel: application.MacWindowLevelPopUpMenu,
+    CollectionBehavior: application.MacWindowCollectionBehaviorCanJoinAllSpaces |
+        application.MacWindowCollectionBehaviorFullScreenAuxiliary |
+        application.MacWindowCollectionBehaviorStationary,
+},
+```
+
 **WindowLevel** (`MacWindowLevel`)
+
 - `MacWindowLevelNormal` - Standard window level (default)
 - `MacWindowLevelFloating` - Floats above normal windows
 - `MacWindowLevelTornOffMenu` - Torn-off menu level
@@ -806,20 +890,14 @@ Mac: application.MacWindow{
 - `MacWindowLevelPopUpMenu` - Pop-up menu level
 - `MacWindowLevelScreenSaver` - Screen saver level
 
-**CornerType** (`MacWindowCornerType`) — *beta.9 新增*
-- 控制**无边框（frameless）** macOS 窗口的圆角形状。
-- `MacWindowCornerTypeRounded` - 保留 AppKit 标准圆角（默认）；配合 `CornerRadius` 可自定义半径
-- `MacWindowCornerTypeSquare` - 真正的直角无边框窗口（此时 `CornerRadius` 被忽略）
-
-**CornerRadius** (`float64`) — *beta.9 新增*
-- 圆角无边框窗口的自定义圆角半径（单位：点 / points）。
-- `0`（默认）保留 AppKit 标准圆角；仅在 `CornerType == MacWindowCornerTypeRounded` 且窗口为 frameless 时生效。
+An explicit `WindowLevel` takes precedence over `AlwaysOnTop` and `PanelPreferences.FloatingPanel`. Without an explicit level, `AlwaysOnTop` or a floating panel resolves to `MacWindowLevelFloating`; otherwise the level is `MacWindowLevelNormal`. Calling `SetAlwaysOnTop` later remains an explicit runtime change.
 
 **CollectionBehavior** (`MacWindowCollectionBehavior`)
 
 Controls how the window behaves across macOS Spaces and fullscreen. These are bitmask values that can be combined using bitwise OR (`|`).
 
 **Space behavior:**
+
 - `MacWindowCollectionBehaviorDefault` - Uses FullScreenPrimary (default, backwards compatible)
 - `MacWindowCollectionBehaviorCanJoinAllSpaces` - Window appears on all Spaces
 - `MacWindowCollectionBehaviorMoveToActiveSpace` - Moves to active Space when shown
@@ -828,10 +906,12 @@ Controls how the window behaves across macOS Spaces and fullscreen. These are bi
 - `MacWindowCollectionBehaviorStationary` - Stays stationary during Space switches
 
 **Window cycling:**
+
 - `MacWindowCollectionBehaviorParticipatesInCycle` - Included in Cmd+` cycling
 - `MacWindowCollectionBehaviorIgnoresCycle` - Excluded from Cmd+` cycling
 
 **Fullscreen behavior:**
+
 - `MacWindowCollectionBehaviorFullScreenPrimary` - Can enter fullscreen mode
 - `MacWindowCollectionBehaviorFullScreenAuxiliary` - Can overlay fullscreen apps
 - `MacWindowCollectionBehaviorFullScreenNone` - Disables fullscreen capability
@@ -843,6 +923,10 @@ Controls how the window behaves across macOS Spaces and fullscreen. These are bi
 ```go
 // Window that appears on all Spaces AND can overlay fullscreen apps
 Mac: application.MacWindow{
+	WindowClass: application.MacWindowClassPanel,
+	PanelPreferences: application.MacPanelPreferences{
+		NonActivating: true,
+	},
     CollectionBehavior: application.MacWindowCollectionBehaviorCanJoinAllSpaces |
                         application.MacWindowCollectionBehaviorFullScreenAuxiliary,
     WindowLevel:        application.MacWindowLevelFloating,
@@ -858,6 +942,65 @@ Mac: application.MacWindow{
 },
 ```
 
+**TabbingMode** (`MacWindowTabbingMode`)
+
+Controls window tabbing behavior on macOS 10.12 and later. Window tabbing allows multiple windows to be grouped as tabs.
+
+**Options:**
+
+- `MacWindowTabbingModeDefault` - Zero-value sentinel (not explicitly set). At runtime, defaults to disallowing tabbing
+- `MacWindowTabbingModeAutomatic` - System determines tabbing behavior
+- `MacWindowTabbingModePreferred` - Window prefers to be in tabbing mode
+- `MacWindowTabbingModeDisallowed` - Disables window tabbing
+
+**Example - Disable window tabbing:**
+
+```go
+Mac: application.MacWindow{
+    TabbingMode: application.MacWindowTabbingModeDisallowed,
+},
+```
+
+**Example - Prefer window tabbing:**
+
+```go
+Mac: application.MacWindow{
+    TabbingMode: application.MacWindowTabbingModePreferred,
+},
+```
+
+**WebviewPreferences** (`MacWebviewPreferences`)
+
+Fine-grained control over the underlying `WKWebView` configuration. All fields are optional — unset fields leave the WebKit default unchanged.
+
+```go
+Mac: application.MacWindow{
+    WebviewPreferences: application.MacWebviewPreferences{
+        TabFocusesLinks:                       optional.True,
+        TextInteractionEnabled:                optional.True,
+        FullscreenEnabled:                     optional.False,
+        AllowsBackForwardNavigationGestures:   optional.False,
+        AllowsMagnification:                   optional.True,
+        AllowsAirPlayForMediaPlayback:         optional.True,
+        JavaScriptCanOpenWindowsAutomatically: optional.False,
+        MinimumFontSize:                       optional.NewVar(12.0),
+        ApplicationNameForUserAgent:           "MyApp",
+        EnableAutoplayWithoutUserAction:       optional.True,
+    },
+},
+```
+
+- `TabFocusesLinks` — When `true`, pressing Tab moves focus to links and form controls (default: `false`)
+- `TextInteractionEnabled` — When `true`, users can select and interact with text in the webview (default: `true`)
+- `FullscreenEnabled` — When `true`, web content can enter fullscreen via the HTML Fullscreen API (default: `false`). Requires macOS 12.3+.
+- `AllowsBackForwardNavigationGestures` — When `true`, horizontal swipe gestures trigger back/forward navigation (default: `false`)
+- `AllowsMagnification` — When `true`, pinch-to-zoom is enabled on the webview (default: `false`)
+- `AllowsAirPlayForMediaPlayback` — When `true`, media can be streamed to AirPlay devices (default: `true`)
+- `JavaScriptCanOpenWindowsAutomatically` — When `true`, JavaScript can open new windows without a user gesture (default: `false`)
+- `MinimumFontSize` — Minimum font size in points. Use `optional.NewVar(12.0)` to set. Unset leaves WebKit default.
+- `ApplicationNameForUserAgent` — Overrides the application-name suffix in the WebKit user-agent string. Useful when sites reject the default `"wails.io"` identifier (e.g. YouTube embeds). Leave empty to keep the default.
+- `EnableAutoplayWithoutUserAction` — When `true`, audio and video can autoplay without a user gesture. Maps to `WKWebViewConfiguration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone` (default: `false`)
+
 ### Windows Options (per-window)
 
 The per-window struct is `application.WindowsWindow` — **not** `WindowsOptions` (that's the *application*-level struct).
@@ -865,17 +1008,26 @@ The per-window struct is `application.WindowsWindow` — **not** `WindowsOptions
 ```go
 Windows: application.WindowsWindow{
     DisableIcon:                       false,
+    DisableMenu:                       false,
     BackdropType:                      application.Auto,
     CustomTheme:                       application.ThemeSettings{},
     DisableFramelessWindowDecorations: false,
-    DisableMenu:                       false,
+    NonClientRegionSupport:            false,
+    WebView2CompositionHosting:        false,
 },
 ```
 
 **DisableIcon** (`bool`)
+
 - Remove icon from title bar.
 
+**DisableMenu** (`bool`)
+
+- Disable the menu bar for the window. When `true`, the window does not display a menu bar even if one is configured.
+- Default: `false`
+
 **BackdropType** (`BackdropType`)
+
 - `application.Auto` - System default
 - `application.None` - No backdrop
 - `application.Mica` - Mica material (Windows 11)
@@ -885,13 +1037,23 @@ Windows: application.WindowsWindow{
 There are no `WindowsBackdropTypeMica`-style constants — use `application.Mica` etc.
 
 **CustomTheme** (`ThemeSettings`)
+
 - Value (not pointer). Custom dark/light-mode colours for window border, title bar text/background, and menu bar.
 
 **DisableFramelessWindowDecorations** (`bool`)
+
 - Disable default frameless decorations (Aero shadow, rounded corners).
 
-**DisableMenu** (`bool`) — *beta.9 新增*
-- 禁用该窗口的菜单。
+**NonClientRegionSupport** (`bool`)
+
+- Enables WebView2-native `app-region: drag` / `app-region: no-drag` support for frameless custom title bars.
+- This is for simple native app dragging only. It does not provide native custom caption-button behavior or Windows 11 Snap Assist / Snap Layouts for custom maximize buttons.
+
+**WebView2CompositionHosting** (`bool`)
+
+- Enables Wails-managed `--wails-non-client-region` support for custom caption buttons with native Windows behavior, including Windows 11 Snap Assist / Snap Layouts on custom maximize buttons.
+- Experimental. This hosts WebView2 through `ICoreWebView2CompositionController` and DirectComposition instead of the default HWND-hosted controller.
+- Can be combined with `NonClientRegionSupport` when a window needs both WebView2-native `app-region` support and Wails-managed custom caption-button regions.
 
 **Example:**
 
@@ -901,6 +1063,17 @@ Windows: application.WindowsWindow{
     DisableIcon:  true,
 },
 ```
+
+**Example - Custom Windows title bar regions:**
+
+```go
+Windows: application.WindowsWindow{
+    NonClientRegionSupport:    true,
+    WebView2CompositionHosting: true,
+},
+```
+
+See [Frameless Windows](/features/windows/frameless/#native-non-client-regions-on-windows) for the detailed behavior, tradeoffs, and matching CSS.
 
 ### Linux Options (per-window)
 
@@ -914,9 +1087,11 @@ Linux: application.LinuxWindow{
 ```
 
 **Icon** (`[]byte`)
+
 - Window icon (PNG format).
 
 **WindowIsTranslucent** (`bool`)
+
 - Requires compositor support.
 
 **Example:**
@@ -962,23 +1137,27 @@ app := application.New(application.Options{
 ```
 
 **EnabledFeatures** (`[]string`)
+
 - List of WebView2 feature flags to enable
 - See [WebView2 browser flags](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/webview-features-flags) for available flags
 - Example: `"msWebView2EnableDraggableRegions"`
 
 **DisabledFeatures** (`[]string`)
+
 - List of WebView2 feature flags to disable
 - Wails automatically disables `msSmartScreenProtection`
 - Example: `"msExperimentalFeature"`
 
 **AdditionalBrowserArgs** (`[]string`)
+
 - Chromium command-line arguments passed to the browser process
 - Must include the `--` prefix (e.g., `"--remote-debugging-port=9222"`)
 - See [Chromium command line switches](https://peter.sh/experiments/chromium-command-line-switches/) for available arguments
 
-:::caution[Important]
+@note{type="caution" title="Important"}
 These flags apply globally to ALL windows because WebView2 shares a single browser environment per user data path. You cannot have different browser flags for different windows.
-:::
+
+@end
 
 **Complete Example:**
 
@@ -1085,11 +1264,11 @@ Frontend assets are served at the application level (`application.Options.Assets
 
 ## Next Steps
 
-- [Window Basics](/features/windows/basics) - Creating and controlling windows
-- [Multiple Windows](/features/windows/multiple) - Multi-window patterns
-- [Frameless Windows](/features/windows/frameless) - Custom window chrome
-- [Window Events](/features/windows/events) - Lifecycle events
+- [Window Basics](/features/windows/basics/) - Creating and controlling windows
+- [Multiple Windows](/features/windows/multiple/) - Multi-window patterns
+- [Frameless Windows](/features/windows/frameless/) - Custom window chrome
+- [Window Events](/features/windows/events/) - Lifecycle events
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [examples](https://github.com/wailsapp/wails/tree/master/v3/examples).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples).

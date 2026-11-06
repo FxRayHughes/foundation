@@ -1,109 +1,84 @@
-import { useMemo } from 'react';
-import type { GridColDef } from '@mui/x-data-grid';
-import type { PinnedColumns } from '../types';
+import { useCallback, useMemo, useState } from 'react';
+import type { DataGridColumn, DataGridRow, PinnedColumns } from '../types';
+import { fieldOf } from '../utils';
 
-interface StickyStyle {
-  position?: string;
-  left?: number;
-  right?: number;
-  zIndex?: number;
-  bgcolor?: string;
-}
+// 列钉住：把 pinnedColumns.left / right 映射到 mantine-datatable 原生的 column.pinned，
+// 并按 left（按配置顺序）→ 中间 → right（按配置顺序）重排。
+// 粘性定位 / 偏移量 / 阴影由 mantine-datatable 测量 DOM 后自动处理。
+//
+// 初始模型 = props.pinnedColumns + 列定义里自带的 pinned（配置优先）；
+// 用户在列菜单里钉住 / 取消钉住后，改为内存中的完整模型（不落任何存储）。
 
-interface UseColumnPinningParams {
-  columns: GridColDef[];
+interface UseColumnPinningParams<T extends DataGridRow> {
+  columns: DataGridColumn<T>[];
   pinnedColumns?: PinnedColumns;
+  onPinnedColumnsChange?: (model: PinnedColumns) => void;
 }
 
-interface UseColumnPinningResult {
-  leftColumns: GridColDef[];
-  centerColumns: GridColDef[];
-  rightColumns: GridColDef[];
-  leftWidth: number;
-  rightWidth: number;
-  getStickyStyles: (field: string) => StickyStyle;
+interface UseColumnPinningResult<T extends DataGridRow> {
+  pinnedColumns: DataGridColumn<T>[];
+  leftFields: Set<string>;
+  rightFields: Set<string>;
+  hasLeftPinned: boolean;
+  /** 钉到左 / 右；side 为 null 时取消钉住 */
+  pinColumn: (field: string, side: 'left' | 'right' | null) => void;
 }
 
-export function useColumnPinning({
+export function useColumnPinning<T extends DataGridRow>({
   columns,
   pinnedColumns,
-}: UseColumnPinningParams): UseColumnPinningResult {
-  const { leftColumns, centerColumns, rightColumns } = useMemo(() => {
-    if (!pinnedColumns) {
-      return { leftColumns: [], centerColumns: columns, rightColumns: [] };
+  onPinnedColumnsChange,
+}: UseColumnPinningParams<T>): UseColumnPinningResult<T> {
+  const [override, setOverride] = useState<PinnedColumns | null>(null);
+
+  // 当前生效的模型（完整的 left / right 列表）
+  const model = useMemo((): Required<PinnedColumns> => {
+    if (override) return { left: override.left ?? [], right: override.right ?? [] };
+    const left = [...(pinnedColumns?.left ?? [])];
+    const right = [...(pinnedColumns?.right ?? [])];
+    for (const c of columns) {
+      const f = fieldOf(c);
+      if (left.includes(f) || right.includes(f)) continue;
+      if (c.pinned === 'left') left.push(f);
+      else if (c.pinned === 'right') right.unshift(f);
     }
+    return { left, right };
+  }, [override, pinnedColumns, columns]);
 
-    const leftFields = new Set(pinnedColumns.left ?? []);
-    const rightFields = new Set(pinnedColumns.right ?? []);
-
-    const left: GridColDef[] = [];
-    const center: GridColDef[] = [];
-    const right: GridColDef[] = [];
-
-    for (const col of columns) {
-      if (leftFields.has(col.field)) left.push(col);
-      else if (rightFields.has(col.field)) right.push(col);
-      else center.push(col);
-    }
-
-    const orderedLeft = (pinnedColumns.left ?? [])
-      .map((f) => left.find((c) => c.field === f))
-      .filter(Boolean) as GridColDef[];
-
-    const orderedRight = (pinnedColumns.right ?? [])
-      .map((f) => right.find((c) => c.field === f))
-      .filter(Boolean) as GridColDef[];
-
-    return { leftColumns: orderedLeft, centerColumns: center, rightColumns: orderedRight };
-  }, [columns, pinnedColumns]);
-
-  const leftWidth = useMemo(
-    () => leftColumns.reduce((sum, col) => sum + (col.width ?? 100), 0),
-    [leftColumns],
-  );
-
-  const rightWidth = useMemo(
-    () => rightColumns.reduce((sum, col) => sum + (col.width ?? 100), 0),
-    [rightColumns],
-  );
-
-  const getStickyStyles = useMemo(() => {
-    const leftOffsets = new Map<string, number>();
-    const rightOffsets = new Map<string, number>();
-
-    let offset = 0;
-    for (const col of leftColumns) {
-      leftOffsets.set(col.field, offset);
-      offset += col.width ?? 100;
-    }
-
-    offset = 0;
-    for (let i = rightColumns.length - 1; i >= 0; i--) {
-      const col = rightColumns[i]!;
-      rightOffsets.set(col.field, offset);
-      offset += col.width ?? 100;
-    }
-
-    return (field: string): StickyStyle => {
-      if (leftOffsets.has(field)) {
-        return {
-          position: 'sticky',
-          left: leftOffsets.get(field),
-          zIndex: 2,
-          bgcolor: 'inherit',
-        };
-      }
-      if (rightOffsets.has(field)) {
-        return {
-          position: 'sticky',
-          right: rightOffsets.get(field),
-          zIndex: 2,
-          bgcolor: 'inherit',
-        };
-      }
-      return {};
+  const result = useMemo(() => {
+    const leftFields = new Set(model.left);
+    const rightFields = new Set(model.right);
+    const byField = new Map(columns.map((c) => [fieldOf(c), c]));
+    const pick = (order: string[], side: 'left' | 'right') =>
+      order.flatMap((f) => {
+        const c = byField.get(f);
+        return c ? [{ ...c, pinned: side } as DataGridColumn<T>] : [];
+      });
+    const center = columns
+      .filter((c) => !leftFields.has(fieldOf(c)) && !rightFields.has(fieldOf(c)))
+      .map((c) => (c.pinned ? ({ ...c, pinned: undefined } as DataGridColumn<T>) : c));
+    const left = pick(model.left, 'left');
+    const right = pick(model.right, 'right');
+    return {
+      pinnedColumns: [...left, ...center, ...right],
+      leftFields,
+      rightFields,
+      hasLeftPinned: left.length > 0,
     };
-  }, [leftColumns, rightColumns]);
+  }, [columns, model]);
 
-  return { leftColumns, centerColumns, rightColumns, leftWidth, rightWidth, getStickyStyles };
+  const pinColumn = useCallback(
+    (field: string, side: 'left' | 'right' | null) => {
+      const left = model.left.filter((f) => f !== field);
+      const right = model.right.filter((f) => f !== field);
+      if (side === 'left') left.push(field);
+      if (side === 'right') right.unshift(field);
+      const next = { left, right };
+      setOverride(next);
+      onPinnedColumnsChange?.(next);
+    },
+    [model, onPinnedColumnsChange],
+  );
+
+  return { ...result, pinColumn };
 }

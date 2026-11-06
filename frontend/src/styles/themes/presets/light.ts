@@ -5,7 +5,7 @@ import type { FoundationThemePreset } from '../types';
 //  - 主区域基本是白：base / content / surface 都用 #ffffff
 //  - 按钮 / 输入框 / 卡片使用 bg.elevated（#eef1f6）默认就能看出底色
 //  - sidebar 用 #f6f7fa 与 content 拉开一级层级
-//  - 圆角弱化由 buildMuiTheme 统一控制（borderRadius: 4）
+//  - 圆角弱化由 buildMantineTheme 统一控制（borderRadius: 4）
 export const lightPreset: FoundationThemePreset = {
   name: 'foundation-light',
   label: 'Light',

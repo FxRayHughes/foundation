@@ -1,15 +1,17 @@
 ---
-title: dialogs Overview
-description: Display native system dialogs in your application
-sidebar:
-  order: 1
+title: "dialogs Overview"
+description: "Display native system dialogs in your application"
+slug: "features/dialogs/overview"
+sourcePath: "features/dialogs/overview.md"
 ---
-
-import { Tabs, TabItem, Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Native dialogs
 
 Wails provides **native system dialogs** that work across all platforms: message dialogs (info, warning, error, question), file dialogs (open, save, folder), and custom dialog windows with platform-native appearance and behaviour.
+
+![A Wails question dialog on macOS with Cancel and Discard buttons](/assets/screenshots/dialog-question-macos.png)
+
+The same API renders with the conventions of each supported platform. This macOS example shows a question dialog attached to its Wails window, including the default and cancel buttons.
 
 ## Quick Start
 
@@ -71,6 +73,7 @@ app.Dialog.Info().
 ```
 
 **Use cases:**
+
 - Success messages
 - Informational notices
 - Completion confirmations
@@ -87,6 +90,7 @@ app.Dialog.Warning().
 ```
 
 **Use cases:**
+
 - Non-critical warnings
 - Deprecation notices
 - Caution messages
@@ -103,6 +107,7 @@ app.Dialog.Error().
 ```
 
 **Use cases:**
+
 - Error messages
 - Failure notifications
 - Exception handling
@@ -128,6 +133,7 @@ dialog.Show()
 ```
 
 **Use cases:**
+
 - Confirm actions
 - Yes/No questions
 - Multiple choice
@@ -247,8 +253,7 @@ dialog.Show()
 
 **Default and Cancel buttons:**
 
-Use `SetDefaultButton()` to specify which button is highlighted and triggered by Enter.
-Use `SetCancelButton()` to specify which button is triggered by Escape.
+Use `SetDefaultButton()` to specify which button is highlighted and triggered by Enter. Use `SetCancelButton()` to specify which button is triggered by Escape.
 
 ```go
 dialog := app.Dialog.Question().
@@ -278,73 +283,75 @@ dialog.Show()
 ```
 
 **Behaviour:**
+
 - dialog appears centred on parent window
 - Parent window disabled whilst dialog shown
 - dialog moves with parent window (macOS)
 
 ## Platform Behaviour
 
-<Tabs syncKey="platform">
-  <TabItem label="macOS" icon="apple">
-    **macOS dialogs:**
-    
-    - Native NSAlert appearance
-    - Follow system theme (light/dark)
-    - Support keyboard navigation
-    - Standard shortcuts (⌘. for Cancel)
-    - Accessibility features built-in
-    - Sheet-style when attached to window
-    
-    **Example:**
-    ```go
-    // Appears as sheet on macOS
-    dialog := app.Dialog.Question().
-        SetMessage("Save changes?").
-        AttachToWindow(window)
-    dialog.AddButton("Yes")
-    dialog.AddButton("No")
-    dialog.Show()
-    ```
-  </TabItem>
+@tabs{sync-key="platform"}
+[macOS]
+**macOS dialogs:**
 
-  <TabItem label="Windows" icon="seti:windows">
-    **Windows dialogs:**
-    
-    - Native TaskDialog appearance
-    - Follow system theme
-    - Support keyboard navigation
-    - Standard shortcuts (Esc for Cancel)
-    - Accessibility features built-in
-    - Modal to parent window
-    
-    **Example:**
-    ```go
-    // Modal dialog on Windows
-    app.Dialog.Error().
-        SetTitle("Error").
-        SetMessage("Operation failed").
-        Show()
-    ```
-  </TabItem>
+- Native NSAlert appearance
+- Follow system theme (light/dark)
+- Support keyboard navigation
+- Standard shortcuts (⌘. for Cancel)
+- Accessibility features built-in
+- Sheet-style when attached to window
 
-  <TabItem label="Linux" icon="linux">
-    **Linux dialogs:**
-    
-    - GTK dialog appearance
-    - Follow desktop theme
-    - Support keyboard navigation
-    - Desktop environment integration
-    - Varies by DE (GNOME, KDE, etc.)
-    
-    **Example:**
-    ```go
-    // GTK dialog on Linux
-    app.Dialog.Info().
-        SetMessage("Update complete").
-        Show()
-    ```
-  </TabItem>
-</Tabs>
+**Example:**
+
+```go
+// Appears as sheet on macOS
+dialog := app.Dialog.Question().
+    SetMessage("Save changes?").
+    AttachToWindow(window)
+dialog.AddButton("Yes")
+dialog.AddButton("No")
+dialog.Show()
+```
+
+[Windows]
+**Windows dialogs:**
+
+- Native TaskDialog appearance
+- Follow system theme
+- Support keyboard navigation
+- Standard shortcuts (Esc for Cancel)
+- Accessibility features built-in
+- Modal to parent window
+
+**Example:**
+
+```go
+// Modal dialog on Windows
+app.Dialog.Error().
+    SetTitle("Error").
+    SetMessage("Operation failed").
+    Show()
+```
+
+[Linux]
+**Linux dialogs:**
+
+- GTK dialog appearance
+- Follow desktop theme
+- Support keyboard navigation
+- Desktop environment integration
+- Varies by DE (GNOME, KDE, etc.)
+
+**Example:**
+
+```go
+// GTK dialog on Linux
+app.Dialog.Info().
+    SetMessage("Update complete").
+    Show()
+```
+
+@end
 
 ## Common Patterns
 
@@ -487,32 +494,32 @@ func exportData(app *application.App) {
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Message dialogs" icon="information">
-    Info, warning, and error dialogs.
-    
-    [Learn More →](/features/dialogs/message)
-  </Card>
+@cards{cols="2"}
+ℹ Message dialogs
+Info, warning, and error dialogs.
 
-  <Card title="File dialogs" icon="document">
-    Open, save, and folder selection.
-    
-    [Learn More →](/features/dialogs/file)
-  </Card>
+[Learn More →](/features/dialogs/message/)
 
-  <Card title="Custom dialogs" icon="puzzle">
-    Create custom dialog windows.
-    
-    [Learn More →](/features/dialogs/custom)
-  </Card>
+---
+📖 File dialogs
+Open, save, and folder selection.
 
-  <Card title="Windows" icon="laptop">
-    Learn about window management.
-    
-    [Learn More →](/features/windows/basics)
-  </Card>
-</CardGrid>
+[Learn More →](/features/dialogs/file/)
+
+---
+◆ Custom dialogs
+Create custom dialog windows.
+
+[Learn More →](/features/dialogs/custom/)
+
+---
+▣ Windows
+Learn about window management.
+
+[Learn More →](/features/windows/basics/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [dialog examples](https://github.com/wailsapp/wails/tree/master/v3/examples/dialogs).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [dialog examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/dialogs).

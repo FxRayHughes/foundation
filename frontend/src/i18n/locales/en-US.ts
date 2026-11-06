@@ -8,6 +8,11 @@ export const enUS: Locale = {
   nativeName: 'English',
   messages: {
     app: {
+      // 托盘原生右键菜单（主窗口推送给后端 SystrayService.SetMenuLabels）
+      trayMenu: {
+        showWindow: 'Show Window',
+        quit: 'Quit',
+      },
       title: 'Foundation',
     },
     sidebar: {

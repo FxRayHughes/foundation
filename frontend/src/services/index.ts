@@ -25,3 +25,8 @@ export {
   type SubprocessItem,
   type ExitInfo,
 } from './subprocess/SubprocessService';
+export {
+  ExportService,
+  type ExportCell,
+  type TableExportPayload,
+} from './export';

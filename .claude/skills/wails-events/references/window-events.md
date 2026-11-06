@@ -1,11 +1,9 @@
 ---
-title: Window Events
-description: Handle window lifecycle and state change events
-sidebar:
-  order: 5
+title: "Window Events"
+description: "Handle window lifecycle and state change events"
+slug: "features/windows/events"
+sourcePath: "features/windows/events.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## Window Events
 
@@ -51,7 +49,7 @@ app.Window.OnCreate(func(window application.Window) {
 })
 ```
 
-The callback receives `application.Window` (an interface). The `OnCreate` callback is invoked once per window, after the window's runtime is initialised.
+The callback receives `application.Window` (an interface). The `OnCreate` callback is invoked once per window during registration, before the window is run. Use it to configure the window and register handlers. Wait for `events.Common.WindowRuntimeReady` before calling JavaScript or sending events that require the frontend runtime.
 
 ### WindowClosing
 
@@ -69,6 +67,7 @@ window.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent
 ```
 
 **Important:**
+
 - `WindowClosing` is dispatched on user-initiated close attempts.
 - A `RegisterHook` callback can call `e.Cancel()` to keep the window open.
 - `OnWindowEvent` callbacks for `WindowClosing` are observers — they fire but cannot cancel.
@@ -483,18 +482,14 @@ unsub()
 
 ## Next Steps
 
-**Window Basics** - Learn the fundamentals of window management
-[Learn More →](/features/windows/basics)
+**Window Basics** - Learn the fundamentals of window management [Learn More →](/features/windows/basics/)
 
-**Multiple Windows** - Patterns for multi-window applications
-[Learn More →](/features/windows/multiple)
+**Multiple Windows** - Patterns for multi-window applications [Learn More →](/features/windows/multiple/)
 
-**Events System** - Deep dive into the event system
-[Learn More →](/features/events/system)
+**Events System** - Deep dive into the event system [Learn More →](/features/events/system/)
 
-**Application Lifecycle** - Understand the application lifecycle
-[Learn More →](/concepts/lifecycle)
+**Application Lifecycle** - Understand the application lifecycle [Learn More →](/concepts/lifecycle/)
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [examples](https://github.com/wailsapp/wails/tree/master/v3/examples).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples).

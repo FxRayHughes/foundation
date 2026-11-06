@@ -1,11 +1,9 @@
 ---
-title: Advanced Binding
-description: Advanced binding techniques including directives, code injection, and custom IDs
-sidebar:
-  order: 3
+title: "Advanced Binding"
+description: "Advanced binding techniques including directives, code injection, and custom IDs"
+slug: "features/bindings/advanced"
+sourcePath: "features/bindings/advanced.md"
 ---
-
-import { FileTree } from "@astrojs/starlight/components";
 
 This guide covers advanced techniques for customizing and optimizing the binding generation process in Wails v3.
 
@@ -46,7 +44,7 @@ This directive is typically used in package documentation comments to include ad
 
 ### Marking Internal Types and Methods
 
-The `//wails:internal` directive marks a type or method as internal, preventing it from being exported to the frontend:
+The `//wails:internal` directive suppresses a type or method export in the generated JavaScript/TypeScript bindings:
 
 ```go
 //wails:internal
@@ -58,7 +56,7 @@ type InternalModel struct {
 func (s *MyService) InternalMethod() {}
 ```
 
-This is useful for types and methods that are only used internally by your Go code and should not be exposed to the frontend.
+This controls the generated SDK, not runtime access. In normal builds, exported Go service methods can still be registered and called through the runtime even when absent from the generated SDK. Keep private operations unexported or on an unbound type, and enforce authorisation inside exposed methods.
 
 ### Ignoring Methods
 
@@ -69,7 +67,7 @@ The `//wails:ignore` directive completely ignores a method during binding genera
 func (s *MyService) IgnoredMethod() {}
 ```
 
-This is similar to `//wails:internal`, but it completely ignores the method rather than marking it as internal.
+This omits the generated wrapper. Like `//wails:internal`, it is not an access-control boundary for exported Go service methods.
 
 ### Custom Method IDs
 

@@ -1,4 +1,4 @@
-import { CssBaseline, ThemeProvider as MuiThemeProvider } from '@mui/material';
+import { MantineProvider } from '@mantine/core';
 import {
   createContext,
   useCallback,
@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { AppSettingsService } from '@/services';
-import { buildMuiTheme } from './buildMuiTheme';
+import { buildCssVariablesResolver, buildMantineTheme } from './buildMantineTheme';
 import {
   hydrateCustomTheme,
   parseStoredCustomTheme,
@@ -84,28 +84,41 @@ export const FoundationThemeProvider = ({ children, initialChoice }: FoundationT
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // mount 拉后端：先 hydrate 自定义主题（保证 setChoice 时它已注册），再切 choice
+  // mount 拉后端：先 hydrate 自定义主题（保证 setChoice 时它已注册），再切 choice。
+  // 之后订阅 appsettings:changed —— 托盘面板 / 子窗口跟随主窗口的主题变更实时刷新。
+  // 自定义主题调色时每次改色都会写库并广播，因此重拉做 200ms 防抖，避免拖动取色器时回闪。
   useEffect(() => {
     let cancelled = false;
-    AppSettingsService.get()
-      .then((snap) => {
-        if (cancelled || !aliveRef.current) return;
-        // 1) hydrate custom theme
-        const custom = parseStoredCustomTheme(snap.customTheme);
-        if (custom) {
-          hydrateCustomTheme(custom);
-        }
-        // 2) 应用 themeChoice：必须是 'system' 或已注册的预设
-        const next = snap.themeChoice;
-        if (next === 'system' || (next && themeRegistry.has(next))) {
-          setChoiceState(next);
-        }
-      })
-      .catch(() => {
-        // 后端未就绪 / 网络异常 —— 保持 'system' 默认
-      });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const load = () => {
+      AppSettingsService.get()
+        .then((snap) => {
+          if (cancelled || !aliveRef.current) return;
+          // 1) hydrate custom theme
+          const custom = parseStoredCustomTheme(snap.customTheme);
+          if (custom) {
+            hydrateCustomTheme(custom);
+          }
+          // 2) 应用 themeChoice：必须是 'system' 或已注册的预设
+          const next = snap.themeChoice;
+          if (next === 'system' || (next && themeRegistry.has(next))) {
+            setChoiceState(next);
+          }
+        })
+        .catch(() => {
+          // 后端未就绪 / 网络异常 —— 保持 'system' 默认
+        });
+    };
+    load();
+    const off = AppSettingsService.onChanged((field) => {
+      if (field !== 'themeChoice' && field !== 'customTheme') return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(load, 200);
+    });
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
+      off();
     };
   }, []);
 
@@ -122,7 +135,8 @@ export const FoundationThemeProvider = ({ children, initialChoice }: FoundationT
     // version 触发：注册表变更后重算
   }, [choice, systemDark, version]);
 
-  const muiTheme = useMemo(() => buildMuiTheme(preset), [preset]);
+  const mantineTheme = useMemo(() => buildMantineTheme(preset), [preset]);
+  const cssVariablesResolver = useMemo(() => buildCssVariablesResolver(preset), [preset]);
 
   const setChoice = useCallback((next: ThemeChoice) => {
     if (next !== 'system' && !themeRegistry.has(next)) {
@@ -146,10 +160,13 @@ export const FoundationThemeProvider = ({ children, initialChoice }: FoundationT
 
   return (
     <ThemeContext.Provider value={ctx}>
-      <MuiThemeProvider theme={muiTheme}>
-        <CssBaseline />
+      <MantineProvider
+        theme={mantineTheme}
+        forceColorScheme={preset.mode}
+        cssVariablesResolver={cssVariablesResolver}
+      >
         {children}
-      </MuiThemeProvider>
+      </MantineProvider>
     </ThemeContext.Provider>
   );
 };

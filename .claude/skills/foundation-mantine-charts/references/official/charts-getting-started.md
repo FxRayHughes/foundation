@@ -1,0 +1,85 @@
+# Getting started
+Package: @mantine/charts
+Description: Get started with @mantine/charts package
+
+## Installation
+
+```bash
+yarn add @mantine/charts recharts
+```
+
+```bash
+npm install @mantine/charts recharts
+```
+
+After installation import package styles at the root of your application:
+
+```tsx
+import '@mantine/core/styles.css';
+// ‼️ import charts styles after core package styles
+import '@mantine/charts/styles.css';
+```
+
+After installation, import package styles at the root of your application:
+
+```tsx
+import '@mantine/core/styles.css';
+// ‼️ import charts styles after core package styles
+import '@mantine/charts/styles.css';
+```
+
+## Do not forget to import styles
+
+Followed the installation instructions above but something is not working
+(misplaced tooltips or no colors)?
+You've fallen into the trap of not importing chart styles!
+To fix the issue, import chart styles at the root of your application:
+
+```tsx
+import '@mantine/charts/styles.css';
+```
+
+## Based on recharts
+
+Most of the components in the `@mantine/charts` package are based on the [recharts](https://recharts.github.io/) library.
+If you need advanced features that are not covered in the `@mantine/charts`
+documentation, refer to the [recharts documentation](https://recharts.github.io/en-US/api) for more information.
+
+## Keyboard navigation
+
+All `@mantine/charts` components include an accessibility layer that makes charts navigable with the
+keyboard. The chart surface is focusable: once it receives focus (for example, with the&#x20;
+key), the arrow keys move the active tooltip point-by-point, so users who do not use a mouse can read
+the underlying values. The feature is enabled by default on all recharts-based charts.
+
+The following keyboard interactions are supported:
+
+When the chart surface is focused with the keyboard, it displays the Mantine focus ring so that the
+focused chart is clearly visible.
+
+## accessibilityLayer prop
+
+The accessibility layer is controlled with the `accessibilityLayer` prop, which is `true` by default
+on all charts. Set it to `false` to opt out of keyboard navigation, for example when a chart is
+embedded inside another widget that already handles keyboard interactions:
+
+```tsx
+import { AreaChart } from '@mantine/charts';
+import { data } from './data';
+
+function Demo() {
+  return (
+    <AreaChart
+      h={300}
+      data={data}
+      dataKey="date"
+      accessibilityLayer={false}
+      series={[{ name: 'Apples', color: 'indigo.6' }]}
+    />
+  );
+}
+```
+
+The `accessibilityLayer` prop is supported by `AreaChart`, `BarChart`, `LineChart`, `CompositeChart`,
+`ScatterChart`, `BubbleChart`, `PieChart`, `DonutChart`, `RadarChart`, `RadialBarChart` and
+`FunnelChart` components.

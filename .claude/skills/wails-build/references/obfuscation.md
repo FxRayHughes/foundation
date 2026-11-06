@@ -1,11 +1,9 @@
 ---
-title: Obfuscated Builds
-description: Build your Wails application with Garble to protect your source code from reverse engineering
-sidebar:
-  order: 8
+title: "Obfuscated Builds"
+description: "Build your Wails application with Garble to protect your source code from reverse engineering"
+slug: "guides/build/obfuscation"
+sourcePath: "guides/build/obfuscation.md"
 ---
-
-import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 [Garble](https://github.com/burrowers/garble) is a Go build tool that replaces `go build` to rename symbols, obfuscate constants, and strip debug information from the resulting binary. Wails v3 has first-class support for Garble through two new commands.
 
@@ -18,9 +16,10 @@ import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 go install mvdan.cc/garble@v0.16.0
 ```
 
-<Aside type="tip">
+@note{type="tip"}
 Garble's minimum Go version changes between releases. If you are on an older Go toolchain, check the [Garble releases page](https://github.com/burrowers/garble/releases) for a version that matches your toolchain before installing.
-</Aside>
+
+@end
 
 ## Required: add JSON tags to your service types
 
@@ -42,35 +41,33 @@ type OrderSummary struct {
 }
 ```
 
-<Aside type="caution">
+@note{type="caution"}
 Garble renames exported struct fields, and Wails passes these structs to `json.Marshal` through an `interface{}` parameter that Garble cannot statically trace. An obfuscated build without JSON tags will compile successfully but your frontend will receive garbled or empty field names at runtime. Add tags before running an obfuscated build.
-</Aside>
+
+@end
 
 Wails's own types — `Screen`, `Rect`, `Point`, `Size`, `EnvironmentInfo`, `OSInfo`, `Capabilities` — are already tagged. You only need to tag your own types.
 
 ## Building with obfuscation
 
-<Steps>
+@steps
+### Generate the stable ID file
+Run this any time you add, rename, or remove a bound service method:
 
-1. **Generate the stable ID file**
+```bash
+wails3 generate bindings -obfuscated
+```
 
-   Run this any time you add, rename, or remove a bound service method:
+This creates `wails_obfuscated.gen.go` in your main package directory — commit this file.
 
-   ```bash
-   wails3 generate bindings -obfuscated
-   ```
+### Build with Garble
+```bash
+wails3 build --obfuscated
+```
 
-   This creates `wails_obfuscated.gen.go` in your main package directory — commit this file.
+Builds the application using the obfuscated bindings.
 
-2. **Build with Garble**
-
-   ```bash
-   wails3 build --obfuscated
-   ```
-
-   Builds the application using the obfuscated bindings.
-
-</Steps>
+@end
 
 ## Passing extra flags to Garble
 
@@ -94,9 +91,10 @@ By default `wails_obfuscated.gen.go` is written next to your `main` package. If 
 wails3 generate bindings -obfuscated -obfuscated-output ./internal/services
 ```
 
-<Aside type="caution">
+@note{type="caution"}
 The destination package must be imported — directly or transitively — by your `main` package so its `init()` runs at startup. If the package is not reachable, the stable IDs are never registered and binding calls will fail (for example, with `binding not found` errors at runtime).
-</Aside>
+
+@end
 
 ## Troubleshooting
 

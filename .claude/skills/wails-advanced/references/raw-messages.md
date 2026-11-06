@@ -1,8 +1,8 @@
 ---
-title: Raw Messages
-description: Implement custom frontend-to-backend communication for performance-critical applications
-sidebar:
-  order: 10
+title: "Raw Messages"
+description: "Implement custom frontend-to-backend communication for performance-critical applications"
+slug: "guides/raw-messages"
+sourcePath: "guides/raw-messages.md"
 ---
 
 Raw messages provide a low-level communication channel between your frontend and backend, bypassing the standard binding system. This trades convenience for speed.
@@ -14,9 +14,10 @@ Raw messages are best suited for extreme edge cases:
 - **Ultra-high-frequency updates** - Thousands of messages per second where every microsecond matters
 - **Custom message protocols** - When you need complete control over the wire format
 
-:::tip
-For almost all use cases, standard [service bindings](/features/bindings/services) are recommended as they provide type safety, automatic serialization, and a better developer experience with negligible overhead.
-:::
+@note{type="tip"}
+For almost all use cases, standard [service bindings](/features/bindings/services/) are recommended as they provide type safety, automatic serialization, and a better developer experience with negligible overhead.
+
+@end
 
 ## Backend Setup
 
@@ -71,7 +72,7 @@ RawMessageHandler func(window Window, message string, originInfo *application.Or
 ```
 
 | Parameter | Type | Description |
-|-----------|------|-------------|
+| --- | --- | --- |
 | `window` | `Window` | The window that sent the message |
 | `message` | `string` | The raw message content |
 | `originInfo` | `*application.OriginInfo` | Origin information about the message source |
@@ -87,7 +88,7 @@ type OriginInfo struct {
 ```
 
 | Field | Type | Description |
-|-------|------|-------------|
+| --- | --- | --- |
 | `Origin` | `string` | The origin URL of the document that sent the message |
 | `TopOrigin` | `string` | The top-level origin URL (may differ from Origin in iframes) |
 | `IsMainFrame` | `bool` | Whether the message originated from the main frame |
@@ -100,12 +101,12 @@ type OriginInfo struct {
 
 ### Origin Validation
 
-:::caution
+@note{type="caution"}
 Never assume a message is safe because it arrives in your handler. The origin information must be validated before processing sensitive operations or operations that modify state.
-:::
 
-**Always verify the origin of incoming messages before processing them.** The `originInfo` parameter provides critical security information that must be validated to prevent unauthorized access.
-Malicious content, compromised content, or unintended scripts could send raw messages. Without origin validation, you may process commands from untrusted sources. Use `originInfo` to ensure messages come from expected sources.
+@end
+
+**Always verify the origin of incoming messages before processing them.** The `originInfo` parameter provides critical security information that must be validated to prevent unauthorized access. Malicious content, compromised content, or unintended scripts could send raw messages. Without origin validation, you may process commands from untrusted sources. Use `originInfo` to ensure messages come from expected sources.
 
 ### Key Validation Points
 
@@ -114,10 +115,10 @@ Malicious content, compromised content, or unintended scripts could send raw mes
 - **Use `TopOrigin`** (Windows) - Verify the top-level origin when dealing with framed content
 - **Reject unexpected origins** - Fail securely by rejecting messages from origins you don't explicitly allow
 
-
-:::note
+@note{type="info"}
 Messages prefixed with `wails:` are reserved for internal Wails communication and will not be passed to your handler.
-:::
+
+@end
 
 ## Frontend Setup
 
@@ -215,7 +216,7 @@ RawMessageHandler: func(window application.Window, message string, originInfo *a
 ## Performance Comparison
 
 | Approach | Overhead | Type Safety | Use Case |
-|----------|----------|-------------|----------|
+| --- | --- | --- | --- |
 | Service Bindings | Higher | Full | General purpose |
 | Raw Messages | Minimal | Manual | High-frequency, performance-critical |
 
@@ -388,6 +389,6 @@ RawMessageHandler: func(window application.Window, message string, originInfo *a
 
 ## Next Steps
 
-- [Service Bindings](/features/bindings/services) - Standard approach for most applications
-- [Events](/guides/events-reference) - Event system for backend-to-frontend communication
-- [Performance](/guides/performance) - General performance optimization
+- [Service Bindings](/features/bindings/services/) - Standard approach for most applications
+- [Events](/guides/events-reference/) - Event system for backend-to-frontend communication
+- [Performance](/guides/performance/) - General performance optimization

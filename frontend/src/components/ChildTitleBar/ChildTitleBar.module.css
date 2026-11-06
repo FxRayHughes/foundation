@@ -1,0 +1,42 @@
+/* 子窗口标题栏：32px 高，只有标题 + 关闭键。拖拽区由 TSX 内联 --wails-draggable 声明。 */
+
+.root {
+  height: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  padding-right: 0;
+  background-color: var(--fd-bg-base);
+  border-bottom: 1px solid var(--fd-divider);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.66;
+  color: var(--fd-text-secondary);
+  user-select: none;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* 双类选择器覆盖全局 ActionIcon subtle 变体的圆角 / hover 底色 */
+.closeBtn.closeBtn {
+  width: 40px;
+  min-width: 40px;
+  height: 32px;
+  min-height: 32px;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+  color: var(--fd-text-secondary);
+}
+
+.closeBtn.closeBtn:hover {
+  background-color: var(--fd-danger);
+  color: var(--mantine-color-white);
+}

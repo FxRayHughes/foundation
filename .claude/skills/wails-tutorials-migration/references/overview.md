@@ -1,30 +1,42 @@
 ---
-title: Tutorials
-description: Learn Wails by building applications
-sidebar:
-  label: Overview
-  order: 0
+title: "Tutorials"
+description: "Learn Wails by building applications"
+slug: "tutorials/overview"
+sourcePath: "tutorials/overview.md"
 ---
 
-import { LinkButton } from '@astrojs/starlight/components';
-import { Image } from 'astro:assets';
-import qr1 from "../../../assets/qr1.png";
-import todoApp from "../../../assets/todo-app.png";
-import notesApp from "../../../assets/notes-app.png";
+Choose a guided lesson when you want to learn Wails by building something. Each lesson follows one project towards a concrete result.
 
-Step-by-step tutorials that teach Wails concepts by building complete applications. Each tutorial includes working code, explanations, and practical patterns.
+If this is your first visit, complete [Installation](/quick-start/installation/) and [Your First App](/quick-start/first-app/) first.
 
-:::tip[New to Go?]
+## Choose a Tutorial
+
+After your first app, follow the desktop lessons in this order:
+
+| Lesson | What you will practise |
+| --- | --- |
+| [QR code service](/tutorials/01-creating-a-service/) | Exposing Go logic through a service and calling it from the frontend |
+| [TODO list](/tutorials/02-todo-vanilla/) | Creating, updating and deleting application data |
+| [Notes app](/tutorials/03-notes-vanilla/) | Using native dialogs and saving data to files |
+| [Self-updating app](/tutorials/04-self-update-a-wails-app/) | Checking and applying updates from GitHub Releases |
+
+For an optional mobile lesson, follow [Your First Mobile App](/guides/mobile/first-mobile-app/). Mobile support is experimental.
+
+If you're working on an existing app and need to complete a particular task, choose a [how-to guide](/quick-start/next-steps/#features) instead. For design background, use [Core Concepts](/concepts/architecture/).
+
+@note{type="tip" title="New to Go?"}
 Complete the [Go Tour](https://go.dev/tour/) before starting tutorials.
-:::
 
-### QR Code Service
+@end
 
-<Image src={qr1} alt="QR Code Example" style="max-width: 400px; margin: 1rem auto; display: block;" />
+## QR Code Service
+
+![QR Code Example](/assets/qr1.png)
 
 Learn the fundamentals of Wails services by building a QR code generator. This tutorial introduces you to the core concepts of organizing your application logic into reusable services.
 
 **What you'll learn:**
+
 - How to create and structure a Wails service
 - Managing external Go dependencies
 - Binding Go methods to your frontend
@@ -34,18 +46,19 @@ Learn the fundamentals of Wails services by building a QR code generator. This t
 **Best for:** First-time Wails users who want to understand the service architecture
 
 <div style="text-align: center; margin-top: 1rem;">
-<LinkButton href="/tutorials/01-creating-a-service" variant="secondary" icon="right-arrow">Get Started</LinkButton>
+<a class="mpress-link-button mpress-link-button-secondary" href="/tutorials/01-creating-a-service/"><span>Get Started</span><span class="mpress-link-button-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.92 11.62a1 1 0 0 0-.21-.33l-5-5a1 1 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1 1 0 1 0 1.42 1.42l5-5a1 1 0 0 0 .21-1.09Z"/></svg></span></a>
 </div>
 
 ---
 
 ### TODO List
 
-<Image src={todoApp} alt="TODO List Application" style="max-width: 400px; margin: 1rem auto; display: block;" />
+![TODO List Application](/assets/todo-app.png)
 
 Build a complete TODO list application with a beautiful, modern interface. This hands-on tutorial teaches you core Wails patterns through a practical, real-world application using vanilla JavaScript.
 
 **What you'll learn:**
+
 - Service-based architecture with thread-safe state management
 - CRUD operations (Create, Read, Update, Delete)
 - Type-safe bindings between Go and JavaScript
@@ -57,18 +70,19 @@ Build a complete TODO list application with a beautiful, modern interface. This 
 **Best for:** Your first complete Wails application - perfect for understanding the fundamentals before adding framework complexity
 
 <div style="text-align: center; margin-top: 1rem;">
-<LinkButton href="/tutorials/02-todo-vanilla" variant="secondary" icon="right-arrow">Get Started</LinkButton>
+<a class="mpress-link-button mpress-link-button-secondary" href="/tutorials/02-todo-vanilla/"><span>Get Started</span><span class="mpress-link-button-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.92 11.62a1 1 0 0 0-.21-.33l-5-5a1 1 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1 1 0 1 0 1.42 1.42l5-5a1 1 0 0 0 .21-1.09Z"/></svg></span></a>
 </div>
 
 ---
 
 ### Notes
 
-<Image src={notesApp} alt="Notes Application" style="max-width: 600px; margin: 1rem auto; display: block;" />
+![Notes Application](/assets/notes-app.png)
 
 Build an Apple Notes-style application with native file dialogs and auto-save functionality. This tutorial demonstrates desktop-specific features like file operations, native dialogs, and professional UI patterns.
 
 **What you'll learn:**
+
 - Native file dialogs (Save, Open, Info)
 - JSON-based data persistence
 - Debounced auto-save patterns
@@ -80,7 +94,7 @@ Build an Apple Notes-style application with native file dialogs and auto-save fu
 **Best for:** Learning desktop-specific features like file operations and native OS dialogs
 
 <div style="text-align: center; margin-top: 1rem;">
-<LinkButton href="/tutorials/03-notes-vanilla" variant="secondary" icon="right-arrow">Get Started</LinkButton>
+<a class="mpress-link-button mpress-link-button-secondary" href="/tutorials/03-notes-vanilla/"><span>Get Started</span><span class="mpress-link-button-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.92 11.62a1 1 0 0 0-.21-.33l-5-5a1 1 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1 1 0 1 0 1.42 1.42l5-5a1 1 0 0 0 .21-1.09Z"/></svg></span></a>
 </div>
 
 ---
@@ -90,6 +104,7 @@ Build an Apple Notes-style application with native file dialogs and auto-save fu
 Add in-app self-updates to a Wails application from a fresh `wails3 init` through signed release verification and the helper-mode binary swap. Uses GitHub Releases as the update source.
 
 **What you'll learn:**
+
 - How `app.Updater` plugs into a Wails app
 - Configuring the GitHub Releases provider
 - Publishing releases with `SHA256SUMS` for digest verification
@@ -102,5 +117,5 @@ Add in-app self-updates to a Wails application from a fresh `wails3 init` throug
 **Best for:** Shipping an updateable desktop app — covers the full release pipeline, not just the API
 
 <div style="text-align: center; margin-top: 1rem;">
-<LinkButton href="/tutorials/04-self-update-a-wails-app" variant="secondary" icon="right-arrow">Get Started</LinkButton>
+<a class="mpress-link-button mpress-link-button-secondary" href="/tutorials/04-self-update-a-wails-app/"><span>Get Started</span><span class="mpress-link-button-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.92 11.62a1 1 0 0 0-.21-.33l-5-5a1 1 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1 1 0 1 0 1.42 1.42l5-5a1 1 0 0 0 .21-1.09Z"/></svg></span></a>
 </div>

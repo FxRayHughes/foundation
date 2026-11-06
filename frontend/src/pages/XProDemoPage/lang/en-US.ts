@@ -7,6 +7,10 @@ export const xProDemoPageEnUS: Messages = {
     datagrid: {
       title: 'DataGrid Pro (Community + pinned columns & row reordering)',
     },
+    datagridPremium: {
+      title: 'DataGrid Premium (export / column menu / resizing / pinned rows / aggregation)',
+      hint: 'Hover a header and open its menu to sort, pin, hide or manage columns; drag a header edge to resize (double-click to reset); toolbar export opens the native Save As dialog.',
+    },
     col: {
       name: 'Name',
       department: 'Department',
@@ -22,6 +26,45 @@ export const xProDemoPageEnUS: Messages = {
       sankey: 'Sankey',
       gantt: 'Gantt',
       treemap: 'Treemap',
+      funnelHorizontal: 'Funnel (horizontal)',
+      // Demo data labels (category names fed into the charts)
+      data: {
+        weekdays: { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri' },
+        quarters: { q1: 'Q1', q2: 'Q2', q3: 'Q3', q4: 'Q4' },
+        funnel: {
+          visits: 'Visits',
+          signups: 'Signups',
+          trials: 'Trials',
+          purchases: 'Purchases',
+          renewals: 'Renewals',
+        },
+        radar: {
+          axes: { speed: 'Speed', power: 'Power', defense: 'Defense', range: 'Range', hp: 'HP' },
+          series: { playerA: 'Player A', playerB: 'Player B' },
+        },
+        sankey: {
+          budget: 'Budget',
+          engineering: 'Engineering',
+          design: 'Design',
+          marketing: 'Marketing',
+          product: 'Product',
+        },
+        gantt: {
+          research: 'Research',
+          design: 'Design',
+          development: 'Development',
+          testing: 'Testing',
+        },
+        treemap: {
+          portfolio: 'Portfolio',
+          tech: 'Tech',
+          frontend: 'Frontend',
+          backend: 'Backend',
+          design: 'Design',
+          marketing: 'Marketing',
+          operations: 'Operations',
+        },
+      },
     },
   },
 };

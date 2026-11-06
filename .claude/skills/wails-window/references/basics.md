@@ -1,11 +1,9 @@
 ---
-title: Window Basics
-description: Creating and managing application windows in Wails
-sidebar:
-  order: 1
+title: "Window Basics"
+description: "Creating and managing application windows in Wails"
+slug: "features/windows/basics"
+sourcePath: "features/windows/basics.md"
 ---
-
-import { Tabs, TabItem, Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Window Management
 
@@ -51,6 +49,7 @@ window := app.Window.New()
 ```
 
 **What you get:**
+
 - Default size (800x600)
 - Default title (application name)
 - WebView ready for your frontend
@@ -80,7 +79,7 @@ window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 **Common options:**
 
 | Option | Type | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `Title` | `string` | Window title |
 | `Width` | `int` | Window width in pixels |
 | `Height` | `int` | Window height in pixels |
@@ -94,7 +93,7 @@ window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 | `MaxWidth` | `int` | Maximum width |
 | `MaxHeight` | `int` | Maximum height |
 
-**See [Window Options](/features/windows/options) for complete list.**
+**See [Window Options](/features/windows/options/) for complete list.**
 
 ### Named Windows
 
@@ -113,6 +112,7 @@ if mainWindow, ok := app.Window.GetByName("main-window"); ok {
 ```
 
 **Use cases:**
+
 - Multiple windows (main, settings, about)
 - Finding windows from different parts of your code
 - Window communication
@@ -135,6 +135,7 @@ if window.IsVisible() {
 ```
 
 **Use cases:**
+
 - Splash screens (show, then hide)
 - Settings windows (hide when not needed)
 - Popup windows (show on demand)
@@ -159,6 +160,7 @@ x, y := window.Position()
 ```
 
 **Coordinate system:**
+
 - (0, 0) is top-left of primary screen
 - Positive X goes right
 - Positive Y goes down
@@ -360,7 +362,7 @@ app.Event.On("data-updated", func(event *application.CustomEvent) {
 })
 ```
 
-**See [Events](/features/events/system) for more.**
+**See [Events](/features/events/system/) for more.**
 
 ### Parent-Child Windows
 
@@ -377,92 +379,95 @@ mainWindow.AttachModal(childWindow)
 ```
 
 **Behaviour:**
+
 - Child stays above parent.
 - Child is modal — blocks interaction with the parent.
 
 **Platform support:**
+
 - **macOS:** Full support (presents as a sheet).
 - **Windows:** Not supported.
 - **Linux:** Not supported.
 
 ## Platform-Specific Features
 
-<Tabs syncKey="platform">
-  <TabItem label="Windows" icon="seti:windows">
-    **Windows-specific features:**
-    
-    ```go
-    // Flash taskbar button
-    window.Flash(true)  // Start flashing
-    window.Flash(false) // Stop flashing
+@tabs{sync-key="platform"}
+[Windows]
+**Windows-specific features:**
 
-    // Trigger Windows 11 Snap Assist (Win+Z)
-    window.SnapAssist()
-    ```
+```go
+// Flash taskbar button
+window.Flash(true)  // Start flashing
+window.Flash(false) // Stop flashing
 
-    There is no per-window `SetIcon` — the application icon is set on the app via `app.SetIcon([]byte)` (or for a Linux-specific window icon, the `application.LinuxWindow.Icon` field at window creation).
-    
-    **Snap Assist:**
-    Shows Windows 11 snap layout options for the window.
-    
-    **Taskbar flashing:**
-    Useful for notifications when window is minimised.
-  </TabItem>
+// Trigger Windows 11 Snap Assist (Win+Z)
+window.SnapAssist()
+```
 
-  <TabItem label="macOS" icon="apple">
-    **macOS-specific features:**
+There is no per-window `SetIcon` — the application icon is set on the app via `app.SetIcon([]byte)` (or for a Linux-specific window icon, the `application.LinuxWindow.Icon` field at window creation).
 
-    ```go
-    // Transparent title bar
-    window := app.Window.NewWithOptions(application.WebviewWindowOptions{
-        Mac: application.MacWindow{
-            TitleBar: application.MacTitleBar{
-                AppearsTransparent: true,
-            },
-            Backdrop: application.MacBackdropTranslucent,
+**Snap Assist:** Shows Windows 11 snap layout options through the system shortcut path. For a custom HTML maximize button with native hover Snap Layouts, use [Native Non-Client Regions on Windows](/features/windows/frameless/#native-non-client-regions-on-windows) instead.
+
+**Taskbar flashing:** Useful for notifications when window is minimised.
+
+[macOS]
+**macOS-specific features:**
+
+```go
+// Transparent title bar
+window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+    Mac: application.MacWindow{
+        TitleBar: application.MacTitleBar{
+            AppearsTransparent: true,
         },
-    })
-    ```
+        Backdrop: application.MacBackdropTranslucent,
+    },
+})
+```
 
-    **Backdrop types:**
-    - `MacBackdropNormal` - Standard window
-    - `MacBackdropTranslucent` - Translucent background
-    - `MacBackdropTransparent` - Fully transparent
+**Backdrop types:**
 
-    **Collection behavior:**
-    Control how windows behave across Spaces:
-    - `MacWindowCollectionBehaviorCanJoinAllSpaces` - Visible on all Spaces
-    - `MacWindowCollectionBehaviorFullScreenAuxiliary` - Can overlay fullscreen apps
+- `MacBackdropNormal` - Standard window
+- `MacBackdropTranslucent` - Translucent background; **private API required** for webview transparency.
+- `MacBackdropTransparent` - Fully transparent; **private API required** for webview transparency.
+- `MacBackdropLiquidGlass` - Glass backdrop; **private API required** for webview transparency.
 
-    **Native fullscreen:**
-    macOS fullscreen creates a new Space (virtual desktop).
-  </TabItem>
+Build with `-tags private_mac_apis` for these effects to show through the webview. Without it, the webview stays opaque. `TitleBar.AppearsTransparent` itself uses public APIs. See [Private macOS APIs](/guides/build/private-macos-apis/).
 
-  <TabItem label="Linux" icon="linux">
-    **Linux-specific features:**
+**Collection behavior:** Control how windows behave across Spaces:
 
-    ```go
-    // Set window icon (per-window struct is LinuxWindow, not the app-level LinuxOptions)
-    window := app.Window.NewWithOptions(application.WebviewWindowOptions{
-        Linux: application.LinuxWindow{
-            Icon: iconBytes,
-        },
-    })
-    ```
+- `MacWindowCollectionBehaviorCanJoinAllSpaces` - Visible on all Spaces
+- `MacWindowCollectionBehaviorFullScreenAuxiliary` - Can overlay fullscreen apps
 
-    **Desktop environment notes:**
-    - GNOME: Full support
-    - KDE Plasma: Full support
-    - XFCE: Partial support
-    - Others: Varies
+**Native fullscreen:** macOS fullscreen creates a new Space (virtual desktop).
 
-    **Tiling window managers (Hyprland, Sway, i3, etc.):**
-    - `Minimise()` and `Maximise()` may not work as expected - the WM controls window geometry
-    - `SetSize()` and `SetPosition()` requests are advisory and may be ignored
-    - `Fullscreen()` typically works as expected
-    - Some WMs don't support always-on-top
-  </TabItem>
-</Tabs>
+[Linux]
+**Linux-specific features:**
+
+```go
+// Set window icon (per-window struct is LinuxWindow, not the app-level LinuxOptions)
+window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+    Linux: application.LinuxWindow{
+        Icon: iconBytes,
+    },
+})
+```
+
+**Desktop environment notes:**
+
+- GNOME: Full support
+- KDE Plasma: Full support
+- XFCE: Partial support
+- Others: Varies
+
+**Tiling window managers (Hyprland, Sway, i3, etc.):**
+
+- `Minimise()` and `Maximise()` may not work as expected - the WM controls window geometry
+- `SetSize()` and `SetPosition()` requests are advisory and may be ignored
+- `Fullscreen()` typically works as expected
+- Some WMs don't support always-on-top
+
+@end
 
 ## Common Patterns
 
@@ -548,6 +553,7 @@ window.RegisterHook(events.Common.WindowClosing, func(event *application.WindowE
 ### Window Not Showing
 
 **Possible causes:**
+
 1. Window created as hidden
 2. Window off-screen
 3. Window behind other windows
@@ -588,32 +594,32 @@ app := application.New(application.Options{
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Window Options" icon="seti:config">
-    Complete reference for all window options.
-    
-    [Learn More →](/features/windows/options)
-  </Card>
+@cards{cols="2"}
+⚙ Window Options
+Complete reference for all window options.
 
-  <Card title="Multiple Windows" icon="laptop">
-    Patterns for multi-window applications.
-    
-    [Learn More →](/features/windows/multiple)
-  </Card>
+[Learn More →](/features/windows/options/)
 
-  <Card title="Frameless Windows" icon="star">
-    Create custom window chrome.
-    
-    [Learn More →](/features/windows/frameless)
-  </Card>
+---
+▣ Multiple Windows
+Patterns for multi-window applications.
 
-  <Card title="Window Events" icon="rocket">
-    Handle window lifecycle events.
-    
-    [Learn More →](/features/windows/events)
-  </Card>
-</CardGrid>
+[Learn More →](/features/windows/multiple/)
+
+---
+★ Frameless Windows
+Create custom window chrome.
+
+[Learn More →](/features/windows/frameless/)
+
+---
+🚀 Window Events
+Handle window lifecycle events.
+
+[Learn More →](/features/windows/events/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [window examples](https://github.com/wailsapp/wails/tree/master/v3/examples).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [window examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples).

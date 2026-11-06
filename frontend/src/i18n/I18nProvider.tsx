@@ -95,23 +95,30 @@ export const I18nProvider = ({ children, initialChoice }: I18nProviderProps) => 
     return localeRegistry.subscribe(() => setVersion((v) => v + 1));
   }, []);
 
-  // mount 拉后端
+  // mount 拉后端；之后订阅 appsettings:changed（其它窗口改了语言时同步）
   useEffect(() => {
     let cancelled = false;
-    AppSettingsService.get()
-      .then((snap) => {
-        if (cancelled || !aliveRef.current) return;
-        const next = snap.localeChoice;
-        if (!next) return;
-        if (next === 'auto' || localeRegistry.has(next)) {
-          setChoiceState(next as Choice);
-        }
-      })
-      .catch(() => {
-        // 后端未就绪 —— 保持 'auto'
-      });
+    const load = () => {
+      AppSettingsService.get()
+        .then((snap) => {
+          if (cancelled || !aliveRef.current) return;
+          const next = snap.localeChoice;
+          if (!next) return;
+          if (next === 'auto' || localeRegistry.has(next)) {
+            setChoiceState(next as Choice);
+          }
+        })
+        .catch(() => {
+          // 后端未就绪 —— 保持 'auto'
+        });
+    };
+    load();
+    const off = AppSettingsService.onChanged((field) => {
+      if (field === 'localeChoice') load();
+    });
     return () => {
       cancelled = true;
+      off();
     };
   }, []);
 

@@ -1,47 +1,41 @@
-import { Box, IconButton, useTheme } from '@mui/material';
-import MinimizeIcon from '@mui/icons-material/Remove';
-import CropSquareIcon from '@mui/icons-material/CropSquare';
-import CloseIcon from '@mui/icons-material/Close';
+import type { CSSProperties } from 'react';
+import { ActionIcon } from '@mantine/core';
+import { IconMinus, IconSquare, IconX } from '@tabler/icons-react';
 import { useT } from '@/i18n';
 import { useWindowControls } from './useWindowControls';
-import { titleBarStyles } from './TitleBar.styles';
+import classes from './TitleBar.module.css';
 
-// 窗口三联按钮：方形圆角设计，等距间隔。
+// 窗口三联按钮：Fluent caption button（46×36、0 圆角、透明），等距排列。
 // 关闭键 hover 变红，最小化/最大化保持中性灰。
 // 通过 --wails-draggable: no-drag 阻止拖拽穿透。
 // aria-label 走 i18n（titleBar.controls.*），系统按钮不应硬编码语言。
 export const WindowControls = () => {
-  const theme = useTheme();
-  const styles = titleBarStyles(theme);
   const t = useT();
   const { minimise, toggleMaximise, close } = useWindowControls();
 
   return (
-    <Box sx={styles.controls} style={{ '--wails-draggable': 'no-drag' } as React.CSSProperties}>
-      <IconButton
-        size="small"
+    <div className={classes.controls} style={{ '--wails-draggable': 'no-drag' } as CSSProperties}>
+      <ActionIcon
         onClick={minimise}
-        sx={styles.controlBtn}
+        className={classes.controlBtn}
         aria-label={t('titleBar.controls.minimise')}
       >
-        <MinimizeIcon fontSize="inherit" />
-      </IconButton>
-      <IconButton
-        size="small"
+        <IconMinus size={14} stroke={1.75} />
+      </ActionIcon>
+      <ActionIcon
         onClick={toggleMaximise}
-        sx={styles.controlBtn}
+        className={classes.controlBtn}
         aria-label={t('titleBar.controls.maximise')}
       >
-        <CropSquareIcon fontSize="inherit" />
-      </IconButton>
-      <IconButton
-        size="small"
+        <IconSquare size={14} stroke={1.75} />
+      </ActionIcon>
+      <ActionIcon
         onClick={close}
-        sx={styles.closeBtn}
+        className={classes.closeBtn}
         aria-label={t('titleBar.controls.close')}
       >
-        <CloseIcon fontSize="inherit" />
-      </IconButton>
-    </Box>
+        <IconX size={14} stroke={1.75} />
+      </ActionIcon>
+    </div>
   );
 };

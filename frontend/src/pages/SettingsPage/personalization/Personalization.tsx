@@ -1,5 +1,5 @@
-import { Box, ButtonBase, Switch, Typography, useTheme } from '@mui/material';
-import { useMemo, type ChangeEvent } from 'react';
+import { ColorInput, Switch, Text, UnstyledButton, type ColorInputProps } from '@mantine/core';
+import { useMemo } from 'react';
 import { useT } from '@/i18n';
 import { CUSTOM_THEME_NAME } from '@/styles/themes';
 import type { Preferences } from '@/preferences';
@@ -8,44 +8,39 @@ import {
   usePersonalization,
   type PaletteField,
 } from './usePersonalization';
-import { personalizationStyles } from './Personalization.styles';
-import { settingsPageStyles } from '../SettingsPage.styles';
+import classes from './Personalization.module.css';
+import shared from '../SettingsPage.module.css';
 
 // 个性化子页面：主题 + 偏好 + 自定义主题。
 // 文案 namespace：settings.personalization.*（顶层 settings.themes.* 仍由本页消费）。
 export const Personalization = () => {
-  const theme = useTheme();
-  const shared = settingsPageStyles(theme);
-  const styles = personalizationStyles(theme);
   const vm = usePersonalization();
   const t = useT();
 
   return (
     <>
-      <ThemeSection vm={vm} shared={shared} styles={styles} />
-      <PreferencesSection vm={vm} shared={shared} styles={styles} />
-      <CustomThemeSection vm={vm} shared={shared} styles={styles} t={t} />
+      <ThemeSection vm={vm} />
+      <PreferencesSection vm={vm} />
+      <CustomThemeSection vm={vm} t={t} />
     </>
   );
 };
 
 type Vm = ReturnType<typeof usePersonalization>;
-type Shared = ReturnType<typeof settingsPageStyles>;
-type Styles = ReturnType<typeof personalizationStyles>;
 
-const ThemeSection = ({ vm, shared, styles }: { vm: Vm; shared: Shared; styles: Styles }) => {
+const ThemeSection = ({ vm }: { vm: Vm }) => {
   const t = useT();
   const currentLabel = vm.currentThemeLabelKey
     ? t(vm.currentThemeLabelKey)
     : vm.currentThemeFallbackLabel;
 
   return (
-    <Box sx={shared.section}>
-      <Box sx={shared.sectionHeader}>
-        <Typography sx={shared.sectionTitle}>{t('settings.personalization.theme.title')}</Typography>
-        <Typography sx={shared.sectionHint}>{t('settings.personalization.theme.hint')}</Typography>
-      </Box>
-      <Box sx={styles.grid}>
+    <div className={shared.section}>
+      <div className={shared.sectionHeader}>
+        <Text className={shared.sectionTitle}>{t('settings.personalization.theme.title')}</Text>
+        <Text className={shared.sectionHint}>{t('settings.personalization.theme.hint')}</Text>
+      </div>
+      <div className={classes.grid}>
         {vm.themeOptions.map((option) => {
           const active = option.value === vm.themeChoice;
           const label = option.labelKey ? t(option.labelKey) : option.fallbackLabel;
@@ -53,27 +48,28 @@ const ThemeSection = ({ vm, shared, styles }: { vm: Vm; shared: Shared; styles: 
             ? t(option.descriptionKey)
             : option.fallbackDescription;
           return (
-            <ButtonBase
+            <UnstyledButton
               key={option.value}
               onClick={() => vm.setThemeChoice(option.value)}
-              sx={active ? styles.cardActive : styles.card}
+              className={classes.card}
+              data-active={active || undefined}
               aria-pressed={active}
             >
-              <Typography sx={styles.cardLabel}>{label}</Typography>
-              <Typography sx={styles.cardDesc}>{desc}</Typography>
-            </ButtonBase>
+              <Text className={classes.cardLabel}>{label}</Text>
+              <Text className={classes.cardDesc}>{desc}</Text>
+            </UnstyledButton>
           );
         })}
-      </Box>
-      <Typography sx={styles.currentLine}>
+      </div>
+      <Text className={classes.currentLine}>
         {t('settings.personalization.theme.currentLine', { label: currentLabel })}
         {vm.themeChoice === 'system' ? t('settings.personalization.theme.followingSystem') : ''}
-      </Typography>
-    </Box>
+      </Text>
+    </div>
   );
 };
 
-const PreferencesSection = ({ vm, shared, styles }: { vm: Vm; shared: Shared; styles: Styles }) => {
+const PreferencesSection = ({ vm }: { vm: Vm }) => {
   const t = useT();
 
   const switches: Array<{
@@ -94,48 +90,46 @@ const PreferencesSection = ({ vm, shared, styles }: { vm: Vm; shared: Shared; st
   ];
 
   return (
-    <Box sx={shared.section}>
-      <Box sx={shared.sectionHeader}>
-        <Typography sx={shared.sectionTitle}>
+    <div className={shared.section}>
+      <div className={shared.sectionHeader}>
+        <Text className={shared.sectionTitle}>
           {t('settings.personalization.preferences.title')}
-        </Typography>
-        <Typography sx={shared.sectionHint}>
+        </Text>
+        <Text className={shared.sectionHint}>
           {t('settings.personalization.preferences.hint')}
-        </Typography>
-      </Box>
+        </Text>
+      </div>
       {switches.map(({ key, labelKey, descriptionKey }) => {
         const label = t(labelKey);
         return (
-          <Box key={key} sx={styles.switchRow}>
-            <Box sx={styles.switchTexts}>
-              <Typography sx={styles.switchLabel}>{label}</Typography>
-              <Typography sx={styles.switchDesc}>{t(descriptionKey)}</Typography>
-            </Box>
+          <div key={key} className={classes.switchRow}>
+            <div className={classes.switchTexts}>
+              <Text className={classes.switchLabel}>{label}</Text>
+              <Text className={classes.switchDesc}>{t(descriptionKey)}</Text>
+            </div>
             <Switch
               checked={vm.preferences[key]}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              onChange={(e) =>
                 vm.setPreference<keyof Preferences>(
                   key,
-                  e.target.checked as Preferences[typeof key],
+                  e.currentTarget.checked as Preferences[typeof key],
                 )
               }
-              slotProps={{ input: { 'aria-label': label } }}
+              aria-label={label}
             />
-          </Box>
+          </div>
         );
       })}
-    </Box>
+    </div>
   );
 };
 
 interface CustomThemeSectionProps {
   vm: Vm;
-  shared: Shared;
-  styles: Styles;
   t: ReturnType<typeof useT>;
 }
 
-const CustomThemeSection = ({ vm, shared, styles, t }: CustomThemeSectionProps) => {
+const CustomThemeSection = ({ vm, t }: CustomThemeSectionProps) => {
   const grouped = useMemo<Array<[PaletteField['group'], PaletteField[]]>>(() => {
     const map = new Map<PaletteField['group'], PaletteField[]>();
     for (const f of vm.paletteFields) {
@@ -152,75 +146,65 @@ const CustomThemeSection = ({ vm, shared, styles, t }: CustomThemeSectionProps) 
     : vm.currentThemeFallbackLabel;
 
   return (
-    <Box sx={shared.section}>
-      <Box sx={shared.sectionHeader}>
-        <Typography sx={shared.sectionTitle}>
+    <div className={shared.section}>
+      <div className={shared.sectionHeader}>
+        <Text className={shared.sectionTitle}>
           {t('settings.personalization.customTheme.title')}
-        </Typography>
-        <Typography sx={shared.sectionHint}>
+        </Text>
+        <Text className={shared.sectionHint}>
           {t('settings.personalization.customTheme.hint')}
-        </Typography>
-      </Box>
+        </Text>
+      </div>
 
-      <Box sx={styles.paletteToolbar}>
-        <Box
-          component="button"
-          type="button"
-          sx={styles.paletteToolbarBtn}
+      <div className={classes.paletteToolbar}>
+        <UnstyledButton
+          className={classes.paletteToolbarBtn}
           onClick={() => vm.resetCustomFromPreset('foundation-light')}
         >
           {t('settings.personalization.customTheme.toolbar.seedLight')}
-        </Box>
-        <Box
-          component="button"
-          type="button"
-          sx={styles.paletteToolbarBtn}
+        </UnstyledButton>
+        <UnstyledButton
+          className={classes.paletteToolbarBtn}
           onClick={() => vm.resetCustomFromPreset('foundation-dark')}
         >
           {t('settings.personalization.customTheme.toolbar.seedDark')}
-        </Box>
-        <Box
-          component="button"
-          type="button"
-          sx={styles.paletteToolbarBtn}
+        </UnstyledButton>
+        <UnstyledButton
+          className={classes.paletteToolbarBtn}
           onClick={() => vm.resetCustomFromPreset('foundation-obsidian')}
         >
           {t('settings.personalization.customTheme.toolbar.seedObsidian')}
-        </Box>
-        <Box
-          component="button"
-          type="button"
-          sx={styles.paletteToolbarBtn}
+        </UnstyledButton>
+        <UnstyledButton
+          className={classes.paletteToolbarBtn}
           onClick={() => vm.setCustomMode(vm.customTheme.mode === 'dark' ? 'light' : 'dark')}
         >
           {vm.customTheme.mode === 'dark'
             ? t('settings.personalization.customTheme.toolbar.modeDark')
             : t('settings.personalization.customTheme.toolbar.modeLight')}
-        </Box>
+        </UnstyledButton>
         {vm.hasCustomTheme && (
-          <Box
-            component="button"
-            type="button"
-            sx={styles.paletteToolbarBtn}
+          <UnstyledButton
+            className={classes.paletteToolbarBtn}
             onClick={() => vm.removeCustomTheme()}
           >
             {t('settings.personalization.customTheme.toolbar.remove')}
-          </Box>
+          </UnstyledButton>
         )}
-      </Box>
+      </div>
 
       {!usingCustom && (
-        <Typography sx={styles.currentLine}>
+        <Text className={classes.currentLine}>
           {t('settings.personalization.customTheme.notUsingHint', { label: currentLabel })}
-        </Typography>
+        </Text>
       )}
 
       {grouped.map(([group, fields]) => (
-        <Box key={group}>
-          <Typography sx={styles.paletteGroupTitle}>
+        <div key={group}>
+          <Text className={classes.paletteGroupTitle}>
             {t(`settings.personalization.customTheme.groups.${group}`)}
-          </Typography>
-          <Box sx={styles.paletteGrid}>
+          </Text>
+          <div className={classes.paletteGrid}>
             {fields.map((field) => {
               const value = getPaletteValue(vm.customTheme.palette, field.path);
               return (
@@ -229,14 +213,13 @@ const CustomThemeSection = ({ vm, shared, styles, t }: CustomThemeSectionProps) 
                   field={field}
                   value={value}
                   onChange={(v) => vm.updatePaletteField(field.path, v)}
-                  styles={styles}
                 />
               );
             })}
-          </Box>
-        </Box>
+          </div>
+        </div>
       ))}
-    </Box>
+    </div>
   );
 };
 
@@ -244,42 +227,46 @@ interface ColorRowProps {
   field: PaletteField;
   value: string;
   onChange: (value: string) => void;
-  styles: Styles;
 }
 
-// 单行：色块（点击呼出取色器） + label/描述 + 文本输入（接受 rgba 等任意 CSS 颜色）。
-const ColorRow = ({ field, value, onChange, styles }: ColorRowProps) => {
+// 取色器输出格式跟随当前值：rgba / hsla 值保留透明度通道，其余输出 6 位 hex
+// （accent 需要 6 位 hex 才能派生 Mantine 10 级色阶，见 buildMantineTheme.accentTuple）。
+const formatOf = (value: string): NonNullable<ColorInputProps['format']> => {
+  const v = value.trim().toLowerCase();
+  if (v.startsWith('rgba(')) return 'rgba';
+  if (v.startsWith('rgb(')) return 'rgb';
+  if (v.startsWith('hsla(')) return 'hsla';
+  if (v.startsWith('hsl(')) return 'hsl';
+  if (/^#[0-9a-f]{8}$/.test(v)) return 'hexa';
+  return 'hex';
+};
+
+// 单行：label/描述 + ColorInput（左侧色块预览，点击呼出取色器；文本框接受 rgba 等任意 CSS 颜色）。
+// 每次输入都会回调 onChange → VM 实时 previewCustomTheme + 持久化；
+// 非法值失焦后由 ColorInput（fixOnBlur）回退到上一个合法值。
+const ColorRow = ({ field, value, onChange }: ColorRowProps) => {
   const t = useT();
-  const colorInputValue = /^#[0-9a-fA-F]{6}$/.test(value) ? value : '#000000';
   const label = t(field.labelKey);
   const descRaw = t(field.descriptionKey);
   const desc = descRaw === field.descriptionKey ? field.path : descRaw;
 
   return (
-    <Box sx={styles.paletteRow}>
-      <Box sx={{ ...styles.paletteSwatch, backgroundColor: value || '#000000' }}>
-        <Box
-          component="input"
-          type="color"
-          value={colorInputValue}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-          sx={styles.paletteSwatchInput}
-          aria-label={t('settings.personalization.customTheme.a11y.colorPickerFor', { label })}
-        />
-      </Box>
-      <Box sx={styles.paletteRowTexts}>
-        <Typography sx={styles.paletteFieldLabel}>{label}</Typography>
-        <Typography sx={styles.paletteFieldDesc}>{desc}</Typography>
-      </Box>
-      <Box
-        component="input"
-        type="text"
+    <div className={classes.paletteRow}>
+      <div className={classes.paletteRowTexts}>
+        <Text className={classes.paletteFieldLabel}>{label}</Text>
+        <Text className={classes.paletteFieldDesc}>{desc}</Text>
+      </div>
+      <ColorInput
+        size="xs"
         value={value}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        sx={styles.paletteFieldValue}
+        onChange={onChange}
+        format={formatOf(value)}
+        withEyeDropper={false}
         spellCheck={false}
         aria-label={t('settings.personalization.customTheme.a11y.colorValueFor', { label })}
+        classNames={{ root: classes.paletteInputRoot, input: classes.paletteInput }}
+        popoverProps={{ position: 'bottom-end' }}
       />
-    </Box>
+    </div>
   );
 };

@@ -1,0 +1,38 @@
+.root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 24px;
+  gap: 16px;
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.message {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--fd-text-primary);
+  text-align: center;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-inline: 16px;
+  padding-bottom: 16px;
+}
+
+.button {
+  border-radius: 6px;
+}

@@ -1,23 +1,35 @@
-import { useEffect, useCallback } from 'react';
-import type { ClipboardPasteConfig } from '../types';
+import { useEffect } from 'react';
+import type { RefObject } from 'react';
+import type { ClipboardPasteConfig, ClipboardPasteContext } from '../types';
+
+// 剪贴板粘贴：监听容器 paste 事件，解析 TSV（Excel / 表格软件）或 CSV，
+// 起点 = 当前聚焦单元格（data-dg-row / data-dg-col），其次是单元格选区左上角，最后回落 (0, 0)。
+
+export const CELL_ROW_ATTR = 'data-dg-row';
+export const CELL_COL_ATTR = 'data-dg-col';
 
 interface UseClipboardPasteParams {
   config?: ClipboardPasteConfig;
-  containerRef: React.RefObject<HTMLDivElement | null>;
+  containerRef: RefObject<HTMLDivElement | null>;
+  /** 无聚焦单元格时的起点（例如单元格选区） */
+  getAnchor?: () => { row: number; col: number } | null;
+  /** 把起点 + 数据尺寸解析为行 id / 列字段 */
+  resolveContext: (startRow: number, startCol: number, rows: number, cols: number) => ClipboardPasteContext;
 }
 
 interface UseClipboardPasteResult {
   isActive: boolean;
 }
 
-function parseTSV(text: string): string[][] {
+export function parseTSV(text: string): string[][] {
   return text
+    .replace(/\r/g, '')
     .split('\n')
     .filter((line) => line.length > 0)
     .map((line) => line.split('\t'));
 }
 
-function parseCSV(text: string): string[][] {
+export function parseCSV(text: string): string[][] {
   const rows: string[][] = [];
   let current = '';
   let inQuotes = false;
@@ -56,39 +68,44 @@ function parseCSV(text: string): string[][] {
 export function useClipboardPaste({
   config,
   containerRef,
+  getAnchor,
+  resolveContext,
 }: UseClipboardPasteParams): UseClipboardPasteResult {
-  const handlePaste = useCallback(
-    (e: ClipboardEvent) => {
-      if (!config?.enabled || !config.onPaste) return;
+  const enabled = !!config?.enabled;
+
+  useEffect(() => {
+    if (!enabled) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handlePaste = (e: ClipboardEvent) => {
+      if (!config?.onPaste) return;
+      // 输入框（如表头筛选）里的粘贴保持原生行为
+      const active = document.activeElement;
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return;
+
       const text = e.clipboardData?.getData('text/plain');
       if (!text) return;
-
       e.preventDefault();
 
       const data = text.includes('\t') ? parseTSV(text) : parseCSV(text);
       if (data.length === 0) return;
 
-      const activeElement = document.activeElement;
-      const container = containerRef.current;
-      if (!container || !activeElement) return;
+      const cell = active?.closest(`[${CELL_ROW_ATTR}][${CELL_COL_ATTR}]`);
+      const anchor = cell
+        ? {
+            row: parseInt(cell.getAttribute(CELL_ROW_ATTR) ?? '0', 10),
+            col: parseInt(cell.getAttribute(CELL_COL_ATTR) ?? '0', 10),
+          }
+        : (getAnchor?.() ?? { row: 0, col: 0 });
 
-      const cell = activeElement.closest('[data-rowindex][data-colindex]');
-      const startRow = cell ? parseInt(cell.getAttribute('data-rowindex') ?? '0', 10) : 0;
-      const startCol = cell ? parseInt(cell.getAttribute('data-colindex') ?? '0', 10) : 0;
-
-      config.onPaste(data, startRow, startCol);
-    },
-    [config, containerRef],
-  );
-
-  useEffect(() => {
-    if (!config?.enabled) return;
-    const container = containerRef.current;
-    if (!container) return;
+      const width = Math.max(...data.map((r) => r.length));
+      config.onPaste(data, anchor.row, anchor.col, resolveContext(anchor.row, anchor.col, data.length, width));
+    };
 
     container.addEventListener('paste', handlePaste);
     return () => container.removeEventListener('paste', handlePaste);
-  }, [config?.enabled, containerRef, handlePaste]);
+  }, [enabled, config, containerRef, getAnchor, resolveContext]);
 
-  return { isActive: !!config?.enabled };
+  return { isActive: enabled };
 }

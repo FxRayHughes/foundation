@@ -1,0 +1,46 @@
+/* 语言子页面专属样式：复用主题卡片网格的视觉语言。颜色全部取 --fd-* 变量。 */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid var(--fd-divider);
+  background-color: var(--fd-bg-surface);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 120ms ease, background-color 120ms ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.card:hover {
+  background-color: var(--fd-bg-hover);
+}
+.card[data-active],
+.card[data-active]:hover {
+  border-color: var(--fd-accent);
+  background-color: var(--fd-bg-active);
+  transition: none;
+}
+
+.cardLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fd-text-primary);
+}
+
+.cardDesc {
+  font-size: 12px;
+  color: var(--fd-text-muted);
+  line-height: 1.5;
+}
+
+.currentLine {
+  font-size: 12px;
+  color: var(--fd-text-muted);
+}

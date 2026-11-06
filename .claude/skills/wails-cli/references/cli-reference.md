@@ -1,9 +1,11 @@
 ---
-title: CLI Reference
-description: Complete reference for the Wails CLI commands
-sidebar:
-  order: 1
+title: "CLI Command Overview"
+description: "Find Wails CLI commands by purpose: projects, builds, signing, tools and services"
+slug: "reference/cli"
+sourcePath: "reference/cli.md"
 ---
+
+Start here to find a command by purpose. For command-specific flags and usage examples, see [CLI Flags and Examples](/guides/cli/).
 
 ## Overview
 
@@ -19,12 +21,13 @@ wails3 <command> --help
 ## Project lifecycle
 
 | Command | Description |
-|---------|-------------|
+| --- | --- |
 | `wails3 init` | Create a new project from a template. Flags: `-n` (project name), `-t` (template, default `vanilla`), `-p` (Go package name, default `main`), `-d` (project directory, default `.`), `-q` (quiet), `-l` (list templates), `-mod` (Go module path), `--git` (Git repository URL), `--skipgomodtidy`, `-s` (skip remote-template warning), `--productname`/`--productdescription`/`--productversion`/`--productcompany`/`--productcopyright`/`--productcomments`/`--productidentifier`. |
 | `wails3 dev` | Run the application in development mode with frontend hot reload. Flags: `--config` (default `./build/config.yml`), `--port` (Vite dev port), `-s` (enable HTTPS). |
-| `wails3 build` | Build the project. Thin wrapper around the Taskfile `build` task. Flags: `--tags` (forwarded as `EXTRA_TAGS=`), `--obfuscated` (build with Garble; see [Obfuscated Builds](/guides/build/obfuscation)), `--garbleargs` (extra flags forwarded to `garble` before the `build` subcommand). |
+| `wails3 build` | Build the project. Thin wrapper around the Taskfile `build` task. Flags: `--tags` (forwarded as `EXTRA_TAGS=`), `--obfuscated` (build with Garble; see [Obfuscated Builds](/guides/build/obfuscation/)), `--garbleargs` (extra flags forwarded to `garble` before the `build` subcommand). |
 | `wails3 package` | Run the platform-specific `package` Taskfile task. |
 | `wails3 task [name]` | Run any Taskfile task; with no name, `--list` shows every registered task. |
+| `wails3 mcp` | Start the project MCP server. Automatically uses stdio for agent-launched processes or loopback Streamable HTTP for interactive terminal use. |
 | `wails3 doctor` | Print a diagnostic report of your environment. |
 | `wails3 doctor-ng` | Newer TUI variant of `doctor`. |
 | `wails3 version` | Print the CLI version. |
@@ -37,11 +40,11 @@ wails3 <command> --help
 `wails3 generate <subcommand>`:
 
 | Subcommand | Description |
-|------------|-------------|
-| `generate bindings` | Generate Go-to-frontend bindings. Flags: `-d` (output dir), `-models`, `-index`, `-time-type` (`time.Time` 的 JS 类型，`string`|`Date`，默认 `string` —— beta.9 起默认改为 RFC3339Nano 字符串), `-ts`, `-i` (interfaces), `-b` (bundle), `-names` (emit `Call.ByName`), `-noevents`, `-noindex`, `-dry`, `-silent`, `-v`, `-clean` (default `true`), `-f`, `-obfuscated` (generate `wails_obfuscated.gen.go` with stable binding IDs for Garble builds; see [Obfuscated Builds](/guides/build/obfuscation)), `-obfuscated-output` (directory for the generated file; defaults to the main package directory). Accepts package patterns (e.g. `./...`); falls back to the current directory if none given. |
+| --- | --- |
+| `generate bindings` | Generate Go-to-frontend bindings. Flags: `-dir` (Go package load dir), `-d` (output dir), `-models`, `-index`, `-time-type` (`time.Time` 的 JS 类型，`string`|`Date`，默认 `string` 即 RFC3339Nano —— 本地补充，官方此表遗漏), `-ts`, `-i` (interfaces), `-b` (bundle), `-names` (emit `Call.ByName`), `-noevents`, `-noindex`, `-dry`, `-silent`, `-v`, `-clean` (default `true`), `-f`, `-obfuscated` (generate `wails_obfuscated.gen.go` with stable binding IDs for Garble builds; see [Obfuscated Builds](/guides/build/obfuscation/)), `-obfuscated-output` (directory for the generated file; defaults to the main package directory). Accepts package patterns (e.g. `./...`); falls back to the current directory if none given. |
 | `generate icons` | Convert a source PNG into the platform icon formats. Flags: `-input`, `-windowsfilename`, `-macfilename`, `-iconcomposerinput`, `-macassetdir`. |
 | `generate build-assets` | Generate the `build/` directory contents (Taskfile snippets, NSIS files, `Info.plist`, `.desktop` template, etc.) from `build/config.yml`. |
-| `generate runtime` | Regenerate the pre-built `/wails/runtime.js` shipped to the webview. |
+| `generate runtime` | Export the CLI's embedded production/debug JavaScript bundles (`-d` selects the destination). |
 | `generate syso` | Generate the Windows `.syso` resource file (icon + manifest + version info). |
 | `generate webview2bootstrapper` | Generate a WebView2 bootstrap installer for Windows. |
 | `generate constants` | Generate JS event-name constants from Go event types. |
@@ -54,27 +57,27 @@ wails3 <command> --help
 `wails3 update <subcommand>`:
 
 | Subcommand | Description |
-|------------|-------------|
+| --- | --- |
 | `update build-assets` | Refresh the `build/` directory from `build/config.yml` (preserves user edits where possible). |
 | `update cli` | Self-update the `wails3` binary. |
 
 ## Code signing & packaging
 
 | Command | Description |
-|---------|-------------|
-| `wails3 setup signing` | Interactive wizard that configures signing for the platforms it detects in `build/`. Flags: `--platform` (repeatable; defaults to auto-detect from build directory). |
-| `wails3 setup entitlements` | Interactive wizard for macOS entitlements. Flag: `--output` (path; default `build/darwin/entitlements.plist`). |
+| --- | --- |
+| `wails3 signing` | Interactive wizard that configures signing for the platforms it detects in `build/`. Flags: `--platform` (repeatable; defaults to auto-detect from build directory). |
+| `wails3 entitlements` | Interactive wizard for macOS entitlements. Flag: `--output` (path; default `build/darwin/entitlements.plist`). |
 | `wails3 sign [GOOS=…]` | Wrapper that runs the platform-specific `*:sign` Taskfile task for the current OS (or the one specified via `GOOS`). |
 | `wails3 tool sign` | Low-level direct signing entry point. Flags: `--input`, `--output`, `--verbose`, `--certificate`, `--password`, `--thumbprint`, `--timestamp`, `--identity`, `--entitlements`, `--hardened-runtime`, `--notarize`, `--keychain-profile`, `--pgp-key`, `--pgp-password`, `--role`. |
 
-There is **no** `wails3 signing` subcommand — for keychain credentials use `xcrun notarytool store-credentials`, and for PGP keys use `gpg` directly (the `wails3 setup signing` wizard automates both).
+In this release, the CLI parser exposes `signing` and `entitlements` at the top level. Check `wails3 signing --help` and `wails3 entitlements --help`; `wails3 setup signing` does not select the signing wizard. For direct credential management, use `xcrun notarytool store-credentials` or `gpg`.
 
 ## Tools
 
 `wails3 tool <subcommand>`:
 
 | Subcommand | Description |
-|------------|-------------|
+| --- | --- |
 | `tool checkport` | Check whether a TCP port is open (useful for waiting on Vite). |
 | `tool watcher` | Run a command whenever watched files change. |
 | `tool cp` | Cross-platform file copy. |
@@ -90,7 +93,7 @@ There is **no** `wails3 signing` subcommand — for keychain credentials use `xc
 `wails3 service <subcommand>`:
 
 | Subcommand | Description |
-|------------|-------------|
+| --- | --- |
 | `service init` | Scaffold a new service package. |
 
 ## iOS
@@ -98,7 +101,7 @@ There is **no** `wails3 signing` subcommand — for keychain credentials use `xc
 `wails3 ios <subcommand>`:
 
 | Subcommand | Description |
-|------------|-------------|
+| --- | --- |
 | `ios overlay:gen` | Generate the Go overlay for the iOS bridge shim. |
 | `ios xcode:gen` | Generate an Xcode project in the output directory. |
 
@@ -107,12 +110,12 @@ There is **no** `wails3 signing` subcommand — for keychain credentials use `xc
 - Native binaries land in `bin/<APP_NAME>` (or `bin/<APP_NAME>.exe` on Windows). There is no `build/bin/`.
 - Packaged outputs (`.app`, `.dmg`, NSIS installer, MSIX, DEB/RPM/AppImage) likewise land in `bin/` (or under platform-specific subdirectories created by the relevant Taskfile task).
 
-## Global flags
+## Shared flags
 
 | Flag | Applies to | Description |
-|------|------------|-------------|
-| `--no-colour` | All commands | Disable ANSI colour in CLI output. |
+| --- | --- | --- |
+| `-nocolour` | Commands that expose it in `--help` (for example `init` and `update cli`) | Disable ANSI colour in CLI output. It is not accepted by every command, including `version`. |
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [examples](https://github.com/wailsapp/wails/tree/master/v3/examples).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples).

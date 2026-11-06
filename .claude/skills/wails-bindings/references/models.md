@@ -1,11 +1,9 @@
 ---
-title: Data Models
-description: Bind complex data structures between Go and JavaScript
-sidebar:
-  order: 3
+title: "Data Models"
+description: "Bind complex data structures between Go and JavaScript"
+slug: "features/bindings/models"
+sourcePath: "features/bindings/models.md"
 ---
-
-import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Data Model Bindings
 
@@ -41,12 +39,18 @@ import { GetUser } from './bindings/changeme/userservice'
 import { User } from './bindings/changeme/models'
 
 const user = await GetUser(1)
-console.log(user.Name)  // Type-safe!
+console.log(user.name)  // Type-safe!
 ```
 
 **That's it!** Full type safety across the bridge.
 
 ## Defining Models
+
+The model classes below illustrate field shapes; use the actual generated bindings rather than copying these simplified classes as conversion code.
+
+For `time.Time`, the generator defaults to `-time-type=string`. Use `-time-type=Date` for generated classes that convert timestamps to JavaScript `Date` values. Stock JavaScript/class template build tasks select `Date`; TypeScript interface tasks keep `string`. Check your generated task before changing modes. Go timestamps remain RFC3339Nano strings in JSON.
+
+Generated conversion helpers turn those strings into dates in Date mode. `Object.assign` alone does not perform that conversion. For string bindings, convert a timestamp explicitly with `new Date(timestamp)` before using Date methods.
 
 ### Basic Struct
 
@@ -57,7 +61,7 @@ type Person struct {
 }
 ```
 
-**Generated JavaScript:**
+**Illustrative JavaScript:**
 
 ```javascript
 export class Person {
@@ -88,7 +92,7 @@ type User struct {
 }
 ```
 
-**Generated JavaScript:**
+**Illustrative JavaScript:**
 
 ```javascript
 export class User {
@@ -112,6 +116,29 @@ export class User {
 
 **JSON tags control field names** in JavaScript.
 
+### Custom JSON Marshalling
+
+Bound method results are marshalled with Go's standard `encoding/json` package. Be aware that `MarshalJSON` methods declared on a pointer receiver are only called when the value being marshalled is addressable. This means a custom marshaler can be called for elements of a returned slice but not for a struct returned by value:
+
+```go
+func (n *Nullable[T]) MarshalJSON() ([]byte, error) {
+    if n.Valid {
+        return json.Marshal(n.V)
+    }
+    return []byte("null"), nil
+}
+
+func (s *UserService) GetUser() User {
+    return User{} // pointer receiver may not be called
+}
+
+func (s *UserService) GetUsers() []User {
+    return []User{{}} // pointer receiver is called for elements
+}
+```
+
+To ensure consistent output, either define `MarshalJSON` on a value receiver when the type can be copied safely, or return a pointer to the struct (for example, `*User`). This is a behaviour of Go's `encoding/json`, rather than a difference in Wails' binding generation.
+
 ### With Comments
 
 ```go
@@ -128,7 +155,7 @@ type User struct {
 }
 ```
 
-**Generated JavaScript:**
+**Illustrative JavaScript:**
 
 ```javascript
 /**
@@ -173,7 +200,7 @@ type User struct {
 }
 ```
 
-**Generated JavaScript:**
+**Illustrative JavaScript:**
 
 ```javascript
 export class Address {
@@ -222,7 +249,7 @@ type Team struct {
 }
 ```
 
-**Generated JavaScript:**
+**Illustrative JavaScript:**
 
 ```javascript
 export class Team {
@@ -251,7 +278,7 @@ type Config struct {
 }
 ```
 
-**Generated JavaScript:**
+**Illustrative JavaScript:**
 
 ```javascript
 export class Config {
@@ -275,8 +302,8 @@ const config = new Config({
 
 ### Primitive Types
 
-| Go Type | JavaScript Type |
-|---------|----------------|
+| Go Type | JavaScript/TypeScript |
+| --- | --- |
 | `string` | `string` |
 | `bool` | `boolean` |
 | `int`, `int8`, `int16`, `int32`, `int64` | `number` |
@@ -285,26 +312,20 @@ const config = new Config({
 | `byte` | `number` |
 | `rune` | `number` |
 
-### Special Types
+### Complex Types
 
-| Go Type | JavaScript Type |
-|---------|----------------|
-| `time.Time` | `string` (RFC3339Nano) — 默认；可用 `wails3 generate bindings -time-type=Date` 改为 `Date` |
-| `[]byte` | `string` (base64) |
-| `*T` | `T` (pointers transparent) |
-| `interface{}` | `any` |
-
-> **beta.9 变更**：`time.Time` 默认绑定为 **RFC3339Nano 字符串**（不再是 `Date`）。本页后文凡出现 `createdAt: Date = new Date()` / `.getTime()` / `.toLocaleDateString()` 的生成代码示例，均对应 `wails3 generate bindings -time-type=Date` 模式；默认（string）模式下该字段是 `string`。
-
-### Collections
-
-| Go Type | JavaScript Type |
-|---------|----------------|
-| `[]T` | `T[]` |
-| `[N]T` | `T[]` |
-| `[]byte` | `Uint8Array` |
-| `map[string]T` | `{ [_: string]: T }` |
-| `map[K]V` | `{ [_ in K]?: V }` (non-string `K` is rendered as a mapped type, not a JS `Map`) |
+| Go Type | JavaScript/TypeScript | Notes |
+| --- | --- | --- |
+| `[]T` | `T[]` | - |
+| `[N]T` | `T[]` | - |
+| `map[string]T` | `{ [_: string]: T }` | string-keyed map |
+| `map[K]V` | `{ [_ in K]?: V }` | non-string `K` is rendered as a mapped type, **not** a JS `Map` |
+| `[]byte` | `string` | base64-encoded |
+| `struct` | `class` / `interface` | with fields |
+| `time.Time` | `string` (default) or `Date` | `-time-type` selects the generated representation; JSON uses an RFC3339Nano string |
+| `*T` | `T \| null` | pointer means nullable |
+| `any` / `interface{}` | `any` | - |
+| `error` | `any` / `Exception` | Exception if as return value else any |
 
 ### Unsupported Types
 
@@ -385,8 +406,10 @@ await UpdateUser(user)
 
 ### Generated TypeScript
 
+This section illustrates class bindings with Date conversion. The plain `-ts` command keeps the generator’s default string representation. The displayed class is simplified; the generator also emits conversion helpers.
+
 ```bash
-wails3 generate bindings -ts
+wails3 generate bindings -ts -time-type=Date
 ```
 
 **Generated:**
@@ -450,7 +473,7 @@ async function example() {
     // Type-safe access
     console.log(user.name.toUpperCase())  // ✅ string method
     console.log(user.id + 1)              // ✅ number operation
-    console.log(user.createdAt.getTime()) // ✅ Date method
+    console.log(user.createdAt.getTime()) // Date mode selected above
 }
 ```
 
@@ -517,7 +540,7 @@ const admin = new User({
 })
 ```
 
-For comprehensive coverage of string enums, integer enums, type aliases, imported package enums, and limitations, see the dedicated **[Enums](/features/bindings/enums)** page.
+For comprehensive coverage of string enums, integer enums, type aliases, imported package enums, and limitations, see the dedicated **[Enums](/features/bindings/enums/)** page.
 
 ### Validation
 
@@ -676,7 +699,7 @@ class UserManager {
                 <h3>${user.name}</h3>
                 <p>${user.email}</p>
                 <p>${user.address.city}, ${user.address.country}</p>
-                <small>Created: ${user.createdAt.toLocaleDateString()}</small>
+                <small>Created: ${new Date(user.createdAt).toLocaleDateString()}</small>
             </div>
         `).join('')
     }
@@ -692,7 +715,7 @@ manager.loadUsers()
 
 - **Use JSON tags** - Control field names
 - **Add comments** - They become JSDoc
-- **Use time.Time** - 默认序列化为 RFC3339Nano 字符串（如需 JS `Date`，用 `wails3 generate bindings -time-type=Date`）
+- **Choose a time representation** - `time.Time` becomes `string` by default; `-time-type=Date` enables generated Date conversion
 - **Validate on Go side** - Don't trust frontend
 - **Keep models simple** - Data containers only
 - **Use pointers for optional** - `*string` for nullable
@@ -707,32 +730,32 @@ manager.loadUsers()
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Method Bindings" icon="rocket">
-    Learn how to bind Go methods.
-    
-    [Learn More →](/features/bindings/methods)
-  </Card>
+@cards{cols="2"}
+🚀 Method Bindings
+Learn how to bind Go methods.
 
-  <Card title="Services" icon="puzzle">
-    Organise code with services.
-    
-    [Learn More →](/features/bindings/services)
-  </Card>
+[Learn More →](/features/bindings/methods/)
 
-  <Card title="Best Practices" icon="approve-check">
-    Binding design patterns.
-    
-    [Learn More →](/features/bindings/best-practices)
-  </Card>
+---
+◆ Services
+Organise code with services.
 
-  <Card title="Go-Frontend Bridge" icon="star">
-    Understand the bridge mechanism.
-    
-    [Learn More →](/concepts/bridge)
-  </Card>
-</CardGrid>
+[Learn More →](/features/bindings/services/)
+
+---
+✓ Best Practices
+Binding design patterns.
+
+[Learn More →](/features/bindings/best-practices/)
+
+---
+★ Go-Frontend Bridge
+Understand the bridge mechanism.
+
+[Learn More →](/concepts/bridge/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [binding examples](https://github.com/wailsapp/wails/tree/master/v3/examples/binding).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [binding examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/binding).

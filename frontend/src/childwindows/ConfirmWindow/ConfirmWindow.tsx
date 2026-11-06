@@ -1,33 +1,29 @@
-import { Box, Button, Typography, useTheme } from '@mui/material';
-import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import { Button, Text } from '@mantine/core';
+import { IconHelpCircle } from '@tabler/icons-react';
 import { useT } from '@/i18n';
 import { ChildTitleBar } from '@/components/ChildTitleBar';
 import { useConfirmWindow } from './useConfirmWindow';
-import { confirmWindowStyles } from './ConfirmWindow.styles';
+import classes from './ConfirmWindow.module.css';
 
 export const ConfirmWindow = () => {
-  const theme = useTheme();
-  const styles = confirmWindowStyles(theme);
   const t = useT();
   const { params, handleConfirm, handleCancel } = useConfirmWindow();
 
   return (
-    <Box sx={styles.root}>
+    <div className={classes.root}>
       <ChildTitleBar title={params.title || t('childwindow.confirm.defaultTitle')} onClose={handleCancel} />
-      <Box sx={styles.body}>
-        <HelpOutlineRoundedIcon sx={styles.icon} />
-        <Typography sx={styles.message}>
-          {params.message}
-        </Typography>
-      </Box>
-      <Box sx={styles.actions}>
-        <Button variant="outlined" sx={styles.button} onClick={handleCancel}>
+      <div className={classes.body}>
+        <IconHelpCircle size={36} stroke={1.75} className={classes.icon} />
+        <Text className={classes.message}>{params.message}</Text>
+      </div>
+      <div className={classes.actions}>
+        <Button variant="outline" className={classes.button} onClick={handleCancel}>
           {t('childwindow.confirm.cancelBtn')}
         </Button>
-        <Button variant="contained" sx={styles.button} onClick={handleConfirm}>
+        <Button variant="filled" className={classes.button} onClick={handleConfirm}>
           {t('childwindow.confirm.confirmBtn')}
         </Button>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

@@ -1,8 +1,8 @@
 ---
-title: Performance Optimisation
-description: Optimise your Wails application for maximum performance
-sidebar:
-  order: 9
+title: "Performance Optimisation"
+description: "Optimise your Wails application for maximum performance"
+slug: "guides/performance"
+sourcePath: "guides/performance.md"
 ---
 
 ## Overview
@@ -335,6 +335,6 @@ go tool pprof -http=:8080 cpu.prof
 
 ## Next Steps
 
-- [Architecture](/guides/architecture) - Application architecture patterns
-- [Testing](/guides/testing) - Test your application
-- [Building](/guides/building) - Build optimised binaries
+- [Architecture](/guides/architecture/) - Application architecture patterns
+- [Testing](/guides/testing/) - Test your application
+- [Building](/guides/build/building/) - Build optimised binaries

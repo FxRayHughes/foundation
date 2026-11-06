@@ -1,17 +1,16 @@
 ---
-title: Custom URL Protocols
-description: Register custom URL schemes to launch your application from links
-sidebar:
-  order: 3
+title: "Custom URL Protocols"
+description: "Register custom URL schemes to launch your application from links"
+slug: "guides/distribution/custom-protocols"
+sourcePath: "guides/distribution/custom-protocols.md"
 ---
-
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
 Custom URL protocols (also called URL schemes) allow your application to be launched when users click links with your custom protocol, such as `myapp://action` or `myapp://open/document`.
 
 ## Overview
 
 Custom protocols enable:
+
 - **Deep linking**: Launch your app with specific data
 - **Browser integration**: Handle links from web pages
 - **Email links**: Open your app from email clients
@@ -105,6 +104,7 @@ myapp://user/profile?username=john
 ```
 
 **Best practices:**
+
 - Use lowercase scheme names
 - Keep schemes short and memorable
 - Use hierarchical paths for resources
@@ -115,9 +115,8 @@ myapp://user/profile?username=john
 
 Custom protocols are registered differently on each platform.
 
-<Tabs syncKey="platform">
-  <TabItem label="Windows" icon="seti:windows">
-
+@tabs{sync-key="platform"}
+[Windows]
 ### Windows NSIS Installer
 
 **Wails v3 automatically registers custom protocols** when using NSIS installers.
@@ -125,6 +124,7 @@ Custom protocols are registered differently on each platform.
 #### Automatic Registration
 
 When you build your application with `wails3 build`, the NSIS installer:
+
 1. Automatically registers all protocols declared in `build/config.yml` under the `protocols:` key
 2. Associates protocols with your application executable
 3. Sets up proper registry entries
@@ -135,6 +135,7 @@ When you build your application with `wails3 build`, the NSIS installer:
 #### How It Works
 
 The NSIS template includes built-in macros:
+
 - `wails.associateCustomProtocols` - Registers protocols during installation
 - `wails.unassociateCustomProtocols` - Removes protocols during uninstall
 
@@ -186,29 +187,28 @@ The generated manifest includes:
 
 Windows supports **Web-to-App linking**, which works similarly to Universal Links on macOS. When deploying your application as an MSIX package, you can enable HTTPS links to launch your app directly.
 
-<Aside type="note">
+@note{type="note"}
 Web-to-App linking requires manual manifest configuration. Custom protocol schemes are automatically configured from `build/config.yml`, but associated domains must be added manually to your MSIX manifest.
-</Aside>
+
+@end
 
 To enable Web-to-App linking, follow the [Microsoft guide on web-to-app linking](https://learn.microsoft.com/en-us/windows/apps/develop/launch/web-to-app-linking). You'll need to:
 
 1. **Manually add App URI Handler to your MSIX manifest** (`build/windows/msix/app_manifest.xml`):
-   ```xml
-   <uap3:Extension Category="windows.appUriHandler">
-     <uap3:AppUriHandler>
-       <uap3:Host Name="myawesomeapp.com"/>
-     </uap3:AppUriHandler>
-   </uap3:Extension>
-   ```
+  ```xml
+  <uap3:Extension Category="windows.appUriHandler">
+    <uap3:AppUriHandler>
+      <uap3:Host Name="myawesomeapp.com"/>
+    </uap3:AppUriHandler>
+  </uap3:Extension>
+  ```
+
 
 2. **Configure `windows-app-web-link` on your website:** Host a `windows-app-web-link` file at `https://myawesomeapp.com/.well-known/windows-app-web-link`. This file should contain your app's package information and the paths it handles.
 
 When a Web-to-App link launches your application, you'll receive the same `ApplicationLaunchedWithUrl` event as with custom protocol schemes.
 
-  </TabItem>
-
-  <TabItem label="macOS" icon="apple">
-
+[macOS]
 ### Info.plist Configuration
 
 On macOS, protocols are registered via your `Info.plist` file.
@@ -249,36 +249,36 @@ open "myapp://test/action"
 
 In addition to custom protocol schemes, macOS also supports **Universal Links**, which allow your app to be launched by regular HTTPS links (e.g., `https://myawesomeapp.com/path`). Universal Links provide a seamless user experience between your web and desktop app.
 
-<Aside type="caution">
+@note{type="caution"}
 Universal Links require your macOS app to be **code-signed** with a valid Apple Developer certificate and provisioning profile. Unsigned or ad-hoc signed builds will not be able to open Universal Links. Ensure your app is properly signed before testing.
-</Aside>
+
+@end
 
 To enable Universal Links, follow the [Apple guide on supporting Universal Links in your app](https://developer.apple.com/documentation/xcode/supporting-universal-links-in-your-app). You'll need to:
 
 1. **Add entitlements** in your `entitlements.plist`:
-   ```xml
-   <key>com.apple.developer.associated-domains</key>
-   <array>
-     <string>applinks:myawesomeapp.com</string>
-   </array>
-   ```
+  ```xml
+  <key>com.apple.developer.associated-domains</key>
+  <array>
+    <string>applinks:myawesomeapp.com</string>
+  </array>
+  ```
+
 
 2. **Add NSUserActivityTypes to Info.plist**:
-   ```xml
-   <key>NSUserActivityTypes</key>
-   <array>
-     <string>NSUserActivityTypeBrowsingWeb</string>
-   </array>
-   ```
+  ```xml
+  <key>NSUserActivityTypes</key>
+  <array>
+    <string>NSUserActivityTypeBrowsingWeb</string>
+  </array>
+  ```
+
 
 3. **Configure `apple-app-site-association` on your website:** Host an `apple-app-site-association` file at `https://myawesomeapp.com/.well-known/apple-app-site-association`.
 
 When a Universal Link triggers your app, you'll receive the same `ApplicationLaunchedWithUrl` event, making the handling code identical to custom protocol schemes.
 
-  </TabItem>
-
-  <TabItem label="Linux" icon="linux">
-
+[Linux]
 ### Desktop Entry
 
 On Linux, protocols are registered via `.desktop` files.
@@ -324,8 +324,7 @@ xdg-open "myapp://test/action"
 xdg-mime query default x-scheme-handler/myapp
 ```
 
-  </TabItem>
-</Tabs>
+@end
 
 ## Complete Example
 
@@ -565,16 +564,19 @@ func goodHandler(url string) {
 Test protocol handlers during development:
 
 **Windows:**
+
 ```powershell
 Start-Process "myapp://test/action?id=123"
 ```
 
 **macOS:**
+
 ```bash
 open "myapp://test/action?id=123"
 ```
 
 **Linux:**
+
 ```bash
 xdg-open "myapp://test/action?id=123"
 ```
@@ -606,16 +608,19 @@ Create a test HTML page:
 ### Protocol Not Registered
 
 **Windows:**
+
 - Check registry: `HKEY_CURRENT_USER\SOFTWARE\Classes\<scheme>`
 - Reinstall with NSIS installer
 - Verify installer ran with proper permissions
 
 **macOS:**
+
 - Rebuild application with `wails3 build`
 - Check `Info.plist` in app bundle: `MyApp.app/Contents/Info.plist`
 - Reset Launch Services: `/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -kill`
 
 **Linux:**
+
 - Check desktop file: `~/.local/share/applications/myapp.desktop`
 - Update database: `update-desktop-database ~/.local/share/applications/`
 - Verify handler: `xdg-mime query default x-scheme-handler/myapp`
@@ -623,6 +628,7 @@ Create a test HTML page:
 ### Application Not Launching
 
 **Check logs:**
+
 ```go
 app := application.New(application.Options{
     LogLevel: slog.LevelDebug, // requires `import "log/slog"`
@@ -631,6 +637,7 @@ app := application.New(application.Options{
 ```
 
 **Common issues:**
+
 - Application not installed in expected location
 - Executable path in registration doesn't match actual location
 - Permissions issues
@@ -656,10 +663,10 @@ app := application.New(application.Options{
 
 ## Next Steps
 
-- [Windows Packaging](/guides/build/windows) - Learn about NSIS installer options
-- [File Associations](/guides/distribution/file-associations) - Open files with your app
-- [Single Instance](/guides/distribution/single-instance) - Prevent multiple app instances
+- [Windows Packaging](/guides/build/windows/) - Learn about NSIS installer options
+- [File Associations](/guides/file-associations/) - Open files with your app
+- [Single Instance](/guides/single-instance/) - Prevent multiple app instances
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [examples](https://github.com/wailsapp/wails/tree/master/v3/examples).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples).

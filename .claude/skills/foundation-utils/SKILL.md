@@ -282,6 +282,8 @@ if err := filex.WriteAtomic("/path/to/config.json", data, 0o644); err != nil {
 流程：写到同目录的 `.tmp.<rand>` → fsync → rename → 替换原文件。
 断电 / 崩溃只可能产生残余 `.tmp` 文件，不会破坏原文件。
 
+内置使用方：`internal/storage/config.go`（storage.json）与 `internal/services/exportsvc`（表格导出 CSV / XLSX）。后者是"用户文件"而非配置，同样走 `WriteAtomic`：导出写一半崩溃不会留下半截文件覆盖用户原文件。
+
 ### 6.2 ReadLimit
 
 ```go
@@ -445,4 +447,9 @@ internal/services/subprocess/   # procx 的前端入口
 └── commands.go        # whitelist + Command.validateArgs / validateCwd
 
 frontend/src/services/subprocess/SubprocessService.ts  # 前端包装 + 事件订阅
+
+internal/services/exportsvc/    # 表格导出落盘（filex.WriteAtomic + logx.For("export")）
+└── exportsvc.go       # WriteCSV（UTF-8 BOM）/ WriteXLSX（excelize）+ validatePath
+
+frontend/src/services/export/ExportService.ts  # saveCSV / saveXLSX（NativeDialogs.saveFile 原生「另存为」→ 后端写文件）
 ```

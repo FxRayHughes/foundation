@@ -1,9 +1,9 @@
 import { localeRegistry } from '@/i18n';
 import { settingsPageZhCN } from './zh-CN';
 import { settingsPageEnUS } from './en-US';
-import { registerPersonalizationLocales } from '../personalization';
-import { registerLanguageLocales } from '../language';
-import { registerDatabaseLocales } from '../database';
+import { registerPersonalizationLocales } from '../personalization/lang';
+import { registerLanguageLocales } from '../language/lang';
+import { registerDatabaseLocales } from '../database/lang';
 
 let registered = false;
 

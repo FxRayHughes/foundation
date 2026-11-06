@@ -1,8 +1,8 @@
 ---
-title: Services
-description: Build modular, reusable application components with services
-sidebar:
-  order: 2
+title: "Services"
+description: "Build modular, reusable application components with services"
+slug: "features/bindings/services"
+sourcePath: "features/bindings/services.md"
 ---
 
 ## Service Architecture
@@ -68,6 +68,7 @@ app := application.New(application.Options{
 ```
 
 **Key points:**
+
 - Only **exported methods** (PascalCase) are bound
 - Services are **singletons** (one instance)
 - Methods can return `(value, error)`
@@ -171,6 +172,7 @@ func (u *UserService) ServiceStartup(ctx context.Context, options application.Se
 ```
 
 **Use cases:**
+
 - Initialise resources
 - Validate configuration
 - Run migrations
@@ -178,6 +180,7 @@ func (u *UserService) ServiceStartup(ctx context.Context, options application.Se
 - Connect to external services
 
 **Important:**
+
 - Services start in **registration order**
 - Return error to **prevent app startup**
 - Use `ctx` for cancellation
@@ -203,6 +206,7 @@ func (u *UserService) ServiceShutdown() error {
 ```
 
 **Use cases:**
+
 - Close connections
 - Save state
 - Cleanup resources
@@ -210,6 +214,7 @@ func (u *UserService) ServiceShutdown() error {
 - Cancel background tasks
 
 **Important:**
+
 - Services shutdown in **reverse order**
 - Application context already cancelled
 - Return error to **log warning** (doesn't prevent shutdown)
@@ -298,9 +303,18 @@ app := application.New(application.Options{
 ```
 
 **Use cases:**
-- Multiple instances of same service type
+
 - Clearer logging
 - Better debugging
+
+`ServiceOptions.Name` is a display name for logging and debugging; it does not change the generated binding namespace. Register at most one service of each Go type. For independently configured instances, use distinct wrapper types, for example:
+
+```go
+type PrimaryStore struct { *Store }
+type ArchiveStore struct { *Store }
+```
+
+Register `application.NewService(&PrimaryStore{primary})` and `application.NewService(&ArchiveStore{archive})` instead of registering two `*Store` values.
 
 ### HTTP Routes
 
@@ -329,6 +343,7 @@ app := application.New(application.Options{
 **Access:** `http://wails.localhost/files/...`
 
 **Use cases:**
+
 - File serving
 - Custom APIs
 - WebSocket endpoints
@@ -787,11 +802,11 @@ func main() {
 
 ## Next Steps
 
-- [Method Bindings](/features/bindings/methods) - Learn how to bind Go methods to JavaScript
-- [Models](/features/bindings/models) - Bind complex data structures
-- [Events](/features/events/system) - Use events for pub/sub communication
-- [Best Practices](/features/bindings/best-practices) - Service design patterns and best practices
+- [Method Bindings](/features/bindings/methods/) - Learn how to bind Go methods to JavaScript
+- [Models](/features/bindings/models/) - Bind complex data structures
+- [Events](/features/events/system/) - Use events for pub/sub communication
+- [Best Practices](/features/bindings/best-practices/) - Service design patterns and best practices
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [service examples](https://github.com/wailsapp/wails/tree/master/v3/examples).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [service examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples).

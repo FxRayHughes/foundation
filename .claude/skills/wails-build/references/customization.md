@@ -1,37 +1,23 @@
 ---
-title: Build Customization
-description: Customize your build process using Task and Taskfile.yml
-sidebar:
-  order: 7
+title: "Build Customization"
+description: "Customize your build process using Task and Taskfile.yml"
+slug: "guides/build/customization"
+sourcePath: "guides/build/customization.md"
 ---
-
-import { FileTree } from "@astrojs/starlight/components";
 
 ## Overview
 
-The Wails build system is a flexible and powerful tool designed to streamline
-the build process for your Wails applications. It leverages
-[Task](https://taskfile.dev), a task runner that allows you to define and run
-tasks easily. While the v3 build system is the default, Wails encourages a
-"bring your own tooling" approach, allowing developers to customize their build
-process as needed.
+The Wails build system is a flexible and powerful tool designed to streamline the build process for your Wails applications. It leverages [Task](https://taskfile.dev), a task runner that allows you to define and run tasks easily. While the v3 build system is the default, Wails encourages a "bring your own tooling" approach, allowing developers to customize their build process as needed.
 
-Learn more about how to use Task in the
-[official documentation](https://taskfile.dev/usage/).
+Learn more about how to use Task in the [official documentation](https://taskfile.dev/usage/).
 
 ## Task: The Heart of the Build System
 
-[Task](https://taskfile.dev) is a modern alternative to Make, written in Go. It
-uses a YAML file to define tasks and their dependencies. In the Wails build
-system, [Task](https://taskfile.dev) plays a central role in orchestrating the
-build process.
+[Task](https://taskfile.dev) is a modern alternative to Make, written in Go. It uses a YAML file to define tasks and their dependencies. In the Wails build system, [Task](https://taskfile.dev) plays a central role in orchestrating the build process.
 
-The main `Taskfile.yml` is located in the project root, while platform-specific
-tasks are defined in `build/<platform>/Taskfile.yml` files. A common `Taskfile.yml`
-file in the `build` directory contains common tasks that are shared across
-platforms.
+The main `Taskfile.yml` is located in the project root, while platform-specific tasks are defined in `build/<platform>/Taskfile.yml` files. A common `Taskfile.yml` file in the `build` directory contains common tasks that are shared across platforms.
 
-<FileTree>
+@filetree
 
 - Project Root
   - Taskfile.yml
@@ -40,13 +26,11 @@ platforms.
     - darwin/Taskfile.yml
     - linux/Taskfile.yml
     - Taskfile.yml
-
-</FileTree>
+@end
 
 ## Taskfile.yml
 
-The `Taskfile.yml` file in the project root is the main entry point for the build system. It defines
-the tasks and their dependencies. Here's the default `Taskfile.yml` file:
+The `Taskfile.yml` file in the project root is the main entry point for the build system. It defines the tasks and their dependencies. Here's the default `Taskfile.yml` file:
 
 ```yaml
 version: '3'
@@ -88,15 +72,13 @@ tasks:
 
 ## Platform-Specific Taskfiles
 
-Each platform has its own Taskfile, located in the platform directories beneath the `build` directory. These
-files define the core tasks for that platform. Each taskfile includes common tasks from the `build/Taskfile.yml` file.
+Each platform has its own Taskfile, located in the platform directories beneath the `build` directory. These files define the core tasks for that platform. Each taskfile includes common tasks from the `build/Taskfile.yml` file.
 
 ### Windows
 
 Location: `build/windows/Taskfile.yml`
 
-The Windows-specific Taskfile includes tasks for building, packaging, and
-running the application on Windows. Key features include:
+The Windows-specific Taskfile includes tasks for building, packaging, and running the application on Windows. Key features include:
 
 - Building with optional production flags
 - Generating `.ico` icon file
@@ -107,8 +89,7 @@ running the application on Windows. Key features include:
 
 Location: `build/linux/Taskfile.yml`
 
-The Linux-specific Taskfile includes tasks for building, packaging, and running
-the application on Linux. Key features include:
+The Linux-specific Taskfile includes tasks for building, packaging, and running the application on Linux. Key features include:
 
 - Building with optional production flags
 - Creating an AppImage, deb, rpm, and Arch Linux packages
@@ -118,8 +99,7 @@ the application on Linux. Key features include:
 
 Location: `build/darwin/Taskfile.yml`
 
-The macOS-specific Taskfile includes tasks for building, packaging, and running
-the application on macOS. Key features include:
+The macOS-specific Taskfile includes tasks for building, packaging, and running the application on macOS. Key features include:
 
 - Building binaries for amd64, arm64 and universal (both) architectures
 - Generating `.icns` icon file
@@ -129,12 +109,9 @@ the application on macOS. Key features include:
 
 ## Task Execution and Command Aliases
 
-The `wails3 task` command is an embedded version of [Taskfile](https://taskfile.dev), which executes
-the tasks defined in your `Taskfile.yml`.
+The `wails3 task` command is an embedded version of [Taskfile](https://taskfile.dev), which executes the tasks defined in your `Taskfile.yml`.
 
-The `wails3 build` and `wails3 package` commands are aliases for
-`wails3 task build` and `wails3 task package` respectively. When you run these
-commands, Wails internally translates them to the appropriate task execution:
+The `wails3 build` and `wails3 package` commands are aliases for `wails3 task build` and `wails3 task package` respectively. When you run these commands, Wails internally translates them to the appropriate task execution:
 
 - `wails3 build` → `wails3 task build`
 - `wails3 package` → `wails3 task package`
@@ -145,14 +122,11 @@ You can pass CLI variables to tasks using the `KEY=VALUE` format. These variable
 
 ```bash
 # These are equivalent:
-wails3 build PLATFORM=linux CONFIG=production
-wails3 task build PLATFORM=linux CONFIG=production
-
-# Package with custom version:
-wails3 package VERSION=2.0.0 OUTPUT=myapp.pkg
+wails3 build GOOS=linux
+wails3 task build GOOS=linux
 ```
 
-In your `Taskfile.yml`, you can access these variables using Go template syntax:
+The stock tasks use `GOOS`, `ARCH` and `DEV`. Variables such as `VERSION`, `OUTPUT`, `PLATFORM` or `CONFIG` only affect a task if your own Taskfile reads them. The following is a custom Taskfile illustration, not the stock Wails build task:
 
 ```yaml
 tasks:
@@ -160,6 +134,12 @@ tasks:
     cmds:
       - echo "Building for {{.PLATFORM | default "darwin"}}"
       - go build -tags {{.CONFIG | default "debug"}} -o myapp
+```
+
+If your custom packaging task reads `VERSION` and `OUTPUT`, you can pass them in the same way:
+
+```bash
+wails3 package VERSION=2.0.0 OUTPUT=myapp.pkg
 ```
 
 ## Common Build Process
@@ -174,44 +154,33 @@ Across all platforms, the build process typically includes the following steps:
 
 ## Customising the Build Process
 
-While the v3 build system provides a solid default configuration, you can easily
-customise it to fit your project's needs. By modifying the `Taskfile.yml` and
-platform-specific Taskfiles, you can:
+While the v3 build system provides a solid default configuration, you can easily customise it to fit your project's needs. By modifying the `Taskfile.yml` and platform-specific Taskfiles, you can:
 
 - Add new tasks
 - Modify existing tasks
 - Change the order of task execution
 - Integrate with other tools and scripts
 
-This flexibility allows you to tailor the build process to your specific
-requirements while still benefiting from the structure provided by the Wails
-build system.
+This flexibility allows you to tailor the build process to your specific requirements while still benefiting from the structure provided by the Wails build system.
 
-:::tip[Learning Taskfile]
-We highly recommend reading the [Taskfile](https://taskfile.dev) documentation to
-understand how to use Taskfile effectively.
-You can find out which version of Taskfile is embedded in the Wails CLI by running `wails3 task --version`.
-:::
+@note{type="tip" title="Learning Taskfile"}
+We highly recommend reading the [Taskfile](https://taskfile.dev) documentation to understand how to use Taskfile effectively. You can find out which version of Taskfile is embedded in the Wails CLI by running `wails3 task --version`.
+
+@end
 
 ## Development Mode
 
-The Wails build system includes a powerful development mode that enhances the
-developer experience by providing live reloading and hot module replacement.
-This mode is activated using the `wails3 dev` command.
+The Wails build system includes a powerful development mode that enhances the developer experience by providing live reloading and hot module replacement. This mode is activated using the `wails3 dev` command.
 
 ### How It Works
 
 When you run `wails3 dev`, the following process occurs:
 
-1. The command checks for an available port, defaulting to 9245 if not
-   specified.
+1. The command checks for an available port, defaulting to 9245 if not specified.
 2. It sets up the environment variables for the frontend dev server (Vite).
 3. It starts the file watcher using the [refresh](https://github.com/atterpac/refresh) library.
 
-The [refresh](https://github.com/atterpac/refresh) library is responsible for
-monitoring file changes and triggering rebuilds. It uses the configuration defined under the `dev_mode` key in the `./build/config.yml` file.
-It may be configured to ignore certain directories and files, to determine which files to watch and what actions to take when changes are detected.
-The default configuration works pretty well, but feel free to customise it to your needs.
+The [refresh](https://github.com/atterpac/refresh) library is responsible for monitoring file changes and triggering rebuilds. It uses the configuration defined under the `dev_mode` key in the `./build/config.yml` file. It may be configured to ignore certain directories and files, to determine which files to watch and what actions to take when changes are detected. The default configuration works pretty well, but feel free to customise it to your needs.
 
 ### Configuration
 
@@ -263,20 +232,11 @@ You can customise the development mode experience by modifying these values in t
 Some ways to customise include:
 
 1. Changing the watched directories or files
-2. Adjusting the debounce time to control how quickly the system responds to
-   changes
+2. Adjusting the debounce time to control how quickly the system responds to changes
 3. Adding or modifying the execute commands to fit your project's needs
 
 ### Using a browser for development
 
-Whilst Wails v2 fully supported the use of a browser for development, it caused a lot
-of confusion. Applications that would work in the browser would not necessarily
-work in the desktop application, as not all browser APIs are available in webviews.
+Whilst Wails v2 fully supported the use of a browser for development, it caused a lot of confusion. Applications that would work in the browser would not necessarily work in the desktop application, as not all browser APIs are available in webviews.
 
-For UI-focused development work, you still have the flexibility to use a browser
-in v3, by accessing the Vite URL at `http://localhost:9245` in dev mode. This
-gives you access to powerful browser dev tools while working on styling and
-layout. Be aware that Go bindings *will not work* in this mode.
-When you're ready to test functionality like bindings and events, simply
-switch to the desktop view to ensure everything works perfectly in the
-production environment.
+For UI-focused development work, you still have the flexibility to use a browser in v3, by accessing the Vite URL at `http://localhost:9245` in dev mode. This gives you access to powerful browser dev tools while working on styling and layout. Be aware that Go bindings *will not work* in this mode. When you're ready to test functionality like bindings and events, simply switch to the desktop view to ensure everything works perfectly in the production environment.

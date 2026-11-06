@@ -1,10 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { GreetService } from '@/services';
 import { useTimeEvent } from '@/shared/hooks/useTimeEvent';
 import { onChildResult, onChildClosed } from '@/services/childwindow';
 import { ChildWindowService } from '@/services/childwindow/ChildWindowService';
-// TODO(systray): 托盘功能暂时移除，后端 bindings 不存在；恢复时取消下面注释。
-// import { SystrayService } from '@/services/systray';
+import { SystrayService } from '@/services/systray';
 
 export interface UseHomePageResult {
   name: string;
@@ -18,9 +17,11 @@ export interface UseHomePageResult {
   openMessage: () => Promise<void>;
   openBlank: () => Promise<void>;
   childResult: string | null;
-  // TODO(systray): 托盘功能暂时移除。
-  // systrayEnabled: boolean;
-  // toggleSystray: () => Promise<void>;
+  // 托盘开关：状态以后端为准（后端持久化到 SQLite，并在启动时恢复）
+  systrayEnabled: boolean;
+  systrayBusy: boolean;
+  systrayError: string | null;
+  toggleSystray: () => Promise<void>;
 }
 
 // HomePage ViewModel：
@@ -32,8 +33,9 @@ export const useHomePage = (): UseHomePageResult => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [childResult, setChildResult] = useState<string | null>(null);
-  // TODO(systray): 托盘功能暂时移除。
-  // const [systrayEnabled, setSystrayEnabled] = useState<boolean>(false);
+  const [systrayEnabled, setSystrayEnabled] = useState<boolean>(false);
+  const [systrayBusy, setSystrayBusy] = useState<boolean>(false);
+  const [systrayError, setSystrayError] = useState<string | null>(null);
   const time = useTimeEvent();
 
   const greet = useCallback(async (): Promise<void> => {
@@ -73,16 +75,46 @@ export const useHomePage = (): UseHomePageResult => {
     setChildResult('blank → opened');
   }, []);
 
-  // TODO(systray): 托盘功能暂时移除，后端 bindings 不存在；恢复时取消下面注释。
-  // const toggleSystray = useCallback(async (): Promise<void> => {
-  //   if (systrayEnabled) {
-  //     await SystrayService.disable();
-  //     setSystrayEnabled(false);
-  //   } else {
-  //     await SystrayService.enable();
-  //     setSystrayEnabled(true);
-  //   }
-  // }, [systrayEnabled]);
+  // mount 时同步后端真实状态（上次会话启用过的托盘会被后端自动恢复）
+  useEffect(() => {
+    let cancelled = false;
+    SystrayService.isEnabled()
+      .then((enabled) => {
+        if (!cancelled) setSystrayEnabled(enabled);
+      })
+      .catch(() => {
+        // 后端未就绪：保持默认"未启用"
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  return { name, setName, result, time, loading, error, greet, openConfirm, openMessage, openBlank, childResult };
+  const toggleSystray = useCallback(async (): Promise<void> => {
+    setSystrayBusy(true);
+    setSystrayError(null);
+    try {
+      if (systrayEnabled) {
+        await SystrayService.disable();
+      } else {
+        await SystrayService.enable();
+      }
+    } catch (e: unknown) {
+      setSystrayError(e instanceof Error ? e.message : String(e));
+    } finally {
+      // 无论成功与否都以后端状态为准（持久化失败时托盘可能已生效）
+      try {
+        setSystrayEnabled(await SystrayService.isEnabled());
+      } catch {
+        // ignore
+      }
+      setSystrayBusy(false);
+    }
+  }, [systrayEnabled]);
+
+  return {
+    name, setName, result, time, loading, error, greet,
+    openConfirm, openMessage, openBlank, childResult,
+    systrayEnabled, systrayBusy, systrayError, toggleSystray,
+  };
 };

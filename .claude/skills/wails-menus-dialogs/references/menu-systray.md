@@ -1,23 +1,17 @@
 ---
-title: System Tray Menus
-description: Add system tray (notification area) integration to your application
-sidebar:
-  order: 3
+title: "System Tray Menus"
+description: "Add system tray (notification area) integration to your application"
+slug: "features/menus/systray"
+sourcePath: "features/menus/systray.md"
 ---
-
-import { Tabs, TabItem, Card, CardGrid } from "@astrojs/starlight/components";
 
 ## System Tray Menus
 
 Wails provides **unified system tray APIs** that work across all platforms. Create tray icons with menus, attach windows, and handle clicks with native platform behaviour for background applications, services, and quick-access utilities.
-{/* VISUAL PLACEHOLDER: System Tray Comparison
-Description: Three screenshots showing the same Wails system tray icon on:
-1. Windows - Notification area (bottom-right)
-2. macOS - Menu bar (top-right) with label
-3. Linux (GNOME) - Top bar
-All showing the same icon and menu structure
-Style: Clean screenshots with arrows pointing to tray icon, menu expanded
-*/}
+
+![A Wails system tray menu, opened from the macOS menu bar](/assets/screenshots/systray-menu-macos.png)
+
+On macOS, a Wails system tray item appears in the menu bar and opens a native menu. The example includes disabled, checkbox, radio, submenu, and action items.
 
 ## Quick Start
 
@@ -97,7 +91,7 @@ func main() {
 
     systray := app.SystemTray.New()
     systray.SetIcon(icon)
-    systray.SetDarkModeIcon(iconDark)  // macOS dark mode
+    systray.SetDarkModeIcon(iconDark)  // Windows and macOS dark mode
     
     app.Run()
 }
@@ -106,7 +100,7 @@ func main() {
 **Icon requirements:**
 
 | Platform | Size | Format | Notes |
-|----------|------|--------|-------|
+| --- | --- | --- | --- |
 | **Windows** | 16x16 or 32x32 | PNG, ICO | Notification area |
 | **macOS** | 18x18 to 22x22 | PNG | Menu bar, template recommended |
 | **Linux** | 22x22 to 48x48 | PNG, SVG | Varies by DE |
@@ -120,6 +114,7 @@ systray.SetTemplateIcon(iconBytes)
 ```
 
 **Template icon guidelines:**
+
 - Use black and clear (transparent) colours only
 - Black becomes white in dark mode
 - Name file with `Template` suffix: `iconTemplate.png`
@@ -154,7 +149,7 @@ menu.Add("Quit").OnClick(func(ctx *application.Context) {
 systray.SetMenu(menu)
 ```
 
-**For all menu item types**, see [Menu Reference](/features/menus/reference).
+**For all menu item types**, see [Menu Reference](/features/menus/reference/).
 
 ## Attaching Windows
 
@@ -173,6 +168,7 @@ systray.WindowDebounce(200 * time.Millisecond)    // Click debounce
 ```
 
 **Behaviour:**
+
 - Window starts hidden
 - **Left-click tray icon** → Toggle window visibility
 - **Right-click tray icon** → Show menu (if set)
@@ -182,16 +178,22 @@ systray.WindowDebounce(200 * time.Millisecond)    // Click debounce
 
 ```go
 window := app.Window.NewWithOptions(application.WebviewWindowOptions{
-    Title:  "Quick Access",
-    Width:  300,
-    Height: 400,
-    Frameless: true,  // No title bar
-    AlwaysOnTop: true,  // Stay on top
+    Title:           "Quick Access",
+    Width:           300,
+    Height:          400,
+    Frameless:       true, // No title bar
+    AlwaysOnTop:     true, // Stay on top
+    HideOnFocusLost: true, // Dismiss when another window receives focus
+    HideOnEscape:    true, // Dismiss when the user presses Escape
 })
 
 systray.AttachWindow(window)
 systray.WindowOffset(5)
 ```
+
+`HideOnFocusLost` is useful for tray popups on Windows, macOS, and click-to-focus Linux desktops. Wails disables that behaviour on Linux focus-follows-mouse environments (including common Hyprland, Sway, and i3 setups), where leaving the popup could otherwise hide it before it can be used. `HideOnEscape` remains available in those environments.
+
+The left- and right-click behaviours above are smart defaults. An explicit `OnClick` or `OnRightClick` handler replaces the corresponding default. For platform checks and edge cases, see the [manual systray suite](https://github.com/wailsapp/wails/tree/v3.0.0/v3/test/manual/systray) and the [systray stress example](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/systray-stress).
 
 ## Click Handlers
 
@@ -228,7 +230,7 @@ systray.OnMouseLeave(func() {
 **Platform support:**
 
 | Event | Windows | macOS | Linux |
-|-------|---------|-------|-------|
+| --- | --- | --- | --- |
 | OnClick | ✅ | ✅ | ✅ |
 | OnRightClick | ✅ | ✅ | ✅ |
 | OnDoubleClick | ✅ | ✅ | ⚠️ Varies |
@@ -275,9 +277,10 @@ pauseMenuItem.OnClick(func(ctx *application.Context) {
 })
 ```
 
-:::caution[Always Call Update()]
-After changing menu state, **call `menu.Update()`**. See [Menu Reference](/features/menus/reference#enabled-state).
-:::
+@note{type="caution" title="Always Call Update()"}
+After changing menu state, **call `menu.Update()`**. See [Menu Reference](/features/menus/reference/#enabled-state).
+
+@end
 
 ### Rebuild Menu
 
@@ -311,95 +314,101 @@ func rebuildTrayMenu(status string) {
 
 ## Platform-Specific Features
 
-<Tabs syncKey="platform">
-  <TabItem label="macOS" icon="apple">
-    **Menu bar integration:**
-    
-    ```go
-    // Set label (appears next to icon)
-    systray.SetLabel("My App")
-    
-    // Use template icon (adapts to dark mode)
-    systray.SetTemplateIcon(iconBytes)
-    
-    // Set icon position — uses AppKit NSImage placement constants.
-    systray.SetIconPosition(application.NSImageRight)
-    ```
+@tabs{sync-key="platform"}
+[macOS]
+**Menu bar integration:**
 
-    **Icon positions** (mirroring `NSImagePosition`):
-    - `application.NSImageLeft` - Icon left of label.
-    - `application.NSImageRight` - Icon right of label.
-    - `application.NSImageOnly` - Icon only, no label.
-    - `application.NSImageNone` - Label only, no icon.
-    
-    **Best practices:**
-    - Use template icons (black + transparent)
-    - Keep labels short (3-5 characters)
-    - 18x18 to 22x22 pixels for Retina displays
-    - Test in both light and dark modes
-  </TabItem>
+```go
+// Set label (appears next to icon)
+systray.SetLabel("My App")
 
-  <TabItem label="Windows" icon="seti:windows">
-    **Notification area integration:**
+// Use template icon (adapts to dark mode)
+systray.SetTemplateIcon(iconBytes)
 
-    ```go
-    // Set tooltip (appears on hover)
-    systray.SetTooltip("My Application")
+// Set icon position — uses AppKit NSImage placement constants.
+systray.SetIconPosition(application.NSImageRight)
+```
 
-    // Or use SetLabel (same as tooltip on Windows)
-    systray.SetLabel("My Application")
+**Icon positions** (mirroring `NSImagePosition`):
 
-    // Show/Hide functionality (fully functional)
-    systray.Show()  // Show tray icon
-    systray.Hide()  // Hide tray icon
-    ```
+- `application.NSImageLeft` - Icon left of label.
+- `application.NSImageRight` - Icon right of label.
+- `application.NSImageOnly` - Icon only, no label.
+- `application.NSImageNone` - Label only, no icon.
 
-    **Icon requirements:**
-    - 16x16 or 32x32 pixels
-    - PNG or ICO format
-    - Transparent background
+**Best practices:**
 
-    **Tooltip limits:**
-    - Maximum 127 UTF-16 characters
-    - Longer tooltips will be truncated
-    - Keep concise for best experience
+- Use template icons (black + transparent)
+- Keep labels short (3-5 characters)
+- 18x18 to 22x22 pixels for Retina displays
+- Test in both light and dark modes
 
-    **Platform features:**
-    - Tray icon survives Windows Explorer restarts
-    - Show() and Hide() methods fully functional
-    - Proper lifecycle management
+[Windows]
+**Notification area integration:**
 
-    **Best practices:**
-    - Use 32x32 for high-DPI displays
-    - Keep tooltips under 127 characters
-    - Test on different Windows versions
-    - Consider notification area overflow
-    - Use Show/Hide for conditional tray visibility
-  </TabItem>
+```go
+// Set tooltip (appears on hover)
+systray.SetTooltip("My Application")
 
-  <TabItem label="Linux" icon="linux">
-    **System tray integration:**
-    
-    Uses StatusNotifierItem specification (most modern DEs).
-    
-    ```go
-    systray.SetIcon(iconBytes)
-    systray.SetLabel("My App")
-    ```
-    
-    **Desktop environment support:**
-    - **GNOME**: Top bar (with extension)
-    - **KDE Plasma**: System tray
-    - **XFCE**: Notification area
-    - **Others**: Varies
-    
-    **Best practices:**
-    - Use 22x22 or 24x24 pixels
-    - SVG icons scale better
-    - Test on target desktop environments
-    - Provide fallback for unsupported DEs
-  </TabItem>
-</Tabs>
+// Or use SetLabel (same as tooltip on Windows)
+systray.SetLabel("My Application")
+
+// Show/Hide functionality (fully functional)
+systray.Show()  // Show tray icon
+systray.Hide()  // Hide tray icon
+```
+
+**Icon requirements:**
+
+- 16x16 or 32x32 pixels
+- PNG or ICO format
+- Transparent background
+
+**Tooltip limits:**
+
+- Maximum 127 UTF-16 characters
+- Longer tooltips will be truncated
+- Keep concise for best experience
+
+**Platform features:**
+
+- Tray icon survives Windows Explorer restarts
+- Show() and Hide() methods fully functional
+- Proper lifecycle management
+
+**Best practices:**
+
+- Use 32x32 for high-DPI displays
+- Keep tooltips under 127 characters
+- Test on different Windows versions
+- Consider notification area overflow
+- Use Show/Hide for conditional tray visibility
+
+[Linux]
+**System tray integration:**
+
+Uses StatusNotifierItem specification (most modern DEs).
+
+```go
+systray.SetIcon(iconBytes)
+systray.SetLabel("My App")
+```
+
+**Desktop environment support:**
+
+- **GNOME**: Top bar (with extension)
+- **KDE Plasma**: System tray
+- **XFCE**: Notification area
+- **Others**: Varies
+
+**Best practices:**
+
+- Use 22x22 or 24x24 pixels
+- SVG icons scale better
+- Test on target desktop environments
+- Provide fallback for unsupported DEs
+
+@end
 
 ## Complete Example
 
@@ -564,12 +573,13 @@ There is no `IsVisible()` getter — track visibility in your own application st
 **Platform Support:**
 
 | Platform | Hide() | Show() | Notes |
-|----------|--------|--------|-------|
+| --- | --- | --- | --- |
 | **Windows** | ✅ | ✅ | Fully functional - icon appears/disappears from notification area |
 | **macOS** | ✅ | ✅ | Menu bar item shows/hides |
 | **Linux** | ✅ | ✅ | Varies by desktop environment |
 
 **Use cases:**
+
 - Temporarily hide tray icon based on user preference
 - Headless mode with tray icon appearing only when needed
 - Toggle visibility based on application state
@@ -629,7 +639,7 @@ app := application.New(application.Options{
 
 - **Don't use large icons** - Follow platform guidelines
 - **Don't use long labels** - Gets truncated
-- **Don't forget dark mode** - Test on macOS dark mode
+- **Don't forget dark mode** - Test on Windows and macOS dark mode
 - **Don't block click handlers** - Keep them fast
 - **Don't forget menu.Update()** - After changing menu state
 - **Don't assume tray support** - Some Linux DEs don't support it
@@ -639,6 +649,7 @@ app := application.New(application.Options{
 ### Tray Icon Not Appearing
 
 **Possible causes:**
+
 1. Icon format not supported
 2. Icon size too large/small
 3. System tray not supported (Linux)
@@ -681,32 +692,32 @@ menu.Update()  // Add this!
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Menu Reference" icon="document">
-    Complete reference for menu item types and properties.
-    
-    [Learn More →](/features/menus/reference)
-  </Card>
+@cards{cols="2"}
+📖 Menu Reference
+Complete reference for menu item types and properties.
 
-  <Card title="Application Menus" icon="list-format">
-    Create application menu bars.
-    
-    [Learn More →](/features/menus/application)
-  </Card>
+[Learn More →](/features/menus/reference/)
 
-  <Card title="Context Menus" icon="puzzle">
-    Create right-click context menus.
-    
-    [Learn More →](/features/menus/context)
-  </Card>
+---
+☰ Application Menus
+Create application menu bars.
 
-  <Card title="System Tray Tutorial" icon="open-book">
-    Build a complete system tray application.
-    
-    [Learn More →](/tutorials/system-tray)
-  </Card>
-</CardGrid>
+[Learn More →](/features/menus/application/)
+
+---
+◆ Context Menus
+Create right-click context menus.
+
+[Learn More →](/features/menus/context/)
+
+---
+📖 System Tray Example
+Explore a complete system tray application.
+
+[Learn More →](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/systray-basic)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [system tray examples](https://github.com/wailsapp/wails/tree/master/v3/examples/systray-basic).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [system tray examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/systray-basic).

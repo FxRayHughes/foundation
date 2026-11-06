@@ -1,0 +1,43 @@
+.root {
+  position: relative;
+  min-width: 0;
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+  user-select: none;
+}
+
+.segment {
+  cursor: default;
+  outline: none;
+  transition: opacity 0.1s ease-out;
+}
+
+.segment:focus-visible {
+  stroke: var(--fd-accent) !important;
+  stroke-width: 2px !important;
+}
+
+/* 与 @mantine/charts FunnelChart 的 inside 标签保持一致（默认白字、12px） */
+.label {
+  fill: var(--chart-labels-color, var(--mantine-color-white));
+  font-family: var(--mantine-font-family);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fd-text-muted);
+  font-size: 13px;
+}

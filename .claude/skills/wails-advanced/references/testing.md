@@ -1,8 +1,8 @@
 ---
-title: Testing
-description: Test your Wails application
-sidebar:
-  order: 5
+title: "Testing"
+description: "Test your Wails application"
+slug: "guides/testing"
+sourcePath: "guides/testing.md"
 ---
 
 ## Overview
@@ -171,5 +171,5 @@ cd frontend && npm test -- --watch
 
 ## Next Steps
 
-- [End-to-End Testing](/guides/e2e-testing) - Test complete user flows
-- [Best Practices](/features/bindings/best-practices) - Learn best practices
+- [End-to-End Testing](/guides/e2e-testing/) - Test complete user flows
+- [Best Practices](/features/bindings/best-practices/) - Learn best practices

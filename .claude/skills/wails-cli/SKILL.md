@@ -1,6 +1,6 @@
 ---
 name: wails-cli
-description: wails3 命令行参考。当用户问到「wails3 init / dev / build / package / generate / doctor / tool / service / ios / sign / update」等 CLI 命令、Taskfile 集成、构建产物路径、generate bindings 用法时使用。
+description: wails3 命令行参考。当用户问到「wails3 init / setup / dev / build / run / package / generate / doctor / tool / service / ios / android / sign / updater / mcp / update cli / config check / eject / migrate / clean」等 CLI 命令、Taskfile 集成、构建产物路径、generate bindings 用法（-time-type 等）、WAILS_PUREGO / WAILS_MCP / WAILS_EXP_USE_WAKE 环境变量时使用。
 ---
 
 # Wails v3 - CLI 参考
@@ -20,10 +20,14 @@ description: wails3 命令行参考。当用户问到「wails3 init / dev / buil
 
 | 命令 | 作用 |
 |------|------|
-| `wails3 init` | 从模板创建新项目。常用 flag：`-n` 项目名、`-t` 模板（默认 `vanilla`）、`-p` Go 包名、`-d` 目录、`-l` 列模板、`-mod` Go 模块路径、`--git` Git URL、`--skipgomodtidy`、产品元数据 `--productname/description/version/company/copyright/comments/identifier` |
-| `wails3 dev` | 开发模式（前端热重载）。`--config` 默认 `./build/config.yml`、`--port` Vite 端口、`-s` HTTPS |
+| `wails3 setup` | 引导向导（浏览器打开）：依赖检查、全局默认值（`~/.config/wails/defaults.yaml`）、可选 Docker、签名凭据。子命令 `setup signing` / `setup entitlements` |
+| `wails3 init` | 从模板创建新项目。常用 flag：`-n` 项目名、`-t` 模板（默认 `vanilla`；远程模板 URL 仅接受 `https/http/ssh/git/user@host:path`）、`-p` Go 包名、`-d` 目录、`-l` 列模板、`-q` 安静、`-mod` Go 模块路径、`-git` Git URL、`-skipgomodtidy`、`-ui`（Wake 交互式，实验性）、产品元数据 `-productname/description/version/company/copyright/comments/identifier`。生成项目声明 `go 1.26.0`，且把 `@wailsio/runtime` pin 到生成它的 CLI 版本 |
+| `wails3 dev` | 开发模式（前端热重载）。`--config` 默认 `./build/config.yml`、`--port` Vite 端口、`-s` HTTPS、`--tags` 额外 dev 构建 tag。主程序退出 / 终端关闭时会停掉后台进程（beta.25 / v3.1.0）；对前端 dev server 做 HTTP 就绪检查（beta.26） |
 | `wails3 build` | 构建（薄封装到 Taskfile `build` 任务）。`--tags` → `EXTRA_TAGS=`、`--obfuscated`（Garble）、`--garbleargs` |
-| `wails3 package` | 调用平台 `package` 任务 |
+| `wails3 run` | 构建并运行；**无 `wails.yaml` 时等价 `go run .`**；有 manifest 时需 `WAILS_EXP_USE_WAKE` |
+| `wails3 package` | 调用平台 `package` 任务（Wake 开启时标为 deprecated） |
+| `wails3 mcp` | 项目级 MCP server（供 AI agent：init / doctor / build / dev / bindings / task，限当前目录；token 走 `WAILS_MCP_TOKEN`）。与应用内 `mcp` tag 的 MCP 不同，见 `wails-advanced` |
+| `wails3 config check` / `eject` / `migrate` / `clean` | **仅 `WAILS_EXP_USE_WAKE` 开启时出现**：校验 `wails.yaml` / 导出完整 manifest / Taskfile→YAML 迁移草稿 / 清理生成的构建状态（见 `wails-build`） |
 | `wails3 task [name]` | 执行任意 Taskfile 任务；不带名时 `--list` 列出全部 |
 | `wails3 doctor` / `doctor-ng` | 诊断报告（new TUI 变体） |
 | `wails3 version` / `releasenotes` / `docs` / `sponsor` | CLI 版本、发版说明、官网、赞助页 |
@@ -32,7 +36,7 @@ description: wails3 命令行参考。当用户问到「wails3 init / dev / buil
 
 | 子命令 | 作用 |
 |-------|------|
-| `bindings` | 生成 Go→前端绑定。Flags：`-d` 输出目录、`-models`、`-index`、`-ts`、`-i` 接口、`-b` bundle、`-names` `Call.ByName`、`-noevents`、`-noindex`、`-dry`、`-silent`、`-v`、`-clean`（默认 `true`）、`-f`、`-obfuscated`、`-obfuscated-output`。可以传 `./...` 等包模式 |
+| `bindings` | 生成 Go→前端绑定（含 `bindings/events` 事件名常量模块，beta.33+）。Flags：`-dir` Go 包目录、`-d` 输出目录、`-models`、`-index`、`-time-type`（`string` 默认 / `Date`）、`-ts`、`-i` 接口、`-b` bundle、`-names` `Call.ByName`、`-noevents`、`-noindex`、`-dry`、`-silent`、`-v`、`-clean`（默认 `true`）、`-f`、`-obfuscated`、`-obfuscated-output`。可以传 `./...` 等包模式 |
 | `icons` | PNG 转平台图标。`-input`、`-windowsfilename`、`-macfilename`、`-iconcomposerinput`、`-macassetdir` |
 | `build-assets` | 从 `build/config.yml` 生成 `build/` 内容（Taskfile 片段、NSIS、Info.plist、.desktop 等） |
 | `runtime` | 重新生成 `/wails/runtime.js` |
@@ -48,7 +52,7 @@ description: wails3 命令行参考。当用户问到「wails3 init / dev / buil
 | 子命令 | 作用 |
 |-------|------|
 | `update build-assets` | 从 `build/config.yml` 刷新 `build/`（尽量保留用户改动） |
-| `update cli` | 自更新 `wails3` 二进制 |
+| `update cli` | 自更新 `wails3` 二进制（v3.0.0 修复了找不到 v3 release 的问题） |
 
 ### 签名 & 打包
 
@@ -73,7 +77,20 @@ description: wails3 命令行参考。当用户问到「wails3 init / dev / buil
 | `version` | 升 semver |
 | `lipo` | 合并多 macOS 架构成 universal 二进制 |
 | `capabilities` | 探测 GTK3/GTK4 / WebKit 可用性 |
+| `msix` / `msix-install-tools` | 创建 Windows MSIX 包 / 安装 MSIX 打包工具 |
+| `docker-mounts` | 生成交叉编译用的 Docker volume mount 参数 |
+| `prepare-macos-output` | 让 file-provider 同步目录（iCloud 等）里的 macOS bundle 保持可签名 |
+| `has` | 检查工具是否在 PATH（`wails3 tool has gcc\|clang`）；`has-cc` 已 deprecated |
 | `sign` | 见上 |
+
+### `wails3 updater <sub>`（自更新发布工具）
+
+| 子命令 | 作用 |
+|-------|------|
+| `updater genkey` | 生成 Ed25519 签名密钥对 |
+| `updater sign` | 计算产物摘要与签名 |
+| `updater manifest` | 为产物生成 update manifest |
+| `updater verify` | 用公钥校验 manifest 与产物 |
 
 ### `wails3 service <sub>`
 
@@ -87,6 +104,21 @@ description: wails3 命令行参考。当用户问到「wails3 init / dev / buil
 |-------|------|
 | `ios overlay:gen` | 生成 iOS bridge shim 的 Go overlay |
 | `ios xcode:gen` | 生成 Xcode 项目 |
+
+### `wails3 android <sub>`（实验性）
+
+| 子命令 | 作用 |
+|-------|------|
+| `android overlay:gen` | 生成注册 Android main 的 Go overlay |
+| `android devices` / `android run` | 列设备 / 构建安装运行 dev APK（仅 `WAILS_EXP_USE_WAKE` 开启时） |
+
+## 影响 CLI 的环境变量
+
+| 变量 | 作用 |
+|------|------|
+| `WAILS_PUREGO=1` | build / package / dev 自动加 `purego` tag（实验性 CGO-free 后端） |
+| `WAILS_MCP=1` | 自动加 `mcp` tag（应用内 MCP server） |
+| `WAILS_EXP_USE_WAKE` | 存在即开启实验性 YAML 构建 CLI（`run`/`config`/`eject`/`migrate`/`clean`、Android run 等） |
 
 ## 构建产物路径
 

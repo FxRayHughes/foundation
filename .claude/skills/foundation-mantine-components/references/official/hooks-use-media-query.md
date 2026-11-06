@@ -1,0 +1,67 @@
+# useMediaQuery
+Package: @mantine/hooks
+Import: import { useMediaQuery } from '@mantine/hooks';
+
+## Usage
+
+The `use-media-query` hook subscribes to media queries.
+It receives a media query as an argument and returns `true` if the given media query matches the current state.
+The hook relies on the `window.matchMedia()` [API](https://developer.mozilla.org/en-US/docs/Web/API/Window/matchMedia)
+and will return `false` if the API is not available, unless an initial value is provided in the second argument.
+
+Resize the browser window to trigger the `window.matchMedia` event:
+
+```tsx
+import { Badge } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
+
+function Demo() {
+  const matches = useMediaQuery('(min-width: ${em(900)})');
+
+  return (
+    <Badge color={matches ? 'teal' : 'red'} variant="filled">
+      Breakpoint {matches ? 'matches' : 'does not match'}
+    </Badge>
+  );
+}
+```
+
+
+## Server-Side Rendering
+
+During server-side rendering, the hook will always return `false` as the `window.matchMedia` API is not available.
+If that is not the desired behavior, you can override the initial value:
+
+```tsx
+import { useMediaQuery } from '@mantine/hooks';
+
+function Demo() {
+  // Set the initial value in the second argument and getInitialValueInEffect option to false
+  const matches = useMediaQuery('(max-width: 40em)', true, {
+    getInitialValueInEffect: false,
+  });
+}
+```
+
+## Definition
+
+```tsx
+interface UseMediaQueryOptions {
+  getInitialValueInEffect: boolean;
+}
+
+function useMediaQuery(
+  query: string,
+  initialValue?: boolean,
+  options?: UseMediaQueryOptions,
+): boolean;
+```
+
+## Exported types
+
+`UseMediaQueryOptions` type is exported from `@mantine/hooks` package,
+you can import it in your application:
+
+```tsx
+import type { UseMediaQueryOptions } from '@mantine/hooks';
+```

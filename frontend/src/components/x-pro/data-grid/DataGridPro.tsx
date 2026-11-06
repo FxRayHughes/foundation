@@ -1,77 +1,10 @@
-import { DataGrid } from '@mui/x-data-grid';
-import { Box, CircularProgress, useTheme } from '@mui/material';
-import type { DataGridProProps } from './types';
+import type { DataGridProProps, DataGridRow } from './types';
 import { useDataGridPro } from './useDataGridPro';
-import { createStyles } from './DataGridPro.styles';
+import { DataGridSurface } from './DataGridSurface';
 
-export function DataGridPro(props: DataGridProProps) {
-  const theme = useTheme();
-  const styles = createStyles(theme);
-
-  const {
-    containerRef,
-    finalColumns,
-    topRows,
-    mainRows,
-    bottomRows,
-    hasPinnedRows,
-    filterModel,
-    sentinelRef,
-    isLoading,
-    restProps,
-  } = useDataGridPro(props);
-
-  return (
-    <Box ref={containerRef} sx={styles.root}>
-      {hasPinnedRows && topRows.length > 0 && (
-        <Box sx={styles.pinnedTop}>
-          <DataGrid
-            {...restProps}
-            rows={topRows}
-            columns={finalColumns}
-            hideFooter
-            disableColumnMenu
-            columnHeaderHeight={0}
-            autoHeight
-          />
-        </Box>
-      )}
-
-      <Box sx={styles.mainSection}>
-        <DataGrid
-          {...restProps}
-          rows={mainRows}
-          columns={finalColumns}
-          filterModel={filterModel}
-          columnHeaderHeight={
-            props.headerFilters?.enabled ? 80 : undefined
-          }
-        />
-        {props.lazyLoading && (
-          <>
-            <Box ref={sentinelRef} sx={styles.sentinel} />
-            {isLoading && (
-              <Box sx={styles.loadingIndicator}>
-                <CircularProgress size={24} />
-              </Box>
-            )}
-          </>
-        )}
-      </Box>
-
-      {hasPinnedRows && bottomRows.length > 0 && (
-        <Box sx={styles.pinnedBottom}>
-          <DataGrid
-            {...restProps}
-            rows={bottomRows}
-            columns={finalColumns}
-            hideFooter
-            disableColumnMenu
-            columnHeaderHeight={0}
-            autoHeight
-          />
-        </Box>
-      )}
-    </Box>
-  );
+// DataGrid Pro：基于 mantine-datatable 的自实现 Pro 表格。
+// 列钉住 / 行钉住 / 树形数据 / 主从明细 / 懒加载 / 表头筛选 / 剪贴板粘贴 / 列与行拖拽重排 / 排序 / 勾选 / 分页。
+export function DataGridPro<T extends DataGridRow = DataGridRow>(props: DataGridProProps<T>) {
+  const vm = useDataGridPro<T>(props);
+  return <DataGridSurface vm={vm} props={props} />;
 }

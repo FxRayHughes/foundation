@@ -1,36 +1,27 @@
-import { Box, Button, Typography, useTheme } from '@mui/material';
+import { Button, Text } from '@mantine/core';
 import { useT } from '@/i18n';
 import { ChildTitleBar } from '@/components/ChildTitleBar';
 import { useMessageWindow } from './useMessageWindow';
-import { messageWindowStyles } from './MessageWindow.styles';
+import classes from './MessageWindow.module.css';
 
 export function MessageWindow() {
-  const theme = useTheme();
   const t = useT();
   const { title, message, icon: Icon, iconColor, handleOk } = useMessageWindow();
-  const styles = messageWindowStyles(theme);
-  const fp = theme.palette.foundation;
 
   const resolvedTitle = title || t('childwindow.message.defaultTitle');
-  const color = iconColor(fp as unknown as Record<string, unknown>);
 
   return (
-    <Box sx={styles.root}>
+    <div className={classes.root}>
       <ChildTitleBar title={resolvedTitle} onClose={handleOk} />
-      <Box sx={styles.body}>
-        <Icon sx={{ fontSize: 36, color }} />
-        <Typography sx={styles.message}>{message}</Typography>
-      </Box>
-      <Box sx={styles.actions}>
-        <Button
-          variant="contained"
-          size="small"
-          sx={styles.button}
-          onClick={handleOk}
-        >
+      <div className={classes.body}>
+        <Icon size={36} stroke={1.75} className={classes.icon} style={{ color: iconColor }} />
+        <Text className={classes.message}>{message}</Text>
+      </div>
+      <div className={classes.actions}>
+        <Button variant="filled" size="xs" className={classes.button} onClick={handleOk}>
           {t('childwindow.message.okBtn')}
         </Button>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }

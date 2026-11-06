@@ -1,0 +1,67 @@
+# useClipboard
+Package: @mantine/hooks
+Import: import { useClipboard } from '@mantine/hooks';
+
+## Usage
+
+The `use-clipboard` hook provides a simple way to copy text to the clipboard,
+track the copied state, handle errors, and reset the state after a given timeout.
+It uses the [navigator.clipboard.writeText](https://caniuse.com/mdn-api_clipboard_writetext) API under the hood.
+
+```tsx
+import { Button } from '@mantine/core';
+import { useClipboard } from '@mantine/hooks';
+
+function Demo() {
+  const clipboard = useClipboard({ timeout: 500 });
+
+  return (
+    <Button
+      color={clipboard.copied ? 'teal' : 'blue'}
+      onClick={() => clipboard.copy('Hello, world!')}
+    >
+      {clipboard.copied ? 'Copied' : 'Copy'}
+    </Button>
+  );
+}
+```
+
+
+## Limitations
+
+Due to security reasons, the `use-clipboard` hook will not work in iframes and may not work with local files opened with the `file://` protocol
+(the hook will work fine with local websites that are using the `http://` protocol). You can learn more about `navigator.clipboard` [here](https://web.dev/async-clipboard/).
+
+## Definition
+
+```tsx
+interface UseClipboardOptions {
+  /** Time in ms after which the copied state will reset, `2000` by default */
+  timeout?: number;
+}
+
+interface UseClipboardReturnValue {
+  /** Function to copy value to clipboard */
+  copy: (value: any) => void;
+
+  /** Function to reset copied state and error */
+  reset: () => void;
+
+  /** Error if copying failed */
+  error: Error | null;
+
+  /** Boolean indicating if the value was copied successfully */
+  copied: boolean;
+}
+
+function useClipboard(options?: UseClipboardOptions): UseClipboardReturnValue
+```
+
+## Exported types
+
+The `UseClipboardOptions` and `UseClipboardReturnValue` types are exported from the `@mantine/hooks` package;
+you can import them in your application:
+
+```tsx
+import type { UseClipboardOptions, UseClipboardReturnValue } from '@mantine/hooks';
+```

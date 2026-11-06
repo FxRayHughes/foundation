@@ -1,0 +1,66 @@
+/* X-Pro 演示页：数据表格 + 七种自实现图表。颜色全部取 --fd-* 变量。 */
+
+.root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--fd-bg-content);
+  overflow: hidden;
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--fd-text-primary);
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.sectionHint {
+  margin-top: -8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fd-text-secondary);
+}
+
+.card {
+  padding: 24px;
+  background-color: var(--fd-bg-surface);
+  border-radius: 8px;
+  border: 1px solid var(--fd-divider);
+  min-width: 0;
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.57;
+  color: var(--fd-text-primary);
+}
+
+.chartRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
+}
+
+.gridContainer {
+  height: 400px;
+  width: 100%;
+}

@@ -1,15 +1,17 @@
 ---
-title: Frameless Windows
-description: Create custom window chrome with frameless windows
-sidebar:
-  order: 4
+title: "Frameless Windows"
+description: "Create custom window chrome with frameless windows"
+slug: "features/windows/frameless"
+sourcePath: "features/windows/frameless.md"
 ---
-
-import { Tabs, TabItem, Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Frameless Windows
 
 Wails provides **frameless window support** with CSS-based drag regions and platform-native behaviour. Remove the platform-native title bar for complete control over window chrome, custom designs, and unique user experiences whilst maintaining essential functionality like dragging, resizing, and system controls.
+
+![The default Wails v3 TypeScript starter app running as a frameless window with native macOS corners](/assets/screenshots/frameless-v3-native-corners-macos.png)
+
+The example above is the default Wails v3 TypeScript starter app with `Frameless: true` enabled.
 
 ## Quick Start
 
@@ -49,6 +51,30 @@ window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 
 ## Creating Frameless Windows
 
+### Corner Radius (macOS)
+
+Frameless windows preserve AppKit's standard rounded macOS corners by default. Set `Mac.CornerRadius` to use a custom radius (in points):
+
+```go
+window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+    Frameless: true,
+    Mac: application.MacWindow{
+        CornerRadius: 16,
+    },
+})
+```
+
+Set `Mac.CornerType` to `MacWindowCornerTypeSquare` for square corners. This ignores `CornerRadius`:
+
+```go
+window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+    Frameless: true,
+    Mac: application.MacWindow{
+        CornerType: application.MacWindowCornerTypeSquare,
+    },
+})
+```
+
 ### Basic Frameless Window
 
 ```go
@@ -60,26 +86,34 @@ window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 ```
 
 **What you get:**
+
 - No title bar
 - No window borders
 - No system buttons
 - Transparent background (optional)
 
 **What you need to implement:**
+
 - Draggable area
 - Close/minimise/maximise buttons
 - Resize handles (if resizable)
 
 ### With Transparent Background
 
+**Private API on macOS:** set `Mac.Backdrop: application.MacBackdropTransparent` and build with `-tags private_mac_apis` for webview transparency. Without the tag, the native webview remains opaque even if the HTML/CSS background is transparent. `Frameless` and `TitleBar.AppearsTransparent` themselves use public APIs. See [Private macOS APIs](/guides/build/private-macos-apis/#webview-transparency-and-background).
+
 ```go
 window := app.Window.NewWithOptions(application.WebviewWindowOptions{
     Frameless:      true,
     BackgroundType: application.BackgroundTypeTransparent,
+    Mac: application.MacWindow{
+        Backdrop: application.MacBackdropTransparent, // Requires -tags private_mac_apis.
+    },
 })
 ```
 
 **Use cases:**
+
 - Rounded corners
 - Custom shapes
 - Overlay windows
@@ -104,6 +138,7 @@ Use the `--wails-draggable` CSS property:
 ```
 
 **Values:**
+
 - `drag` - Area is draggable
 - `no-drag` - Area is not draggable (even if parent is)
 
@@ -171,6 +206,158 @@ import { Window } from '@wailsio/runtime'
 document.querySelector('.minimize').addEventListener('click', () => Window.Minimise())
 document.querySelector('.maximize').addEventListener('click', () => Window.Maximise())
 document.querySelector('.close').addEventListener('click', () => Window.Close())
+```
+
+## Native Non-Client Regions on Windows
+
+Windows can treat parts of a custom title bar as native non-client areas. This lets you draw the title bar and caption buttons with any HTML/CSS design while keeping native Windows behavior: the caption area drags the window, the maximize button can show Windows 11 Snap Assist / Snap Layouts, and the minimize, maximize, and close buttons receive native hit testing and mouse state.
+
+The video below shows a custom HTML/CSS title bar using native Windows hit testing, including Windows 11 Snap Assist / Snap Layouts on a custom maximize button.
+
+<video src="/assets/windows-native-non-client-regions/wails-app-region.mp4" controls muted playsInline></video>
+
+Wails supports two Windows-specific mechanisms:
+
+- `app-region` through WebView2's native non-client region support
+- `--wails-non-client-region` through Wails runtime tracking for custom caption buttons
+
+### Choosing a Mode
+
+@note{type="caution" title="Experimental"}
+`WebView2CompositionHosting` changes how the window hosts and interacts with WebView2 under the hood. Instead of the default HWND-hosted WebView2 controller, Wails uses composition controller hosting and forwards input explicitly. This mode may have rendering, input, focus, or WebView2 Runtime compatibility issues. Enable it only when you need native custom caption-button behavior, and test your app carefully on the Windows and WebView2 Runtime versions you support.
+
+@end
+
+Choose based on what you need from Windows:
+
+- Use `NonClientRegionSupport` for simple native app dragging with WebView2's `app-region: drag` and `app-region: no-drag`.
+- Use `WebView2CompositionHosting` when your custom minimize, maximize, and close buttons should behave like native Windows caption buttons.
+- Enable both when the same window needs WebView2-native `app-region` support and Wails-managed custom caption-button regions.
+
+`NonClientRegionSupport` is the lightweight native alternative to Wails' `--wails-draggable` tracking. You mark draggable and non-draggable areas with CSS, WebView2 decides which pixels belong to the caption, and Wails asks WebView2 for the native region when hit testing.
+
+That is the full scope of this mode today. It does not make custom minimize, maximize, or close buttons behave like native Windows caption buttons, and it does not enable Windows 11 Snap Assist / Snap Layouts for a custom maximize button. Use it when you need simple native app dragging without the extra machinery of `--wails-draggable`.
+
+`WebView2CompositionHosting` is for custom caption buttons with native behavior. Wails tracks DOM rectangles marked with `--wails-non-client-region`, maps them to Windows hit-test values such as `HTMINBUTTON`, `HTMAXBUTTON`, and `HTCLOSE`, and forwards mouse input back into the composition-hosted WebView2 surface. That is what allows a custom maximize button to participate in Windows 11 Snap Assist / Snap Layouts while keeping any visual design you choose.
+
+Put another way: `NonClientRegionSupport` is WebView2-native CSS region support. `WebView2CompositionHosting` is Wails taking responsibility for host-owned composition and custom non-client hit testing.
+
+### WebView2 app-region
+
+Enable WebView2's native non-client region support for the window:
+
+```go
+window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+    Frameless: true,
+    Windows: application.WindowsWindow{
+        NonClientRegionSupport: true,
+    },
+})
+```
+
+Then mark draggable areas with the CSS `app-region` property:
+
+```css
+.titlebar {
+    app-region: drag;
+}
+
+.titlebar button,
+.titlebar input,
+.titlebar select,
+.titlebar textarea {
+    app-region: no-drag;
+}
+```
+
+Use this when you only need native caption dragging and your title bar controls are handled with normal frontend clicks.
+
+The limitation of this mode is that it is constrained by WebView2's own non-client region support. In current WebView2 releases, that means drag and no-drag regions only. It is not intended to model fully custom frontend caption buttons with distinct native minimize, maximize, and close roles.
+
+### Custom Caption Buttons with Native Behavior
+
+For custom minimize, maximize, and close buttons that should behave like system caption buttons, enable composition hosting:
+
+@note{type="caution" title="Experimental"}
+`WebView2CompositionHosting` uses WebView2 composition controller hosting with DirectComposition. See [Choosing a Mode](#choosing-a-mode) before enabling it.
+
+@end
+
+```go
+window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+    Frameless: true,
+    Windows: application.WindowsWindow{
+        WebView2CompositionHosting: true,
+    },
+})
+```
+
+Then mark each frontend region with `--wails-non-client-region`:
+
+```html
+<div class="titlebar">
+    <div class="title">My Application</div>
+    <div class="window-controls">
+        <button class="window-button minimize" aria-label="Minimize"></button>
+        <button class="window-button maximize" aria-label="Maximize"></button>
+        <button class="window-button close" aria-label="Close"></button>
+    </div>
+</div>
+```
+
+```css
+.titlebar {
+    --wails-non-client-region: caption;
+    height: 40px;
+}
+
+.window-controls {
+    display: flex;
+    height: 100%;
+}
+
+.window-button {
+    width: 46px;
+    border: 0;
+    background: transparent;
+}
+
+.window-button.minimize {
+    --wails-non-client-region: minimize;
+}
+
+.window-button.maximize {
+    --wails-non-client-region: maximize;
+}
+
+.window-button.close {
+    --wails-non-client-region: close;
+}
+```
+
+Supported `--wails-non-client-region` values:
+
+- `caption` - draggable caption area
+- `minimize` - native minimize button hit target
+- `maximize` - native maximize button hit target, including Windows 11 Snap Assist / Snap Layouts hover behavior
+- `close` - native close button hit target
+
+The Wails runtime observes DOM, style, size, scroll, and viewport changes, then sends region snapshots to the native window. Region geometry is measured in CSS pixels and converted to physical pixels for Windows hit testing.
+
+The visual design remains entirely yours. The regions only tell Windows what each rectangle means; the button shape, icon, color, spacing, hover styling, and layout still come from your frontend.
+
+### Combining Both
+
+You can enable both options when you want WebView2 `app-region` support and Wails-managed caption button regions in the same window:
+
+```go
+window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+    Frameless: true,
+    Windows: application.WindowsWindow{
+        NonClientRegionSupport:    true,
+        WebView2CompositionHosting: true,
+    },
+})
 ```
 
 ## System Buttons
@@ -295,6 +482,7 @@ body {
 ```
 
 **Values:**
+
 - `all` - Resize from all edges
 - `top`, `bottom`, `left`, `right` - Specific edges
 - `top-left`, `top-right`, `bottom-left`, `bottom-right` - Corners
@@ -327,104 +515,110 @@ body {
 
 ## Platform-Specific Behaviour
 
-<Tabs syncKey="platform">
-  <TabItem label="Windows" icon="seti:windows">
-    **Windows frameless windows:**
-    
-    ```go
-    window := app.Window.NewWithOptions(application.WebviewWindowOptions{
-        Frameless: true,
-        Windows: application.WindowsWindow{
-            DisableFramelessWindowDecorations: false,
-        },
-    })
-    ```
-    
-    **Features:**
-    - Automatic drop shadow
-    - Snap layouts support (Windows 11)
-    - Aero Snap support
-    - DPI scaling
-    
-    **Disable decorations:**
-    ```go
+@tabs{sync-key="platform"}
+[Windows]
+**Windows frameless windows:**
+
+```go
+window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+    Frameless: true,
     Windows: application.WindowsWindow{
-        DisableFramelessWindowDecorations: true,
+        DisableFramelessWindowDecorations: false,
     },
-    ```
-    
-    **Snap Assist:**
-    ```go
-    // Trigger Windows 11 Snap Assist
-    window.SnapAssist()
-    ```
-    
-    **Custom title bar height:**
-    Windows automatically detects drag regions from CSS.
-  </TabItem>
+})
+```
 
-  <TabItem label="macOS" icon="apple">
-    **macOS frameless windows:**
-    
-    ```go
-    window := app.Window.NewWithOptions(application.WebviewWindowOptions{
-        Frameless: true,
-        Mac: application.MacWindow{
-            TitleBar: application.MacTitleBar{
-                AppearsTransparent: true,
-            },
-            InvisibleTitleBarHeight: 40,
+**Features:**
+
+- Automatic drop shadow
+- Snap layouts support (Windows 11)
+- Aero Snap support
+- DPI scaling
+
+**Disable decorations:**
+
+```go
+Windows: application.WindowsWindow{
+    DisableFramelessWindowDecorations: true,
+},
+```
+
+**Snap Assist:**
+
+```go
+// Trigger Windows 11 Snap Assist
+window.SnapAssist()
+```
+
+This triggers Snap Layouts through the Windows hotkey path. For a custom HTML maximize button with native hover Snap Layouts, use [Native Non-Client Regions on Windows](#native-non-client-regions-on-windows) instead.
+
+**Custom title bar height:** Windows automatically detects drag regions from CSS.
+
+[macOS]
+**macOS frameless windows:**
+
+```go
+window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+    Frameless: true,
+    Mac: application.MacWindow{
+        TitleBar: application.MacTitleBar{
+            AppearsTransparent: true,
         },
-    })
-    ```
-
-    **Features:**
-    - Native fullscreen support
-    - Traffic light buttons (optional)
-    - Vibrancy effects
-    - Transparent title bar
-
-    **Hide the title bar entirely** (use the preset variants exported from the `application` package — there is no `TitleBarStyle` field or `MacTitleBarStyleHidden` constant):
-    ```go
-    Mac: application.MacWindow{
-        TitleBar: application.MacTitleBarHidden,
-    },
-    ```
-    Other presets include `MacTitleBarDefault`, `MacTitleBarHiddenInset`, and `MacTitleBarHiddenInsetUnified`.
-
-    **Invisible title bar:**
-    Allows dragging whilst hiding the title bar. This only takes effect when the window is frameless or uses `AppearsTransparent`:
-    ```go
-    Mac: application.MacWindow{
         InvisibleTitleBarHeight: 40,
     },
-    ```
-  </TabItem>
+})
+```
 
-  <TabItem label="Linux" icon="linux">
-    **Linux frameless windows:**
-    
-    ```go
-    window := app.Window.NewWithOptions(application.WebviewWindowOptions{
-        Frameless: true,
-    })
-    ```
-    
-    **Features:**
-    - Basic frameless support
-    - CSS drag regions
-    - Varies by desktop environment
-    
-    **Desktop environment notes:**
-    - **GNOME:** Good support
-    - **KDE Plasma:** Good support
-    - **XFCE:** Basic support
-    - **Tiling WMs:** Limited support
-    
-    **Compositor required:**
-    Transparency requires a compositor (most modern DEs have one).
-  </TabItem>
-</Tabs>
+**Features:**
+
+- Native fullscreen support
+- Traffic light buttons (optional)
+- Vibrancy effects
+- Transparent title bar
+
+**Hide the title bar entirely** (use the preset variants exported from the `application` package — there is no `TitleBarStyle` field or `MacTitleBarStyleHidden` constant):
+
+```go
+Mac: application.MacWindow{
+    TitleBar: application.MacTitleBarHidden,
+},
+```
+
+Other presets include `MacTitleBarDefault`, `MacTitleBarHiddenInset`, and `MacTitleBarHiddenInsetUnified`.
+
+**Invisible title bar:** Allows dragging whilst hiding the title bar. This only takes effect when the window is frameless or uses `AppearsTransparent`:
+
+```go
+Mac: application.MacWindow{
+    InvisibleTitleBarHeight: 40,
+},
+```
+
+[Linux]
+**Linux frameless windows:**
+
+```go
+window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+    Frameless: true,
+})
+```
+
+**Features:**
+
+- Basic frameless support
+- CSS drag regions
+- Varies by desktop environment
+
+**Desktop environment notes:**
+
+- **GNOME:** Good support
+- **KDE Plasma:** Good support
+- **XFCE:** Basic support
+- **Tiling WMs:** Limited support
+
+**Compositor required:** Transparency requires a compositor (most modern DEs have one).
+
+@end
 
 ## Common Patterns
 
@@ -506,6 +700,9 @@ splash := app.Window.NewWithOptions(application.WebviewWindowOptions{
     Frameless:      true,
     AlwaysOnTop:    true,
     BackgroundType: application.BackgroundTypeTransparent,
+    Mac: application.MacWindow{
+        Backdrop: application.MacBackdropTransparent, // Requires -tags private_mac_apis.
+    },
 })
 ```
 
@@ -532,6 +729,9 @@ body {
 window := app.Window.NewWithOptions(application.WebviewWindowOptions{
     Frameless:      true,
     BackgroundType: application.BackgroundTypeTransparent,
+    Mac: application.MacWindow{
+        Backdrop: application.MacBackdropTransparent, // Requires -tags private_mac_apis.
+    },
 })
 ```
 
@@ -563,6 +763,9 @@ overlay := app.Window.NewWithOptions(application.WebviewWindowOptions{
     Frameless:      true,
     AlwaysOnTop:    true,
     BackgroundType: application.BackgroundTypeTransparent,
+    Mac: application.MacWindow{
+        Backdrop: application.MacBackdropTransparent, // Requires -tags private_mac_apis.
+    },
 })
 ```
 
@@ -833,32 +1036,32 @@ body {
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Window Basics" icon="laptop">
-    Learn the fundamentals of window management.
-    
-    [Learn More →](/features/windows/basics)
-  </Card>
+@cards{cols="2"}
+▣ Window Basics
+Learn the fundamentals of window management.
 
-  <Card title="Window Options" icon="seti:config">
-    Complete reference for window options.
-    
-    [Learn More →](/features/windows/options)
-  </Card>
+[Learn More →](/features/windows/basics/)
 
-  <Card title="Window Events" icon="rocket">
-    Handle window lifecycle events.
-    
-    [Learn More →](/features/windows/events)
-  </Card>
+---
+⚙ Window Options
+Complete reference for window options.
 
-  <Card title="Multiple Windows" icon="puzzle">
-    Patterns for multi-window applications.
-    
-    [Learn More →](/features/windows/multiple)
-  </Card>
-</CardGrid>
+[Learn More →](/features/windows/options/)
+
+---
+🚀 Window Events
+Handle window lifecycle events.
+
+[Learn More →](/features/windows/events/)
+
+---
+◆ Multiple Windows
+Patterns for multi-window applications.
+
+[Learn More →](/features/windows/multiple/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [frameless example](https://github.com/wailsapp/wails/tree/master/v3/examples/frameless).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [frameless example](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/frameless).

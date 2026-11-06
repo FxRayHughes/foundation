@@ -1,6 +1,8 @@
 ---
-title: Handling Panics
-description: How to handle panics in your Wails application
+title: "Handling Panics"
+description: "How to handle panics in your Wails application"
+slug: "guides/panic-handling"
+sourcePath: "guides/panic-handling.md"
 ---
 
 In Go applications, panics can occur during runtime when something unexpected happens. This guide explains how to handle panics both in general Go code and specifically in your Wails application.
@@ -10,8 +12,8 @@ In Go applications, panics can occur during runtime when something unexpected ha
 Before diving into Wails-specific panic handling, it's essential to understand how panics work in Go:
 
 1. Panics are for unrecoverable errors that shouldn't happen during normal operation
-2. When a panic occurs in a goroutine, only that goroutine is affected
-3. Panics can be recovered using `defer` and `recover()`
+2. A panic unwinds the current goroutine; if it reaches the top without recovery, the process terminates, including other goroutines
+3. Recovery must run in a deferred function in the same goroutine as the panic
 
 Here's a basic example of panic handling in Go:
 
@@ -36,8 +38,9 @@ For more detailed information about panic and recover in Go, see the [Go Blog: D
 Wails automatically handles panics that occur in your Service methods when they are called from the frontend. This means you don't need to add panic recovery to these methods - Wails will catch the panic and process it through your configured panic handler.
 
 The panic handler is specifically designed to catch:
+
 - Panics in bound service methods called from the frontend
-- Internal panics from the Wails runtime
+- Panics in runtime paths that explicitly install Wails recovery; this is not a process-wide handler for every goroutine
 
 For other scenarios, such as background goroutines or standalone Go code, you should handle panics yourself using Go's standard panic recovery mechanisms.
 
@@ -55,22 +58,20 @@ type PanicDetails struct {
 ```
 
 This structure provides comprehensive information about the panic:
+
 - `StackTrace`: A formatted string showing the call stack that led to the panic
 - `Error`: The actual error or panic message
 - `Time`: The exact time when the panic occurred
 - `FullStackTrace`: The complete stack trace including runtime frames
 
-:::note[Panics in Service Code]
+@note{type="info" title="Panics in Service Code"}
+When panics are caught in your Service code after being called from the frontend, the stack trace is trimmed to focus on exactly where in your code the panic occurred. If you want to see the full stack trace, you can use the `FullStackTrace` field.
 
-When panics are caught in your Service code after being called from the frontend, the stack trace is trimmed to focus on exactly where in your code the panic occurred.
-If you want to see the full stack trace, you can use the `FullStackTrace` field.
-
-:::
+@end
 
 ## Default Panic Handler
 
-If you don't specify a custom panic handler, Wails will use its default handler which outputs error information in a formatted log message and then quits.
-For example:
+If you don't specify a custom panic handler, Wails will use its default handler which outputs error information in a formatted log message and then quits. For example:
 
 ```
 ************************ FATAL ******************************

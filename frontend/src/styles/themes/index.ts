@@ -19,7 +19,12 @@ export const registerFoundationThemes = (): void => {
 };
 
 export { themeRegistry } from './registry';
-export { buildMuiTheme } from './buildMuiTheme';
+export {
+  buildMantineTheme,
+  buildCssVariablesResolver,
+  FOUNDATION_CSS_VARS,
+} from './buildMantineTheme';
+export { useFoundationPalette } from './useFoundationPalette';
 export type { FoundationPalette, FoundationThemePreset } from './types';
 export { lightPreset } from './presets/light';
 export { darkPreset } from './presets/dark';

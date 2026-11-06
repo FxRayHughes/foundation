@@ -1,22 +1,11 @@
 ---
-title: Server Build
-description: Run Wails applications as HTTP servers without a native GUI window
-sidebar:
-    order: 52
-    badge:
-        text: Experimental
-        variant: caution
+title: "Server Build"
+description: "Run Wails applications as HTTP servers without a native GUI window"
+slug: "guides/server-build"
+sourcePath: "guides/server-build.md"
 ---
 
-import { Aside } from '@astrojs/starlight/components';
-
-<Aside type="caution" title="Experimental Feature">
-Server mode is experimental and may change in future releases.
-</Aside>
-
 Wails v3 supports server mode, allowing you to run your application as a pure HTTP server without creating native windows or requiring GUI dependencies. This enables deploying the same Wails application to servers, containers, and web browsers.
-
-## Overview
 
 Server mode is useful for:
 
@@ -106,6 +95,13 @@ Server: application.ServerOptions{
     // Graceful shutdown timeout. Default: 30s
     ShutdownTimeout: 30 * time.Second,
 
+    // Additional origins allowed to open WebSocket connections and call
+    // /wails/runtime. Same-origin requests are always allowed.
+    WebSocketOriginPatterns: []string{"app.example.com"},
+
+    // Disable WebSocket and runtime origin checks. Unsafe; default: false.
+    WebSocketAllowAllOrigins: false,
+
     // TLS configuration (optional)
     TLS: &application.TLSOptions{
         CertFile: "/path/to/cert.pem",
@@ -126,6 +122,7 @@ curl http://localhost:8080/health
 ```
 
 This is useful for:
+
 - Kubernetes liveness/readiness probes
 - Load balancer health checks
 - Monitoring systems
@@ -197,12 +194,12 @@ The server handles `SIGINT` and `SIGTERM` signals gracefully:
 ## Differences from Desktop Mode
 
 | Feature | Desktop Mode | Server Mode |
-|---------|-------------|-------------|
+| --- | --- | --- |
 | Native windows | Created | Browser windows (`browser-N`) |
 | System tray | Available | Not available |
 | Native dialogs | Available | Not available |
 | Application menu | Available | Not available |
-| Screen info | Available | Returns error |
+| Screen info | Available | No native screen; `GetPrimary()` returns `nil` |
 | Service bindings | Works | Works |
 | Events | Works | Works (via WebSocket) |
 | Assets | Via webview | Via HTTP |
@@ -212,11 +209,18 @@ The server handles `SIGINT` and `SIGTERM` signals gracefully:
 
 In server mode, window-related APIs are safely handled:
 
-- `app.Window.NewWithOptions()` - Logs a warning, returns nil
+- `app.Window.NewWithOptions(options)` - Returns a non-nil Go window object; this does not create a native desktop window
 - `app.Hide()` / `app.Show()` - No-op
-- `app.Screen.GetPrimary()` - Returns error
+- `app.Screen.GetPrimary()` - Returns `*application.Screen`, which is `nil` when no primary screen is available; check before dereferencing
 
-This allows code that references windows to run without crashing, though window operations have no effect.
+Separate Go window objects from native window availability. Guard desktop-only behaviour when building a server; a non-nil Go window object does not establish that a native window or screen exists.
+
+### Supported Platforms
+
+Server mode is pure Go and compiles for every `GOOS` Wails supports, including `android` and `ios`, without CGO. On mobile targets it builds a headless server only:
+
+- The native mobile APIs, `application.Android` and `application.IOS`, are not available. Code that uses them must be excluded from server builds with a `!server` build constraint.
+- The default logger is the desktop one, which writes to stderr in development builds, rather than logcat or the WebView console.
 
 ## Building for Production
 
@@ -284,9 +288,10 @@ services:
       retries: 3
 ```
 
-:::note
+@note{type="info"}
 The healthcheck example uses `wget`. If you're using a distroless base image, you'll need to either include a healthcheck binary in your image or use an external health check mechanism (e.g., Docker's `curl` option or a sidecar container).
-:::
+
+@end
 
 ### Custom Dockerfile
 
@@ -317,7 +322,8 @@ When deploying server mode applications:
 1. **Bind to localhost by default** - Only use `0.0.0.0` when needed
 2. **Use TLS in production** - Configure `ServerOptions.TLS`
 3. **Place behind reverse proxy** - Use nginx/traefik for additional security
-4. **Validate all inputs** - Same security practices as any web application
+4. **Keep WebSockets and runtime calls same-origin** - Add only trusted origins with `WebSocketOriginPatterns`; avoid `WebSocketAllowAllOrigins`
+5. **Validate all inputs** - Same security practices as any web application
 
 ## Example
 
@@ -340,7 +346,7 @@ go run -tags server .
 For deployment scenarios where you need to override the server configuration without changing code, Wails recognises these environment variables:
 
 | Variable | Description | Default |
-|----------|-------------|---------|
+| --- | --- | --- |
 | `WAILS_SERVER_HOST` | Network interface to bind to | `localhost` |
 | `WAILS_SERVER_PORT` | Port to listen on | `8080` |
 
@@ -348,6 +354,20 @@ These take precedence over the `ServerOptions` in your code, which is why the Do
 
 ## See Also
 
-- [Custom Transport](/docs/guides/custom-transport) - For advanced IPC customization
-- [Services](/docs/concepts/services) - Service binding documentation
-- [Events](/docs/guides/events-reference) - Event system documentation
+- [Custom Transport](/guides/custom-transport/) - For advanced IPC customization
+- [Services](/features/bindings/services/) - Service binding documentation
+- [Events](/guides/events-reference/) - Event system documentation
+
+### Runtime request size
+
+Requests to `/wails/runtime` are limited to 64 MiB before JSON processing. An ordinary request above this limit receives HTTP 413, including requests without `Content-Length`. Chunked runtime uploads retain their separate 1 MiB per-chunk and 64 MiB assembled-payload limits. Use application middleware or a reverse proxy to impose a lower limit where appropriate.
+
+### Runtime request origin
+
+`/wails/runtime` accepts only `POST` requests; other methods receive HTTP 405. A browser request whose `Origin` is neither the request host nor a match for `WebSocketOriginPatterns` receives HTTP 403, as does one without `Origin` whose `Sec-Fetch-Site` is `cross-site` or `same-site`. Requests carrying neither header, such as those from `curl` or other non-browser clients, are accepted. If a reverse proxy rewrites the `Host` header, add the public origin to `WebSocketOriginPatterns`.
+
+`WebSocketOriginPatterns` exists for reverse-proxy deployments, where the public origin differs from the `Host` seen by the application. Frontends served from a different origin that call `/wails/runtime` directly are not supported: the endpoint emits no CORS headers and answers preflight `OPTIONS` requests with HTTP 405. Serve the frontend from the Wails server, or put both behind the same proxy origin.
+
+### Loopback Host check
+
+When the server binds a loopback address (the default `localhost`, any `127.0.0.0/8` address, or `::1`, whether set in `ServerOptions.Host` or `WAILS_SERVER_HOST`), every request must carry a `Host` header naming `localhost`, an IP literal, the bind host, or a host matching the host part of a `WebSocketOriginPatterns` entry; any other `Host` receives HTTP 403. This stops DNS rebinding, where a hostile web page points its own hostname at `127.0.0.1` so that its requests pass the same-origin checks above. The port is not compared, and spellings such as `localhost.` (trailing dot) or `127.1` are rejected. The check still applies when `WebSocketAllowAllOrigins` is set. If a local reverse proxy forwards its public `Host`, add that host to `WebSocketOriginPatterns`. Binds to other addresses, such as `0.0.0.0` in containers, are not affected.

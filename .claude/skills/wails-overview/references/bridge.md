@@ -1,11 +1,9 @@
 ---
-title: Go-Frontend Bridge
-description: Deep dive into how Wails enables direct communication between Go and JavaScript
-sidebar:
-  order: 3
+title: "Go-Frontend Bridge"
+description: "Deep dive into how Wails enables direct communication between Go and JavaScript"
+slug: "concepts/bridge"
+sourcePath: "concepts/bridge.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## Direct Go-JavaScript Communication
 
@@ -21,7 +19,7 @@ Frontend: "Frontend (JavaScript)" {
     shape: rectangle
     style.fill: "#8B5CF6"
   }
-  
+
   Bindings: "Auto-Generated Bindings" {
     shape: rectangle
     style.fill: "#A78BFA"
@@ -33,17 +31,17 @@ Bridge: "Wails Bridge" {
     shape: rectangle
     style.fill: "#10B981"
   }
-  
+
   Router: "Method Router" {
     shape: diamond
     style.fill: "#10B981"
   }
-  
+
   Decoder: "JSON Decoder" {
     shape: rectangle
     style.fill: "#10B981"
   }
-  
+
   TypeGen: "Type Generator" {
     shape: rectangle
     style.fill: "#10B981"
@@ -55,7 +53,7 @@ Backend: "Backend (Go)" {
     shape: rectangle
     style.fill: "#00ADD8"
   }
-  
+
   Registry: "Service Registry" {
     shape: rectangle
     style.fill: "#00ADD8"
@@ -103,6 +101,7 @@ app := application.New(application.Options{
 ```
 
 **What Wails does:**
+
 1. **Scans the struct** for exported methods
 2. **Extracts type information** (parameters, return types)
 3. **Builds a registry** mapping method names to functions
@@ -121,7 +120,7 @@ export function Add(a: number, b: number): Promise<number>
 **Type mapping:**
 
 | Go Type | TypeScript Type |
-|---------|-----------------|
+| --- | --- |
 | `string` | `string` |
 | `int`, `int32`, `int64` | `number` |
 | `float32`, `float64` | `number` |
@@ -129,7 +128,7 @@ export function Add(a: number, b: number): Promise<number>
 | `[]T` | `T[]` |
 | `map[string]T` | `Record<string, T>` |
 | `struct` | `interface` |
-| `time.Time` | `Date` |
+| `time.Time` | `string` by default; `Date` with `-time-type=Date` |
 | `error` | Exception (thrown) |
 
 ### 3. Frontend Call (Runtime)
@@ -148,6 +147,7 @@ console.log(sum)  // 8
 ```
 
 **What happens:**
+
 1. **Binding function called** - `Greet("World")`
 2. **Message created** - `{ service: "GreetService", method: "Greet", args: ["World"] }`
 3. **Sent to bridge** - Via WebView's JavaScript bridge
@@ -173,11 +173,11 @@ Validate: "Validate" {
   Check: "Service exists?" {
     shape: diamond
   }
-  
+
   CheckMethod: "Method exists?" {
     shape: diamond
   }
-  
+
   CheckTypes: "Types correct?" {
     shape: diamond
   }
@@ -229,6 +229,7 @@ func (g *GreetService) Greet(name string) string {
 ```
 
 **Execution context:**
+
 - Runs in a **goroutine** (non-blocking)
 - Has access to **all Go features** (file system, network, databases)
 - Can call **other Go code** freely
@@ -276,6 +277,7 @@ Frontend Call → Bridge → Go Execution → Bridge → Frontend Response
 ```
 
 **Compared to alternatives:**
+
 - **HTTP/REST:** 5-50ms (network stack, serialisation)
 - **IPC:** 1-10ms (process boundaries, marshalling)
 - **Wails Bridge:** &lt;1ms (in-memory, direct call)
@@ -289,6 +291,7 @@ Frontend Call → Bridge → Go Execution → Bridge → Frontend Response
 ### Concurrency
 
 **Calls are concurrent:**
+
 - Each call runs in its own goroutine
 - Multiple calls can execute simultaneously
 - No blocking between calls
@@ -420,11 +423,11 @@ func GetTimestamp() time.Time {
 
 ```typescript
 // TypeScript
-function GetTimestamp(): Promise<Date>
+function GetTimestamp(): Promise<string> // default -time-type=string
 
 // Usage
 const timestamp = await GetTimestamp()
-console.log(timestamp.toISOString())
+console.log(new Date(timestamp).toISOString())
 ```
 
 #### Errors
@@ -518,6 +521,7 @@ func (s *UserService) GetCurrentUser(ctx context.Context) (*User, error) {
 ```
 
 **Context provides:**
+
 - Window that made the call
 - Application instance
 - Request metadata
@@ -533,10 +537,10 @@ func ProcessLargeFile(path string) error {
         return err
     }
     defer file.Close()
-    
+
     scanner := bufio.NewScanner(file)
     lineNum := 0
-    
+
     for scanner.Scan() {
         lineNum++
         // Emit progress events
@@ -545,7 +549,7 @@ func ProcessLargeFile(path string) error {
             "text": scanner.Text(),
         })
     }
-    
+
     return scanner.Err()
 }
 ```
@@ -623,6 +627,7 @@ app := application.New(application.Options{
 ```
 
 **Output shows:**
+
 - Method calls
 - Parameters
 - Return values
@@ -684,6 +689,7 @@ The bridge is secure by default:
 4. **No reflection abuse** - Only exported methods accessible
 
 **Best practices:**
+
 - **Validate input** in Go (don't trust frontend)
 - **Use context** for authentication/authorisation
 - **Rate limit** expensive operations
@@ -691,15 +697,12 @@ The bridge is secure by default:
 
 ## Next Steps
 
-**Build System** - Learn how Wails builds and bundles your application  
-[Learn More →](/concepts/build-system)
+**Build System** - Learn how Wails builds and bundles your application [Learn More →](/concepts/build-system/)
 
-**Services** - Deep dive into the service system  
-[Learn More →](/features/bindings/services)
+**Services** - Deep dive into the service system [Learn More →](/features/bindings/services/)
 
-**Events** - Use events for pub/sub communication  
-[Learn More →](/features/events/system)
+**Events** - Use events for pub/sub communication [Learn More →](/features/events/system/)
 
 ---
 
-**Questions about the bridge?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [binding examples](https://github.com/wailsapp/wails/tree/master/v3/examples/binding).
+**Questions about the bridge?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [binding examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/binding).

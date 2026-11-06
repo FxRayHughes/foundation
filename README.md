@@ -1,9 +1,9 @@
 # Foundation
 
-[![Wails v3](https://img.shields.io/badge/Wails-v3.0.0--alpha-red)](https://v3.wails.io)
-[![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go)](https://go.dev)
+[![Wails v3](https://img.shields.io/badge/Wails-v3.1.0-red)](https://v3.wails.io)
+[![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](https://go.dev)
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react)](https://react.dev)
-[![MUI](https://img.shields.io/badge/MUI-9.0-007FFF?logo=mui)](https://mui.com)
+[![Mantine](https://img.shields.io/badge/Mantine-9.7-339AF0?logo=mantine)](https://mantine.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript)](https://www.typescriptlang.org)
 
 **Foundation** 是一个**生产可用的 Wails v3 桌面应用脚手架**。开箱包含：
@@ -16,6 +16,8 @@
 - 📐 严格的 MVVM 前端规范（View / ViewModel / Style / Service / lang 五层）
 
 **适用人群**：想跳过"造轮子两周"直接进入业务开发的团队 / 个人。
+
+> **从 v0.0.3（MUI）升级？** 见 [v1.0.0 迁移指南](./docs/MIGRATION-v1.md)（Wails v3.1.0 + Mantine 9，含 MUI → Mantine 逐项对照与破坏性变更速查表）。
 
 ---
 
@@ -54,13 +56,14 @@
 | 类别 | 内容 |
 |-----|------|
 | **窗口** | Windows/Linux 完全无边框（前端自绘标题栏 + 窗口控制按钮）；macOS 沉浸式标题栏 + 系统红绿灯 |
-| **布局** | 左侧 64px Sidebar（自动从路由表渲染）+ 自定义 TitleBar + 主内容区，方圆设计语言（按钮 12 / 容器 8） |
+| **布局** | 左侧 64px Sidebar（自动从路由表渲染）+ 自定义 TitleBar + 主内容区，方圆设计语言（按钮 4–6px / 容器 8px） |
 | **路由** | 唯一事实源 `routes.tsx` + `<RouterOutlet />` + `useRouter()`；支持 `keepAlive` 页面缓存 |
-| **主题** | `foundation-light` / `foundation-dark` / `foundation-obsidian` + 用户自定义调色板（17 个语义槽位） |
+| **UI 栈** | Mantine 9（`@mantine/core` / `@mantine/hooks`）+ CSS Modules + `@tabler/icons-react`；图表 `@mantine/charts`（recharts）+ 自实现高级图表（`components/x-pro/charts`）；数据表格 `components/x-pro/data-grid`（基于 `mantine-datatable`） |
+| **主题** | `foundation-light` / `foundation-dark` / `foundation-obsidian` + 用户自定义调色板（16 个语义槽位），编译为 CSS 变量 `--fd-*` + Mantine 主色 `foundation` |
 | **i18n** | `zh-CN` / `en-US`（默认 zh-CN）；`'auto'` 跟随浏览器；公用 + 页面级语言包深合并 |
 | **首屏优化** | `index.html` 内联静态骨架（消除白屏）+ React 骨架组件 + lazy import + Suspense |
 | **持久化** | SQLite + GORM AutoMigrate；用户可在「设置 → 数据存储」改数据库位置（原生「另存为」对话框） |
-| **数据可视化** | 设置页内置环形 + 条形图（@mui/x-charts）展示各表占用 + 逐表清空 |
+| **数据可视化** | 设置页内置环形 + 条形图（`@mantine/charts`）展示各表占用 + 逐表清空 |
 | **工具层** | `httpx` HTTP / `procx` 子进程（Windows JobObject）/ `cryptox` AES-GCM / `logx` slog+rotate / `filex` 原子写 |
 | **子进程** | 严格白名单子进程 service：前端可调，命令必须在 `commands.go` 注册并通过 `ArgPattern` 校验 |
 | **原生对话框** | `NativeDialogs` 服务封装 Wails v3 `Dialogs.*`，禁用浏览器 `alert/confirm/prompt` |
@@ -81,7 +84,7 @@
 
 | 依赖 | 版本 | 验证 / 安装 |
 |------|------|------------|
-| **Go** | ≥ 1.25 | `go version` |
+| **Go** | ≥ 1.26（Wails v3.1.0 要求） | `go version` |
 | **Node.js** | ≥ 20 | `node --version` |
 | **pnpm** | latest | `npm i -g pnpm` |
 | **task** (go-task) | latest | `go install github.com/go-task/task/v3/cmd/task@latest` |
@@ -209,15 +212,15 @@ foundation/
 │       ├── logx/                      # slog + 控制台 + 文件 rotate
 │       └── filex/                     # 原子写
 │
-├── frontend/                          # React 19 + MUI 9 + Vite 8
+├── frontend/                          # React 19 + Mantine 9 + Vite 8
 │   ├── index.html                     # 内联首屏骨架（消除白屏）
 │   ├── src/
 │   │   ├── main.tsx
 │   │   ├── App.tsx                    # Provider 链装配
 │   │   ├── routes.tsx                 # 路由表（唯一事实源）
-│   │   ├── components/                # AppLayout / TitleBar / Sidebar / Skeleton
+│   │   ├── components/                # AppLayout / TitleBar / Sidebar / Skeleton / x-pro（图表 + 数据表格）
 │   │   ├── pages/
-│   │   │   ├── HomePage/              # 一个页面 = View+VM+Style+lang+Skeleton
+│   │   │   ├── HomePage/              # 一个页面 = View+VM+Style(.module.css)+lang+Skeleton
 │   │   │   └── SettingsPage/
 │   │   │       ├── SettingsPage.tsx   # 框架：左列入口 + 右列分发
 │   │   │       ├── personalization/   # 子页：主题 + 偏好 + 自定义主题
@@ -225,7 +228,7 @@ foundation/
 │   │   │       └── database/          # 子页：数据存储路径 / 图表 / 清空
 │   │   ├── router/                    # RouteDefinition / RouterOutlet / useRouter
 │   │   ├── services/                  # services 包装 bindings（View/VM 不直接 import bindings）
-│   │   ├── styles/themes/             # 主题注册系统（含 customTheme）
+│   │   ├── styles/                    # global.css + themes/（Mantine 主题注册系统，含 customTheme）
 │   │   ├── i18n/                      # 注册式 i18n
 │   │   └── preferences/               # PreferencesProvider（异步对接 SQLite）
 │   ├── bindings/                      # wails3 自动生成（gitignore）
@@ -239,7 +242,8 @@ foundation/
 ├── .claude/                           # AI 协作工作区
 │   └── skills/
 │       ├── wails-*/                   # Wails v3 官方文档（13 个 skill）
-│       ├── foundation-theme/          # 主题系统使用指南
+│       ├── foundation-theme/          # 主题系统使用指南（Mantine + --fd-* CSS 变量）
+│       ├── foundation-mantine*/       # Mantine 组件 / 图标 / 图表 / 数据表格使用指南
 │       ├── foundation-i18n/           # i18n 使用指南
 │       ├── foundation-persistence/    # 持久化层使用指南
 │       └── foundation-utils/          # 工具层使用指南（httpx/procx/cryptox/logx/filex）
@@ -288,8 +292,9 @@ foundation/
 | **日志** | **禁止** `log.Printf` / `fmt.Println`；用 `logx.For("component").Info(...)` |
 | **配置文件** | **禁止** `os.WriteFile` 写配置；用 `filex.WriteAtomic` |
 | **原生对话框** | 文件 / 文件夹 / 确认 / 错误 提示必须走 `NativeDialogs`，**禁止** `alert/confirm/prompt` |
-| **Icon** | UI 图标必须用 `@mui/icons-material` 的 React 组件（推荐 `*Rounded` 系列）；**禁止** emoji / Unicode / 第三方 icon 包 |
-| **样式取色** | 永远从 `theme.palette.foundation.*` 取；圆角语言：按钮 12 / 容器 8 |
+| **UI 组件** | 只用 Mantine（`@mantine/*`）+ CSS Modules；**禁止**引入 `@mui/*` / `@emotion/*` / `sx` 写法 |
+| **Icon** | UI 图标必须用 `@tabler/icons-react` 的 React 组件（`<IconXxx size={20} stroke={1.75} />`）；**禁止** emoji / Unicode / 其它 icon 包 |
+| **样式取色** | 样式写 `<Name>.module.css`，颜色永远用 `var(--fd-*)`（JS 侧用 `FOUNDATION_CSS_VARS` / `useFoundationPalette()`）；圆角语言：按钮 4–6px / 容器 8px |
 | **平台分支** | 走 `internal/app/window_<os>.go` 的 build tag 文件，**禁止** `runtime.GOOS` 判断 |
 
 ---
@@ -307,7 +312,7 @@ foundation/
 | 5 | `internal/utils/logx/logx.go` 的 `AppDirName` | 同上 |
 | 6 | `internal/app/app.go` 的 `Name`、`Description` | 你的产品信息 |
 | 7 | `internal/app/window_*.go` 的 `Title` | 同上 |
-| 8 | `frontend/services/greet/GreetService.ts` 的 `@bindings/foundation/...` | `@bindings/<your-app>/...` |
+| 8 | `frontend/src/services/*/*.ts` 中所有 `@bindings/foundation/...`（greet / preferences / appsettings / storage / subprocess / childwindow / systray / export） | `@bindings/<your-app>/...` |
 | 9 | `frontend/package.json` 的 `name` 字段 | `<your-app>-frontend` |
 | 10 | `frontend/index.html` 的 `<title>` | 你的产品名 |
 | 11 | `Taskfile.yml` 的 `APP_NAME: "foundation"` | `<your-app>` |
@@ -333,11 +338,11 @@ wails3 task common:update:build-assets   # 用新 productName 重生成图标 / 
 详见 `frontend/CLAUDE.md` 的「路由规范」。
 
 ```ts
-// 1. 写页面：frontend/src/pages/AccountPage/{AccountPage.tsx, useAccountPage.ts, AccountPage.styles.ts, AccountPage.skeleton.tsx, index.ts}
+// 1. 写页面：frontend/src/pages/AccountPage/{AccountPage.tsx, useAccountPage.ts, AccountPage.module.css, AccountPage.skeleton.tsx, index.ts}
 //    若有人类可见文案：再加 lang/{zh-CN.ts, en-US.ts, index.ts} + register<Name>Locales
 
 // 2. 在 src/routes.tsx 追加一项
-import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
+import { IconUser } from '@tabler/icons-react';
 import { AccountPage } from '@/pages/AccountPage';
 import { AccountPageSkeleton } from '@/pages/AccountPage/AccountPage.skeleton';
 
@@ -347,7 +352,7 @@ export const routes: RouteDefinition[] = [
     id: 'account',
     labelKey: 'route.account',
     label: 'Account',
-    icon: PersonRoundedIcon,
+    icon: IconUser,
     element: <AccountPage />,
     fallback: <AccountPageSkeleton />,
     slot: 'primary',
@@ -444,13 +449,17 @@ err := procx.Run(ctx, procx.Spec{
 | [frontend/CLAUDE.md](./frontend/CLAUDE.md) | 前端模块详细规范（MVVM / 路由 / 持久化 / 原生对话框 / Icon / 子目录隔离） |
 | [frontend/DEVELOPMENT.md](./frontend/DEVELOPMENT.md) | 前端 MVVM 落地细则 |
 | [build/CLAUDE.md](./build/CLAUDE.md) | 多平台构建配置说明 |
+| [docs/MIGRATION-v1.md](./docs/MIGRATION-v1.md) | v0.0.3 → v1.0.0 迁移指南（MUI → Mantine、Wails v3.1.0） |
 | `.claude/skills/wails-*/` | Wails v3 官方文档（按主题拆分的 13 个 skill） |
 | `.claude/skills/foundation-theme/` | 主题系统使用指南 |
+| `.claude/skills/foundation-mantine*/` | Mantine 组件 / 图标 / 图表 / 数据表格使用指南 |
 | `.claude/skills/foundation-i18n/` | i18n 使用指南 |
 | `.claude/skills/foundation-persistence/` | 持久化层使用指南 |
 | `.claude/skills/foundation-utils/` | 工具层使用指南（httpx/procx/cryptox/logx/filex） |
 | [Wails v3 官网](https://v3.wails.io) | 上游文档 |
-| [MUI 官网](https://mui.com) | UI 组件库 |
+| [Mantine 官网](https://mantine.dev) | UI 组件库（`@mantine/core` / `@mantine/charts`） |
+| [mantine-datatable](https://icflorescu.github.io/mantine-datatable/) | 数据表格 |
+| [Tabler Icons](https://tabler.io/icons) | 图标库 |
 
 ---
 

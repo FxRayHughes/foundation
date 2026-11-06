@@ -1,11 +1,9 @@
 ---
-title: Browser Integration
-description: Open URLs and files in the user's default web browser
-sidebar:
-  order: 1
+title: "Browser Integration"
+description: "Open URLs and files in the user's default web browser"
+slug: "features/browser/integration"
+sourcePath: "features/browser/integration.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 Wails provides simple browser integration through the BrowserManager API, allowing your application to open URLs and files in the user's default web browser. This is useful for opening external links, documentation, or files that should be handled by the browser.
 
@@ -268,6 +266,8 @@ func setupDevelopmentMenu(app *application.App) {
 }
 ```
 
+**Private API on macOS:** `OpenDevTools()` requires `private_mac_apis`; otherwise the call is a no-op. Production builds also require `devtools`. See the [Web Inspector build matrix](/guides/build/private-macos-apis/#web-inspector).
+
 ## Error Handling
 
 ### Graceful Error Handling
@@ -316,75 +316,71 @@ func openURLWithFeedback(app *application.App, url string) {
 
 ## Platform Considerations
 
-<Tabs>
-  <TabItem label="macOS" icon="fa-brands:apple">
-    
-    On macOS:
-    
-    - Uses the `open` command to launch the default browser
-    - Respects user's default browser setting in System Preferences
-    - May prompt for permission if the application is sandboxed
-    - Handles `file://` URLs correctly for local files
-    
-  </TabItem>
-  
-  <TabItem label="Windows" icon="fa-brands:windows">
-    
-    On Windows:
-    
-    - Uses Windows Shell API to open URLs
-    - Respects default browser setting in Windows Settings
-    - Handles Windows path formats correctly
-    - May show security warnings for untrusted URLs
-    
-  </TabItem>
-  
-  <TabItem label="Linux" icon="fa-brands:linux">
-    
-    On Linux:
-    
-    - Attempts to use `xdg-open` first, falls back to other methods
-    - Behavior varies by desktop environment
-    - Respects `BROWSER` environment variable if set
-    - May require additional packages in minimal installations
-    
-  </TabItem>
-</Tabs>
+@tabs
+[macOS]
+On macOS:
+
+- Uses the `open` command to launch the default browser
+- Respects user's default browser setting in System Preferences
+- May prompt for permission if the application is sandboxed
+- Handles `file://` URLs correctly for local files
+
+[Windows]
+On Windows:
+
+- Uses Windows Shell API to open URLs
+- Respects default browser setting in Windows Settings
+- Handles Windows path formats correctly
+- May show security warnings for untrusted URLs
+
+[Linux]
+On Linux:
+
+- Attempts to use `xdg-open` first, falls back to other methods
+- Behavior varies by desktop environment
+- Respects `BROWSER` environment variable if set
+- May require additional packages in minimal installations
+
+@end
 
 ## Best Practices
 
 1. **Always Handle Errors**: Browser operations can fail for various reasons:
-   ```go
-   if err := app.Browser.OpenURL(url); err != nil {
-       app.Logger.Error("Failed to open browser", "error", err)
-       // Provide fallback or user notification
-   }
-   ```
+  ```go
+  if err := app.Browser.OpenURL(url); err != nil {
+      app.Logger.Error("Failed to open browser", "error", err)
+      // Provide fallback or user notification
+  }
+  ```
+
 
 2. **Validate URLs**: Ensure URLs are well-formed before opening:
-   ```go
-   func isValidHTTPURL(str string) bool {
-       u, err := url.Parse(str)
-       return err == nil && (u.Scheme == "http" || u.Scheme == "https")
-   }
-   ```
+  ```go
+  func isValidHTTPURL(str string) bool {
+      u, err := url.Parse(str)
+      return err == nil && (u.Scheme == "http" || u.Scheme == "https")
+  }
+  ```
+
 
 3. **User Confirmation**: For external links, consider asking user permission:
-   ```go
-   // Show confirmation dialog before opening external links
-   confirmAndOpen(app, "https://external-site.com")
-   ```
+  ```go
+  // Show confirmation dialog before opening external links
+  confirmAndOpen(app, "https://external-site.com")
+  ```
+
 
 4. **Secure File Paths**: When opening files, ensure paths are safe:
-   ```go
-   func openSafeFile(app *application.App, filename string) error {
-       // Ensure file exists and is readable
-       if _, err := os.Stat(filename); err != nil {
-           return err
-       }
-       return app.Browser.OpenFile(filename)
-   }
-   ```
+  ```go
+  func openSafeFile(app *application.App, filename string) error {
+      // Ensure file exists and is readable
+      if _, err := os.Stat(filename); err != nil {
+          return err
+      }
+      return app.Browser.OpenFile(filename)
+  }
+  ```
+
 
 ## Complete Example
 
@@ -502,10 +498,12 @@ func showError(app *application.App, message string, err error) {
 }
 ```
 
-:::tip[Pro Tip]
+@note{type="tip" title="Pro Tip"}
 Consider providing fallback mechanisms for when browser operations fail, such as copying URLs to clipboard or showing them in a dialog for manual opening.
-:::
 
-:::danger[Warning]
+@end
+
+@note{type="danger" title="Warning"}
 Always validate URLs and file paths before opening them to prevent security issues. Be cautious about opening user-provided URLs without validation.
-:::
+
+@end

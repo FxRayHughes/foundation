@@ -1,8 +1,8 @@
-import { Box, useTheme } from '@mui/material';
 import { TitleBar } from '@/components/TitleBar';
 import { Sidebar } from '@/components/Sidebar';
 import { RouterOutlet } from '@/router';
-import { appLayoutStyles } from './AppLayout.styles';
+import { useAppLayout } from './useAppLayout';
+import classes from './AppLayout.module.css';
 
 export interface AppLayoutProps {
   // 可选：覆盖标题栏标题；不传则 TitleBar 使用 i18n 默认值（app.title）
@@ -15,18 +15,16 @@ export interface AppLayoutProps {
 //  └─────────┴──────────────────────────────┘
 // AppLayout 不接收 children —— 主内容由 RouterOutlet 从路由表渲染。
 export const AppLayout = ({ title }: AppLayoutProps) => {
-  const theme = useTheme();
-  const styles = appLayoutStyles(theme);
-
+  useAppLayout();
   return (
     <>
       <TitleBar {...(title !== undefined ? { title } : {})} />
-      <Box sx={styles.root}>
+      <div className={classes.root}>
         <Sidebar />
-        <Box component="main" sx={styles.main}>
+        <main className={classes.main}>
           <RouterOutlet />
-        </Box>
-      </Box>
+        </main>
+      </div>
     </>
   );
 };

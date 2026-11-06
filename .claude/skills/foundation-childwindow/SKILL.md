@@ -12,7 +12,7 @@ Foundation 内置一套**类型化子窗口**方案，用于需要独立窗口�
 - **前端子窗口 UI**：`frontend/src/childwindows/<Type>/` — 每种类型独立 MVVM 文件夹
 - **入口**：`frontend/child.html` + `frontend/src/child.tsx`（URL query 路由到对应组件）
 
-> 子窗口是**真正的操作系统窗口**，可拖离主窗口范围、独立最小化。不是 MUI Dialog。
+> 子窗口是**真正的操作系统窗口**，可拖离主窗口范围、独立最小化。不是 Mantine `<Modal>`。
 
 ---
 
@@ -20,7 +20,7 @@ Foundation 内置一套**类型化子窗口**方案，用于需要独立窗口�
 
 | # | 规则 | 原因 |
 |---|------|------|
-| 1 | **子窗口 UI 必须走 MUI + `theme.palette.foundation.*`** | 视觉一致性；禁止硬编码颜色 |
+| 1 | **子窗口 UI 必须走 Mantine（`@mantine/core`）+ CSS Modules，颜色只用 `var(--fd-*)`** | 视觉一致性；禁止硬编码颜色 |
 | 2 | **子窗口文案必须走 i18n**（`useT()` + `t('childwindow.<type>.*')`） | 禁止硬编码中/英文 |
 | 3 | **子窗口 MVVM 规范与 pages 完全一致** | View 不写业务、ViewModel 不返回 JSX |
 | 4 | **窗口间通信只走事件总线**（`services/childwindow/`） | 禁止 localStorage / postMessage / 全局变量 |
@@ -37,7 +37,7 @@ Foundation 内置一套**类型化子窗口**方案，用于需要独立窗口�
 - 需要独立可拖拽的自定义面板（详情、编辑器、预览）→ `blank` 类型
 - 需要窗口间双向通信（主窗口 ↔ 子窗口 / 子窗口 ↔ 子窗口）
 
-**不适合子窗口的场景**：简单提示（用 MUI Snackbar）、内联表单验证、下拉菜单。
+**不适合子窗口的场景**：简单提示（用 Mantine `<Notification>` / `<Alert>`）、内联表单验证、下拉菜单。
 
 ---
 
@@ -69,7 +69,8 @@ Foundation 内置一套**类型化子窗口**方案，用于需要独立窗口�
 
 子窗口特征：
 - 无边框（`Frameless: true`）+ 前端自绘标题栏（`ChildTitleBar`，32px）
-- MUI 主题（`buildMuiTheme(lightPreset)`）
+- 主题 / 语言：`child.tsx` 与主窗口一样挂 `<I18nProvider><FoundationThemeProvider>…`（先 `registerFoundationThemes()` + `registerFoundationLocales()`），启动时从 SQLite（`AppSettingsService`）读主题与语言，外观与主窗口一致（含自定义主题、跟随系统）；全局样式经 `import '@/styles'` 引入
+- 跨窗口同步：两个 Provider 都订阅后端广播 `appsettings:changed`，主窗口切主题 / 语言后已打开的子窗口实时刷新（主题 200ms 防抖），无需自己发 broadcast
 - AlwaysOnTop + DisableResize + 居中显示
 - ID 格式：`child-<type>-<number>`（如 `child-confirm-1`）
 - 单 HTML 入口 `child.html`，通过 URL query params 路由到不同组件
@@ -172,8 +173,8 @@ sendToWindow('child-blank-3', {
 // 广播给所有窗口
 broadcast({
   from: getWindowId(),
-  type: 'theme-changed',
-  payload: { theme: 'dark' },
+  type: 'data-refreshed',
+  payload: { table: 'orders' },
 });
 
 // 监听定向消息
@@ -234,7 +235,7 @@ interface WindowMessage {
 <NewType>/
 ├── <NewType>.tsx           — View（纯展示 + 事件绑定）
 ├── use<NewType>.ts         — ViewModel（业务逻辑 + 状态）
-├── <NewType>.styles.ts     — Style（sx / styled）
+├── <NewType>.module.css   — Style（CSS Modules，颜色只用 var(--fd-*)）
 ├── lang/
 │   ├── zh-CN.ts            — 中文文案（namespace: childwindow.<newtype>.*）
 │   ├── en-US.ts            — 英文文案
@@ -293,7 +294,7 @@ case "newtype":
 
   frontend/src/components/ChildTitleBar/  — 子窗口专用标题栏（32px, 可拖拽, 关闭按钮）
   │   ├── ChildTitleBar.tsx
-  │   ├── ChildTitleBar.styles.ts
+  │   ├── ChildTitleBar.module.css
   │   └── index.ts
 
   frontend/src/services/childwindow/      — 事件通信总线
@@ -306,19 +307,19 @@ case "newtype":
       ├── ConfirmWindow/                  — 确认-取消
       │   ├── ConfirmWindow.tsx
       │   ├── useConfirmWindow.ts
-      │   ├── ConfirmWindow.styles.ts
+      │   ├── ConfirmWindow.module.css
       │   ├── lang/
       │   └── index.ts
       ├── MessageWindow/                  — 消息提示
       │   ├── MessageWindow.tsx
       │   ├── useMessageWindow.ts
-      │   ├── MessageWindow.styles.ts
+      │   ├── MessageWindow.module.css
       │   ├── lang/
       │   └── index.ts
       └── BlankWindow/                    — 空白模板
           ├── BlankWindow.tsx
           ├── useBlankWindow.ts
-          ├── BlankWindow.styles.ts
+          ├── BlankWindow.module.css
           ├── lang/
           └── index.ts
 ```
@@ -329,7 +330,7 @@ case "newtype":
 
 | ❌ 错误做法 | ✅ 正确做法 | 原因 |
 |-------------|-------------|------|
-| 在主窗口用 MUI `<Dialog>` 模拟子窗口 | 用 `ChildWindowService.Open` 创建真窗口 | Dialog 无法拖出主窗口范围，不是独立 OS 窗口 |
+| 在主窗口用 Mantine `<Modal>` 模拟子窗口 | 用 `ChildWindowService.Open` 创建真窗口 | Modal 无法拖出主窗口范围，不是独立 OS 窗口 |
 | 子窗口 `import { useAppContext } from '@/contexts'` | 通过事件总线 `onMessage` 接收数据 | 跨窗口不共享 React 树，Context 取不到值 |
 | 用 `window.opener` / `window.postMessage` 通信 | 用 `sendToWindow` / `broadcast` | Wails webview 不支持 opener/postMessage |
 | 子窗口硬编码 `<Button>确定</Button>` | `<Button>{t('childwindow.confirm.ok')}</Button>` | 违反 i18n 铁律 |
@@ -392,11 +393,11 @@ type ChildWindowOptions struct {
 
 2. **blank 类型扩展**：blank 窗口的 `message` 字段可传 JSON 字符串，子窗口 ViewModel 解析后渲染自定义内容。
 
-3. **主题同步**：子窗口独立加载 MUI 主题。如果主窗口切换了主题，通过 `broadcast` 通知所有子窗口刷新。
+3. **主题 / 语言同步**：已内置，不要再用 `broadcast` 下发主题。`child.tsx` 挂的 `FoundationThemeProvider` / `I18nProvider` 订阅 `appsettings:changed`（后端 `appsettings` setter 写库成功后对所有窗口 Emit，payload 为字段名 `themeChoice` / `customTheme` / `localeChoice`），各自重新 `AppSettingsService.get()`。也**不要**在子窗口里直接挂 `<MantineProvider>` 固定某个预设。
 
 4. **生命周期感知**：在 ViewModel 中用 `onChildClosed` 清理关联资源，避免对已关闭窗口发消息。
 
-5. **ChildTitleBar 的 onClose**：`ChildTitleBar` 接受可选 `onClose` 回调。传入时关闭按钮执行该回调（如 confirm 窗口绑定到"取消"逻辑）；不传时默认调用 `Window.Close()`。
+5. **ChildTitleBar 的 onClose**：`ChildTitleBar` 接受可选 `onClose` 回调。传入时关闭按钮执行该回调（如 confirm 窗口绑定到"取消"逻辑）；不传时默认调用 `Window.Close()`。关闭按钮（Tabler `IconX`）带 `aria-label={t('titleBar.controls.close')}`，复用公用语言包的标题栏文案。
 
 ---
 
@@ -410,7 +411,7 @@ type ChildWindowOptions struct {
 frontend/src/childwindows/ProgressWindow/
 ├── ProgressWindow.tsx
 ├── useProgressWindow.ts
-├── ProgressWindow.styles.ts
+├── ProgressWindow.module.css
 ├── lang/
 │   ├── zh-CN.ts
 │   ├── en-US.ts
@@ -448,46 +449,60 @@ export const useProgressWindow = () => {
 ### Step 3：编写 View（`ProgressWindow.tsx`）
 
 ```tsx
-import { Box, LinearProgress, Typography, useTheme } from '@mui/material';
+import { Progress, Text } from '@mantine/core';
 import { useT } from '@/i18n';
 import { ChildTitleBar } from '@/components/ChildTitleBar';
 import { useProgressWindow } from './useProgressWindow';
-import { progressWindowStyles } from './ProgressWindow.styles';
+import classes from './ProgressWindow.module.css';
 
 export const ProgressWindow = () => {
-  const theme = useTheme();
-  const styles = progressWindowStyles(theme);
   const t = useT();
   const { title, progress, status } = useProgressWindow();
 
   return (
-    <Box sx={styles.root}>
+    <div className={classes.root}>
       <ChildTitleBar title={title || t('childwindow.progress.defaultTitle')} />
-      <Box sx={styles.body}>
-        <LinearProgress variant="determinate" value={progress} sx={styles.bar} />
-        <Typography sx={styles.status}>{status}</Typography>
-        <Typography sx={styles.percent}>{progress}%</Typography>
-      </Box>
-    </Box>
+      <div className={classes.body}>
+        {/* 不传 color：默认取 primaryColor 'foundation'（= accent） */}
+        <Progress value={progress} radius="sm" />
+        <Text className={classes.status}>{status}</Text>
+        <Text className={classes.percent}>{progress}%</Text>
+      </div>
+    </div>
   );
 };
 ```
 
-### Step 4：编写 Style（`ProgressWindow.styles.ts`）
+### Step 4：编写 Style（`ProgressWindow.module.css`）
 
-```ts
-import type { SxProps, Theme } from '@mui/material';
+```css
+.root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 
-export const progressWindowStyles = (theme: Theme): Record<string, SxProps<Theme>> => {
-  const fp = theme.palette.foundation;
-  return {
-    root: { height: '100%', display: 'flex', flexDirection: 'column' },
-    body: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', px: 3, gap: 2 },
-    bar: { borderRadius: 1 },
-    status: { fontSize: 13, color: fp.text.secondary, textAlign: 'center' },
-    percent: { fontSize: 20, fontWeight: 600, color: fp.text.primary, textAlign: 'center' },
-  };
-};
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-inline: 24px;
+  gap: 16px;
+}
+
+.status {
+  font-size: 13px;
+  color: var(--fd-text-secondary);
+  text-align: center;
+}
+
+.percent {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--fd-text-primary);
+  text-align: center;
+}
 ```
 
 ### Step 5：编写 lang 文件

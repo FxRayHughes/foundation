@@ -1,11 +1,9 @@
 ---
-title: Event System
-description: Communicate between components with the event system
-sidebar:
-  order: 1
+title: "Event System"
+description: "Communicate between components with the event system"
+slug: "features/events/system"
+sourcePath: "features/events/system.md"
 ---
-
-import { Tabs, TabItem, Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Event System
 
@@ -169,6 +167,13 @@ app.Event.On("order-created", sendEmail)
 app.Event.On("order-created", updateInventory)
 ```
 
+**Delivery order:** each handler registered with `On`, `Once` or `OnMultiple` handles one event
+at a time, so it never runs concurrently with itself, and receives sequential `Emit` calls in
+order: if one `Emit` returns before the next is made, every handler sees them in that order.
+Concurrent `Emit` calls from different goroutines have no defined order between them. Different handlers run independently: a slow handler does not delay the others, and
+there is no ordering between handlers. `Emit` never waits for handlers. After a handler is
+removed, events still queued for it are dropped.
+
 ### In JavaScript
 
 **Basic listener:**
@@ -246,84 +251,82 @@ app.Event.OnApplicationEvent(events.Common.ApplicationOpenedWithFile, func(e *ap
 
 **Platform-specific events:**
 
-<Tabs syncKey="platform">
-  <TabItem label="macOS" icon="apple">
-    ```go
-    // Application became active
-    app.Event.OnApplicationEvent(events.Mac.ApplicationDidBecomeActive, func(e *application.ApplicationEvent) {
-        app.Logger.Info("App became active")
-    })
-    
-    // Application will terminate
-    app.Event.OnApplicationEvent(events.Mac.ApplicationWillTerminate, func(e *application.ApplicationEvent) {
-        cleanup()
-    })
+@tabs{sync-key="platform"}
+[macOS]
+```go
+// Application became active
+app.Event.OnApplicationEvent(events.Mac.ApplicationDidBecomeActive, func(e *application.ApplicationEvent) {
+    app.Logger.Info("App became active")
+})
 
-    // System about to sleep / resumed
-    app.Event.OnApplicationEvent(events.Mac.ApplicationWillSleep, func(e *application.ApplicationEvent) {
-        flushPendingWrites()
-    })
-    app.Event.OnApplicationEvent(events.Mac.ApplicationDidWake, func(e *application.ApplicationEvent) {
-        refreshState()
-    })
+// Application will terminate
+app.Event.OnApplicationEvent(events.Mac.ApplicationWillTerminate, func(e *application.ApplicationEvent) {
+    cleanup()
+})
 
-    // Displays sleeping/waking — distinct from system sleep (e.g. lid lowered)
-    app.Event.OnApplicationEvent(events.Mac.ApplicationScreensDidSleep, func(e *application.ApplicationEvent) {
-        pauseRendering()
-    })
-    app.Event.OnApplicationEvent(events.Mac.ApplicationScreensDidWake, func(e *application.ApplicationEvent) {
-        resumeRendering()
-    })
-    ```
-  </TabItem>
+// System about to sleep / resumed
+app.Event.OnApplicationEvent(events.Mac.ApplicationWillSleep, func(e *application.ApplicationEvent) {
+    flushPendingWrites()
+})
+app.Event.OnApplicationEvent(events.Mac.ApplicationDidWake, func(e *application.ApplicationEvent) {
+    refreshState()
+})
 
-  <TabItem label="Windows" icon="seti:windows">
-    ```go
-    // Power status changed
-    app.Event.OnApplicationEvent(events.Windows.APMPowerStatusChange, func(e *application.ApplicationEvent) {
-        app.Logger.Info("Power status changed")
-    })
-    
-    // System suspending
-    app.Event.OnApplicationEvent(events.Windows.APMSuspend, func(e *application.ApplicationEvent) {
-        saveState()
-    })
+// Displays sleeping/waking — distinct from system sleep (e.g. lid lowered)
+app.Event.OnApplicationEvent(events.Mac.ApplicationScreensDidSleep, func(e *application.ApplicationEvent) {
+    pauseRendering()
+})
+app.Event.OnApplicationEvent(events.Mac.ApplicationScreensDidWake, func(e *application.ApplicationEvent) {
+    resumeRendering()
+})
+```
 
-    // System resumed. APMResumeAutomatic always fires on resume;
-    // APMResumeSuspend fires after it when the wake was triggered by
-    // user input. Prefer Common.SystemDidWake if you don't need to
-    // distinguish.
-    app.Event.OnApplicationEvent(events.Windows.APMResumeAutomatic, func(e *application.ApplicationEvent) {
-        refreshState()
-    })
-    ```
-  </TabItem>
+[Windows]
+```go
+// Power status changed
+app.Event.OnApplicationEvent(events.Windows.APMPowerStatusChange, func(e *application.ApplicationEvent) {
+    app.Logger.Info("Power status changed")
+})
 
-  <TabItem label="Linux" icon="linux">
-    ```go
-    // Application startup
-    app.Event.OnApplicationEvent(events.Linux.ApplicationStartup, func(e *application.ApplicationEvent) {
-        app.Logger.Info("App starting")
-    })
-    
-    // Theme changed
-    app.Event.OnApplicationEvent(events.Linux.SystemThemeChanged, func(e *application.ApplicationEvent) {
-        updateTheme()
-    })
+// System suspending
+app.Event.OnApplicationEvent(events.Windows.APMSuspend, func(e *application.ApplicationEvent) {
+    saveState()
+})
 
-    // System sleep/wake — sourced from systemd-logind's PrepareForSleep
-    // signal on the system bus. Requires logind/elogind exposing
-    // org.freedesktop.login1, so it may be unavailable on distros/setups
-    // without it (Alpine, Void, some Devuan setups).
-    app.Event.OnApplicationEvent(events.Linux.SystemWillSleep, func(e *application.ApplicationEvent) {
-        flushPendingWrites()
-    })
-    app.Event.OnApplicationEvent(events.Linux.SystemDidWake, func(e *application.ApplicationEvent) {
-        refreshState()
-    })
-    ```
-  </TabItem>
-</Tabs>
+// System resumed. APMResumeAutomatic always fires on resume;
+// APMResumeSuspend fires after it when the wake was triggered by
+// user input. Prefer Common.SystemDidWake if you don't need to
+// distinguish.
+app.Event.OnApplicationEvent(events.Windows.APMResumeAutomatic, func(e *application.ApplicationEvent) {
+    refreshState()
+})
+```
+
+[Linux]
+```go
+// Application startup
+app.Event.OnApplicationEvent(events.Linux.ApplicationStartup, func(e *application.ApplicationEvent) {
+    app.Logger.Info("App starting")
+})
+
+// Theme changed
+app.Event.OnApplicationEvent(events.Linux.SystemThemeChanged, func(e *application.ApplicationEvent) {
+    updateTheme()
+})
+
+// System sleep/wake — sourced from systemd-logind's PrepareForSleep
+// signal on the system bus. Requires logind/elogind exposing
+// org.freedesktop.login1, so it may be unavailable on distros/setups
+// without it (Alpine, Void, some Devuan setups).
+app.Event.OnApplicationEvent(events.Linux.SystemWillSleep, func(e *application.ApplicationEvent) {
+    flushPendingWrites()
+})
+app.Event.OnApplicationEvent(events.Linux.SystemDidWake, func(e *application.ApplicationEvent) {
+    refreshState()
+})
+```
+
+@end
 
 ### Window Events
 
@@ -377,7 +380,7 @@ window.OnWindowEvent(events.Common.WindowClosing, func(e *application.WindowEven
 **Key differences:**
 
 | Feature | Hooks | Standard Listeners |
-|---------|-------|-------------------|
+| --- | --- | --- |
 | Execution order | First, in registration order | After hooks, no guaranteed order |
 | Blocking | Synchronous, blocks next hook | Asynchronous, non-blocking |
 | Can cancel | Yes | No (already propagated) |
@@ -608,32 +611,32 @@ document.getElementById('button').addEventListener('click', () => {
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Custom Events" icon="star">
-    Create your own event types.
-    
-    [Learn More →](/features/events/custom)
-  </Card>
+@cards{cols="2"}
+★ Events Guide
+Learn about event patterns and type-safe event generation.
 
-  <Card title="Event Patterns" icon="puzzle">
-    Common event patterns and best practices.
-    
-    [Learn More →](/features/events/patterns)
-  </Card>
+[Learn More →](/guides/events-reference/)
 
-  <Card title="Bindings" icon="rocket">
-    Use bindings for request/response.
-    
-    [Learn More →](/features/bindings/methods)
-  </Card>
+---
+◆ Event API
+Explore the full application and window event API.
 
-  <Card title="Window Events" icon="laptop">
-    Handle window lifecycle events.
-    
-    [Learn More →](/features/windows/events)
-  </Card>
-</CardGrid>
+[Learn More →](/reference/events/)
+
+---
+🚀 Bindings
+Use bindings for request/response.
+
+[Learn More →](/features/bindings/methods/)
+
+---
+▣ Window Events
+Handle window lifecycle events.
+
+[Learn More →](/features/windows/events/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [event examples](https://github.com/wailsapp/wails/tree/master/v3/examples/events).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [event examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/events).

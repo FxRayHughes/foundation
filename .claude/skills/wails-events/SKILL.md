@@ -1,6 +1,6 @@
 ---
 name: wails-events
-description: Wails v3 事件系统：自定义事件、应用事件、窗口事件、events.Common 常量、ApplicationEvent / WindowEvent 类型、JS Events.On / Events.Emit。当用户问到「Emit / On / Off / OnApplicationEvent / OnWindowEvent / events.Common.WindowFocus / WindowClosing / ThemeChanged / 事件命名空间 common: windows: mac: linux:」时使用。
+description: Wails v3 事件系统：自定义事件、应用事件、窗口事件、events.Common 常量、ApplicationEvent / WindowEvent 类型、JS Events.On / Events.Emit。当用户问到「Emit / On / Off / OnMultiple / OnApplicationEvent / RegisterHook / RegisterApplicationEventHook / OnWindowEvent / RegisterEvent[T] / bindings/events 事件名常量 / events.Common.WindowFocus / WindowClosing / ThemeChanged / BatteryChanged / 事件命名空间 common: windows: mac: linux:」时使用。
 ---
 
 # Wails v3 - 事件系统
@@ -47,11 +47,16 @@ unsub := app.Event.On("user-logged-in", func(e *application.CustomEvent) {
 })
 unsub()  // 取消订阅
 
-// 单次
-unsub2 := app.Event.Once("event-name", func(e *application.CustomEvent) { ... })
+// 限次（Go 侧没有 Once，用 OnMultiple(name, cb, n)）
+app.Event.OnMultiple("event-name", func(e *application.CustomEvent) { ... }, 1)
 
-// 移除所有监听
+// 移除该事件所有监听 / 全部重置
 app.Event.Off("user-logged-in")
+app.Event.Reset()
+
+// 同步钩子（可 e.Cancel()）
+app.Event.RegisterApplicationEventHook(events.Common.ApplicationStarted, func(e *application.ApplicationEvent) { ... })
+window.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) { e.Cancel() })
 
 // === 应用事件（lifecycle / system） ===
 app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(e *application.ApplicationEvent) {
@@ -76,23 +81,47 @@ window.OnWindowEvent(events.Common.WindowClosing, func(e *application.WindowEven
 
 ### 常用 events.Common 常量
 
+（按 v3.1.0 `pkg/events/events.go` 的 `events.Common` 核对）
+
 | 应用级 | 窗口级 |
 |--------|--------|
-| `ApplicationStarted` | `WindowFocus` |
-| `ThemeChanged` | `WindowLostFocus` |
-| `SystemThemeChanged` | `WindowMinimise` / `WindowUnMinimise` |
-| `Awake` / `Sleep` | `WindowMaximise` / `WindowUnMaximise` |
-| `URLOpen` | `WindowFullscreen` / `WindowUnFullscreen` |
-| `URLPasteboard` | `WindowResize` / `WindowMove` |
-| | `WindowDPIChanged` |
-| | `WindowShow` / `WindowHide` |
-| | `WindowClosing` |
+| `ApplicationStarted` | `WindowFocus` / `WindowLostFocus` |
+| `ApplicationOpenedWithFile` | `WindowMinimise` / `WindowUnMinimise` |
+| `ApplicationLaunchedWithUrl` | `WindowMaximise` / `WindowUnMaximise` / `WindowRestore` |
+| `ThemeChanged` | `WindowFullscreen` / `WindowUnFullscreen` |
+| `SystemDidWake` / `SystemWillSleep` | `WindowDidResize` / `WindowDidMove` |
+| `BatteryChanged` / `NetworkChanged` | `WindowDPIChanged` / `WindowFilesDropped` |
+| `ScreenLocked` / `ScreenUnlocked` | `WindowShow` / `WindowHide` / `WindowClosing` |
+| `LowMemory` | `WindowRuntimeReady` / `WindowToggleFrameless` |
+| | `WindowZoom` / `WindowZoomIn` / `WindowZoomOut` / `WindowZoomReset` |
+
+系统主题变化的平台事件：`events.Linux.SystemThemeChanged` 等（v3.1.0 修复 GTK4 下不触发）。
 
 ⚠️ **应用关闭** 不是事件常量。用 `OnShutdown(func())` 或 `application.Options.OnShutdown`。
 
 ### 平台特定事件
 
 `events.Mac.*` / `events.Windows.*` / `events.Linux.*` 提供平台特定事件常量。详见 reference 文件。
+⚠️ macOS **不再派发** `WindowDidUpdate` / `WindowWillUpdate`（beta.30：每个 run-loop 都触发、会吃掉用户点击的 transient activation）——别再监听它们。
+
+### 投递语义（v3.1.0）
+
+- Go 侧监听器按 **emit 顺序串行**回调（之前可能乱序 / 并发）。
+- 应用事件 hook 即使没有监听器也会执行（beta.13）。
+
+### 类型化事件 + `bindings/events` 常量（beta.33）
+
+```go
+type UserLoginData struct { Name string `json:"name"` }
+func init() { application.RegisterEvent[UserLoginData]("user:login") }   // 名字必须是编译期常量
+```
+`wails3 generate bindings` 会生成事件数据类型和 `bindings/events` 模块（`user:login` → `UserLogin`）：
+```ts
+import { Events } from '@wailsio/runtime'
+import { UserLogin } from './bindings/events'
+Events.On(UserLogin, (e) => { e.data.name /* 已类型化 */ })
+```
+`-noevents` 关闭这部分生成。Foundation 的 `internal/events/events.go` 走的就是 `RegisterEvent[T]`。
 
 ### JavaScript 端
 
@@ -107,15 +136,17 @@ const off = Events.On('user-logged-in', (event) => {
 });
 off();  // 取消订阅
 
-// 单次
+// 单次 / 限次
 Events.Once('done', (event) => { ... });
+Events.OnMultiple('tick', handler, 3);
 
-// 取消所有
+// 取消某事件 / 全部
 Events.Off('user-logged-in');
+Events.OffAll();
 
-// 发送（Go 可监听）
-Events.Emit('myapp:close-window');
-Events.Emit('myapp:disconnect-requested', 'id-123');
+// 发送（Go 可监听）；返回 Promise<boolean>
+await Events.Emit('myapp:close-window');
+await Events.Emit('myapp:disconnect-requested', 'id-123');
 ```
 
 ### 仅发到单个窗口

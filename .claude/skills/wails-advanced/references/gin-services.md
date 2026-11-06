@@ -1,9 +1,11 @@
 ---
-title: Using Gin for Services
-description: A guide to integrating the Gin web framework with Wails v3 Services
+title: "Using Gin for Services"
+description: "A guide to integrating the Gin web framework with Wails v3 Services"
+slug: "guides/gin-services"
+sourcePath: "guides/gin-services.md"
 ---
 
-# Using Gin for Services
+## Using Gin for Services
 
 The Gin web framework is a popular choice for building HTTP services in Go. With Wails v3, you can easily integrate Gin-based services into your application, providing a powerful way to handle HTTP requests, implement RESTful APIs, and serve web content.
 
@@ -340,11 +342,13 @@ To interact with your Gin service from the frontend, you'll need to import the W
 For production use, it's recommended to use the `@wailsio/runtime` package instead of directly importing `/wails/runtime.js`. This ensures type safety, better IDE support, version management through npm, and compatibility with modern JavaScript tooling.
 
 Install the package:
+
 ```bash
 npm install @wailsio/runtime
 ```
 
 Then use it in your code:
+
 ```javascript
 import * as wails from '@wailsio/runtime';
 

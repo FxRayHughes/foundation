@@ -1,4 +1,5 @@
 export {
+  HeatmapChart,
   FunnelChart,
   RadarChart,
   CandlestickChart,
@@ -7,13 +8,10 @@ export {
   TreemapChart,
   ZoomableChart,
   useChartColors,
-  useChartDimensions,
-  useChartTooltip,
-  ChartContainer,
-  Tooltip,
-  Legend,
+  registerXProChartsLocales,
 } from './charts';
 export type {
+  HeatmapChartProps,
   FunnelChartProps,
   FunnelDataItem,
   RadarChartProps,
@@ -26,12 +24,8 @@ export type {
   TreemapChartProps,
   TreemapNode,
   ZoomableChartProps,
+  ZoomableSeries,
   ChartMargin,
-  ChartDimensions,
-  TooltipData,
-  LegendItem,
-  ChartContainerProps,
-  TooltipState,
 } from './charts';
 
 export {
@@ -41,6 +35,7 @@ export {
   useAggregation,
   useExcelExport,
   useCellSelection,
+  registerDataGridLocales,
 } from './data-grid';
 export type {
   DataGridProProps,
@@ -59,4 +54,13 @@ export type {
   CellSelectionModel,
   CellRange,
   ExcelExportOptions,
+  DataGridColumn,
+  DataGridRow,
+  DataGridRowId,
+  DataGridFilterModel,
+  DataGridFilterItem,
+  DataGridFilterOperator,
+  DataGridSortModel,
+  ClipboardPasteContext,
+  DataGridRecord,
 } from './data-grid';

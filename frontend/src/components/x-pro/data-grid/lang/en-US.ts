@@ -1,0 +1,56 @@
+import type { Messages } from '@/i18n';
+
+// DataGrid Pro / Premium copy. Mounted under the `dataGrid.*` namespace.
+export const dataGridEnUS: Messages = {
+  dataGrid: {
+    noRecords: 'No rows',
+    loading: 'Loading…',
+    groupColumn: 'Group',
+    filterPlaceholder: 'Filter…',
+    filterAriaLabel: 'Filter column {{column}}',
+    dragColumnAriaLabel: 'Drag to reorder column: {{column}}',
+    dragRowAriaLabel: 'Drag to reorder row',
+    resizeColumnAriaLabel: 'Drag to resize column: {{column}} (double-click to reset)',
+    columnMenu: {
+      ariaLabel: 'Column menu: {{column}}',
+      sortAsc: 'Sort ascending',
+      sortDesc: 'Sort descending',
+      sortClear: 'Clear sort',
+      pinLeft: 'Pin to left',
+      pinRight: 'Pin to right',
+      unpin: 'Unpin',
+      hide: 'Hide column',
+      manageColumns: 'Manage columns',
+      showAll: 'Show all',
+      hideAll: 'Hide all',
+    },
+    export: {
+      csvDialogTitle: 'Export as CSV',
+      excelDialogTitle: 'Export as Excel',
+      errorTitle: 'Export failed',
+      csvFilter: 'CSV file (*.csv)',
+      excelFilter: 'Excel workbook (*.xlsx)',
+    },
+    expandRow: 'Show details',
+    collapseRow: 'Hide details',
+    expand: 'Expand',
+    collapse: 'Collapse',
+    pinnedRow: 'Pinned row',
+    paginationText: '{{from}}–{{to}} of {{total}}',
+    recordsPerPage: 'Rows per page',
+    aggregation: {
+      sum: 'sum',
+      avg: 'avg',
+      min: 'min',
+      max: 'max',
+      count: 'count',
+      custom: 'agg',
+    },
+    toolbar: {
+      ariaLabel: 'Grid toolbar',
+      exportCsv: 'Export CSV',
+      exportExcel: 'Export Excel',
+      selectedCells: '{{count}} cells selected',
+    },
+  },
+};

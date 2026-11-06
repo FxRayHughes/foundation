@@ -1,11 +1,9 @@
 ---
-title: Application Lifecycle
-description: Understanding the Wails application lifecycle from startup to shutdown
-sidebar:
-  order: 2
+title: "Application Lifecycle"
+description: "Understanding the Wails application lifecycle from startup to shutdown"
+slug: "concepts/lifecycle"
+sourcePath: "concepts/lifecycle.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## Understanding Application Lifecycle
 
@@ -126,6 +124,7 @@ app := application.New(application.Options{
 ```
 
 **What happens:**
+
 1. Options are parsed and validated
 2. Services are registered (but not started yet)
 3. Asset server is configured
@@ -143,6 +142,7 @@ if err != nil {
 ```
 
 **What happens:**
+
 1. Services are started in registration order
 2. Event listeners are activated
 3. Windows can be created
@@ -169,7 +169,7 @@ When the application quits:
 
 ## Services Lifecycle
 
-Services are the primary way to manage lifecycle in Wails v3. They provide startup and shutdown hooks through interfaces. For complete documentation on services, see the [Services guide](/features/bindings/services).
+Services are the primary way to manage lifecycle in Wails v3. They provide startup and shutdown hooks through interfaces. For complete documentation on services, see the [Services guide](/features/bindings/services/).
 
 ### Creating a Service
 
@@ -215,6 +215,7 @@ app := application.New(application.Options{
 ```
 
 **Key points:**
+
 - Services start in registration order
 - Services shut down in **reverse** registration order
 - If a service's `ServiceStartup` returns an error, the application aborts
@@ -264,6 +265,7 @@ For more complex lifecycle management with startup logic, dependency injection, 
 The `ShouldQuit` callback is called whenever a quit is requested—whether by the user closing the last window, pressing Cmd+Q (macOS) / Alt+F4 (Windows), or calling `app.Quit()` programmatically.
 
 **Return value:**
+
 - Return `true` to allow the quit to proceed (application will shut down)
 - Return `false` to cancel the quit (application continues running)
 
@@ -300,12 +302,14 @@ app := application.New(application.Options{
 If `ShouldQuit` is not set, the application will quit immediately when requested.
 
 **When ShouldQuit is called:**
+
 - User closes the last window (unless `DisableQuitOnLastWindowClosed` is set)
 - User presses Cmd+Q on macOS
 - User presses Alt+F4 on Windows (when focused on last window)
 - Code calls `app.Quit()`
 
 **When ShouldQuit is NOT called:**
+
 - The process is killed (SIGKILL, Task Manager force-quit)
 - `os.Exit()` is called directly
 
@@ -342,6 +346,7 @@ Multiple callbacks are executed in the order they were registered. The shutdown 
 The `PostShutdown` callback is called after all shutdown tasks have completed, just before the process terminates. At this point, the application instance is no longer usable—windows are closed, services are shut down, and resources are released.
 
 This is primarily useful for:
+
 - Final logging that must happen after all other cleanup
 - Testing and debugging shutdown behaviour
 - Platforms where `app.Run()` doesn't return (the callback ensures your code runs)
@@ -366,7 +371,7 @@ Wails provides an event system that notifies you when things happen in your appl
 
 For window events, you can also use `RegisterHook` instead of `OnWindowEvent` to intercept and cancel actions—for example, preventing a window from closing. See [Window Hooks](#window-hooks-cancellable-events) below.
 
-For full documentation on the event system, see the [Events guide](/features/events/system).
+For full documentation on the event system, see the [Events guide](/features/events/system/).
 
 ### Application Events
 
@@ -433,6 +438,7 @@ window.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent
 ```
 
 **Difference between OnWindowEvent and RegisterHook:**
+
 - `OnWindowEvent`: Notifies you when an event happens (cannot cancel)
 - `RegisterHook`: Lets you intercept and potentially cancel the event
 
@@ -440,7 +446,7 @@ window.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent
 
 Windows have their own lifecycle, from creation through to destruction. Each window loads its frontend content independently and can be shown, hidden, or closed at any time. When a user attempts to close a window, you can intercept this with a `RegisterHook` to prompt for confirmation or hide the window instead of destroying it.
 
-For complete window documentation, see the [Windows guide](/features/windows/basics).
+For complete window documentation, see the [Windows guide](/features/windows/basics/).
 
 ```d2
 direction: down
@@ -562,7 +568,7 @@ settingsWindow := app.Window.NewWithOptions(application.WebviewWindowOptions{
 **Default behaviour varies by platform:**
 
 | Platform | Default when last window closes |
-|----------|--------------------------------|
+| --- | --- |
 | macOS | App stays running (menu bar remains) |
 | Windows | App quits |
 | Linux | App quits |
@@ -703,7 +709,7 @@ func (s *WorkerService) runWorker(ctx context.Context) {
 ## Lifecycle Reference
 
 | Hook/Interface | When Called | Can Cancel? | Use For |
-|----------------|-------------|-------------|---------|
+| --- | --- | --- | --- |
 | `ServiceStartup` | During `app.Run()`, before event loop | No (return error to abort) | Initialisation |
 | `ServiceShutdown` | During shutdown, after `OnShutdown` | No | Cleanup |
 | `OnShutdown` | When quit confirmed | No | Application cleanup |
@@ -737,6 +743,7 @@ func (s *WorkerService) runWorker(ctx context.Context) {
 ### Problem: Application Won't Quit
 
 **Causes:**
+
 1. `ShouldQuit` returning `false`
 2. `OnShutdown` taking too long
 3. Background goroutines not stopping
@@ -801,15 +808,12 @@ The error will be logged and the application will not start.
 
 ## Next Steps
 
-**Services** - Learn more about the service system
-[Learn More →](/features/services)
+**Services** - Learn more about the service system [Learn More →](/features/bindings/services/)
 
-**Events System** - Use events for communication
-[Learn More →](/features/events/system)
+**Events System** - Use events for communication [Learn More →](/features/events/system/)
 
-**Window Management** - Create and manage windows
-[Learn More →](/features/windows/basics)
+**Window Management** - Create and manage windows [Learn More →](/features/windows/basics/)
 
 ---
 
-**Questions about lifecycle?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [examples](https://github.com/wailsapp/wails/tree/master/v3/examples).
+**Questions about lifecycle?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples).

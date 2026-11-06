@@ -2,7 +2,7 @@
 
 ## 项目愿景
 
-`foundation` 是一个开箱即用的跨平台桌面应用脚手架，基于 Wails v3 + React 19 + MUI 9，为新项目提供：
+`foundation` 是一个开箱即用的跨平台桌面应用脚手架，基于 Wails v3 + React 19 + Mantine 9，为新项目提供：
 
 - 已分层的 Go 后端（`internal/app` + `internal/services` + `internal/events`）
 - 已分平台的窗口配置（Windows/Linux 无边框前端自绘，macOS 沉浸式标题栏保留红绿灯）
@@ -12,8 +12,8 @@
 
 ## 架构总览
 
-- 后端：Go 1.25，`main.go` 仅做 `embed.FS` + `app.Run`，业务装配集中在 `internal/app`。
-- 前端：React 19 + TypeScript（strict）+ MUI 9 + Vite 8，主题统一在 `frontend/src/styles/theme.ts`。
+- 后端：Go 1.26（Wails v3.1.0 要求），`main.go` 仅做 `embed.FS` + `app.Run`，业务装配集中在 `internal/app`。
+- 前端：React 19 + TypeScript（strict）+ Mantine 9（`@mantine/core` / `@mantine/charts` on recharts / `mantine-datatable`）+ `@tabler/icons-react` + Vite 8。主题为注册式预设，统一在 `frontend/src/styles/themes/`（`buildMantineTheme.ts` 把 `FoundationPalette` 编译为 CSS 变量 `--fd-*` + Mantine 主色 `foundation`），全局样式 `frontend/src/styles/global.css`；组件样式用 CSS Modules（`<Name>.module.css`）。
 - 通信：通过 `wails3 generate bindings` 生成 `frontend/bindings/foundation/...`，前端 `services/` 层包装。
 - 构建：根 `Taskfile.yml` 调用各平台子 Taskfile（Windows/macOS/Linux/iOS/Android/Docker）。
 
@@ -29,6 +29,13 @@ React 组件 (View)
 后端 internal/events/events.go (RegisterEvent[string]("time"))
     └── internal/app/app.go: app.Event.Emit("time", ...)
         └── 前端 shared/hooks/useTimeEvent.ts (Events.On)
+
+后端 internal/events/events.go (RegisterEvent[string]("appsettings:changed") = AppSettingsChanged)
+    └── internal/services/appsettings 任一 setter 写库成功: app.Event.Emit("appsettings:changed", "<字段名>")
+        └── 前端 services/appsettings/AppSettingsService.onChanged (Events.On)
+            ├── FoundationThemeProvider（themeChoice / customTheme，200ms 防抖后重拉）
+            └── I18nProvider（localeChoice，重拉）
+            → 主窗口 / 子窗口（child.tsx）/ 托盘面板（systrayEntry.tsx）主题、语言实时同步
 ```
 
 ## 模块结构图
@@ -40,16 +47,16 @@ graph TD
     A --> F["frontend/"]
     A --> B["build/"]
 
-    I --> IA["internal/app/<br/>app.go + window_*.go"]
-    I --> IS["internal/services/<br/>greet / preferences / appsettings / storagesvc / subprocess"]
+    I --> IA["internal/app/<br/>app.go + window_*.go + childwindow.go + systray*.go"]
+    I --> IS["internal/services/<br/>greet / preferences / appsettings / storagesvc / exportsvc / subprocess"]
     I --> IE["internal/events/events.go"]
     I --> IT["internal/storage/<br/>SQLite + GORM + AutoMigrate"]
     I --> IU["internal/utils/<br/>httpx / procx / cryptox / logx / filex"]
 
-    F --> FC["src/components/<br/>AppLayout / TitleBar / Sidebar / Skeleton"]
+    F --> FC["src/components/<br/>AppLayout / TitleBar / Sidebar / Skeleton / x-pro"]
     F --> FP["src/pages/<br/>HomePage / SettingsPage(personalization,language,database)"]
-    F --> FS["src/services/<br/>greet / preferences / appsettings / storage / dialogs"]
-    F --> FT["src/styles/themes/"]
+    F --> FS["src/services/<br/>greet / preferences / appsettings / storage / dialogs / export / subprocess / childwindow / systray"]
+    F --> FT["src/styles/themes/<br/>(Mantine theme + --fd-* CSS 变量)"]
     F --> FB["bindings/ (生成)"]
 
     B --> B1["windows / darwin / linux / ios / android / docker"]
@@ -63,17 +70,17 @@ graph TD
 | 模块 | 路径 | 语言/技术 | 一句话职责 |
 |------|------|-----------|------------|
 | 应用入口 | `main.go` | Go | 仅含 `embed.FS` 与 `app.Run(assets)`，业务下沉到 `internal/` |
-| 应用启动 | `internal/app/` | Go | 服务注册、平台窗口配置、事件循环 |
-| 业务服务 | `internal/services/` | Go | Wails Service（每个领域一个子包：greet / preferences / appsettings / storagesvc / subprocess） |
+| 应用启动 | `internal/app/` | Go | 服务注册、平台窗口配置、事件循环、子窗口（ChildWindowService）、系统托盘（SystrayService，`systray*.go` 分平台） |
+| 业务服务 | `internal/services/` | Go | Wails Service（每个领域一个子包：greet / preferences / appsettings / storagesvc / exportsvc（表格导出 CSV / XLSX）/ subprocess） |
 | 持久化层 | `internal/storage/` | Go + GORM | SQLite 打开 / PRAGMA / AutoMigrate / 路径配置 / Holder |
 | 工具层 | `internal/utils/` | Go | httpx（HTTP）/ procx（子进程 + JobObject）/ cryptox（AES-GCM）/ logx（slog + rotate）/ filex（原子写） |
 | 事件契约 | `internal/events/` | Go | 集中注册类型化事件，前后端共享名称 |
-| 前端 UI | `frontend/` | React 19 + MUI 9 + TS | 用户界面、调用 Service、订阅事件 |
+| 前端 UI | `frontend/` | React 19 + Mantine 9 + TS | 用户界面、调用 Service、订阅事件 |
 | 多平台构建 | `build/` | Taskfile / Gradle / Shell / nfpm | 各平台打包脚本与资源 |
 
 ## 运行与开发
 
-前置条件：Go 1.25+、Node.js + pnpm、`wails3` CLI、`task` (go-task)。
+前置条件：Go 1.26+、Node.js + pnpm、`wails3` CLI、`task` (go-task)。
 
 | 命令 | 说明 |
 |------|------|
@@ -161,8 +168,9 @@ func (s *Service) DoSomething(ctx context.Context) error {
   - **前端调子进程**：必须经 `internal/services/subprocess` 白名单，**禁止**给前端开万能 `RunCommand`
 - **前端调用边界**：组件 → ViewModel hook → `services/<Domain>Service.ts` → `@bindings/<module>/...`。View 不许直接 import bindings；ViewModel 不许直接 import bindings。
 - **原生对话框铁律**：所有"打开 / 保存 / 选择文件夹 / 确认 / 错误提示"必须走 `NativeDialogs`（封装 Wails v3 `Dialogs.*`）。**禁止**使用浏览器 `alert` / `confirm` / `prompt` / `<input type="file">`。
-- **Icon 铁律**：UI 中所有图标必须用 `@mui/icons-material` 的 React 组件（推荐 `*Rounded` 系列以匹配方圆设计语言）。**禁止** emoji、Unicode 符号、第三方 icon 包当图标。详见 `frontend/CLAUDE.md` 的「Icon 规范」。
-- **样式取色**：永远从 `theme.palette.foundation.*` 取，不要硬编码十六进制。圆角语言：按钮 12 / 容器 8（详见 `frontend/CLAUDE.md`）。
+- **Icon 铁律**：UI 中所有图标必须用 `@tabler/icons-react` 的 React 组件（`<IconXxx size={20} stroke={1.75} />`，路由 `icon` 字段类型为 `Icon`）。**禁止** emoji、Unicode 符号、内联 `<svg>` 字面量、其它 icon 包（`@mui/icons-material` / `react-icons` / `lucide-react` 等）当图标。详见 `frontend/CLAUDE.md` 的「Icon 规范」与 `.claude/skills/foundation-mantine-icons/SKILL.md`。
+- **样式取色**：样式写在 `<Name>.module.css`（CSS Modules），颜色永远用 `var(--fd-*)`；JS 侧需要引用颜色（图表 `color`、内联 style）用 `FOUNDATION_CSS_VARS.*`，必须拿真实色值（canvas 等）才用 `useFoundationPalette()`。除 `styles/themes/presets/*.ts` 外禁止硬编码十六进制，也不要给 Mantine 组件传内置色名（如 `color="blue"`）。圆角语言：按钮 4–6px（Mantine `radius="sm"` / 自绘 6px）/ 容器 8px（`radius="md"`），不用圆形按钮（详见 `frontend/CLAUDE.md` 与 `.claude/skills/foundation-theme/SKILL.md`）。
+- **UI 组件**：只用 Mantine（`@mantine/core` / `@mantine/hooks`），图表用 `@mantine/charts`（高级图表见 `components/x-pro/charts`），表格用 `components/x-pro/data-grid`（基于 `mantine-datatable`，列定义 `DataGridColumn<T>`）。**禁止**重新引入 `@mui/*` / `@emotion/*` / `sx` 写法。详见 `.claude/skills/foundation-mantine/SKILL.md`（及 `foundation-mantine-components` / `-charts` / `-datatable`）。
 - **i18n 铁律**：任何"人类可见字符串"必须经 `t('key')` —— JSX 文本、`aria-label`、`placeholder`、Tooltip、按钮文字、错误文案、对话框标题 / 消息 / 按钮、常量字符串都不允许硬编码。新增页面必须配套 `pages/<Name>/lang/{<code>.ts}` 并在 `App.tsx` 注册。详见 `.claude/skills/foundation-i18n/SKILL.md`。
 - **设置页子目录隔离**：`SettingsPage/<sub>/` 每个子页面独立目录（含 View / VM / Style / lang），文案命名空间 `settings.<sub>.*`，子页面之间不互相 import。详见 `frontend/CLAUDE.md` 的「设置页：子目录隔离规范」。
 - **改名提醒**：`module foundation` 一旦改动，必须同步前端 import + bindings 重新生成 + Taskfile 的 APP_NAME；`internal/storage/AppDirName` / `internal/utils/cryptox/AppDirName` / `internal/utils/logx/AppDirName` 也要同步改成新业务名（决定数据 / 密钥 / 日志目录）。
@@ -177,3 +185,5 @@ func (s *Service) DoSomething(ctx context.Context) error {
 - 2026-05-28（数据可视化 + 表清理）：`internal/storage/models.go` 引入 `ModelDescriptor`（labelKey / clearable）；`storagesvc` 新增 `GetTableStats`（dbstat 精确字节，回退按行数估算）+ `ClearTable`（白名单 + clearable 校验）；前端升级 `@mui/x-charts@^9.3.0`，数据存储页新增双图（PieChart 占比 + 横向 BarChart 字节）+ 逐表清空（带原生确认对话框）；新增 Icon 规范铁律：UI 图标必须用 `@mui/icons-material`，禁止 emoji / Unicode 符号 / 第三方 icon 包。
 - 2026-05-28（工具层）：新增 `internal/utils/`：`httpx`（HTTP 客户端 + JSON helper + 重试，单例 client）、`procx`（子进程 + Windows JobObject / Unix setpgid，父进程崩溃连带 kill）、`cryptox`（AES-GCM 对称加密，主密钥 ~/.../<App>/.master.key）、`logx`（slog + 控制台 + 文件 rotate）、`filex`（原子写、限长读）；新增 `internal/services/subprocess` 白名单子进程 service（前端可调，命令必须在 commands.go 注册并通过 ArgPattern 校验）；改造 `storage/config.go` 走 filex.WriteAtomic 保护 storage.json；新增 `foundation-utils` SKILL。
 - 2026-08-17（Wails 升级 alpha.96 → beta.9）：`go.mod` 升到 `github.com/wailsapp/wails/v3 v3.0.0-beta.9`（`go mod tidy` 自动移除已折叠进 v3 的独立 `webview2` indirect 依赖）；前端 `@wailsio/runtime` 由 `"latest"` **锁定**为 `3.0.0-beta.9`（避免 beta 期间 latest 漂移），bindings 用 beta.9 CLI 重新生成。**无业务代码改动**——项目用到的整套 application/events/window/systray API 在 beta.9 签名不变（`internal/...` 全部 `go build` + `go vet` 通过，前端 `pnpm typecheck` 通过）。同步更新 `.claude/skills/` 下 Wails 知识库到 beta.9：修正 `wails-bindings` 破坏性变更（2 参 `NewService(x, ServiceOptions{})` → `NewServiceWithOptions`；`time.Time` 默认映射由 `Date` 改为 RFC3339Nano 字符串、`[]byte`→base64 字符串、新增 `-time-type` flag）；`wails-runtime-features` 修正 `KeyBinding`「global」措辞并新增 `app.GlobalShortcut`（系统级快捷键）、前端 `System.IsMobile/IsDesktop/...` 平台检测、通知增强字段（Sound/Attachments/ThreadID/InterruptionLevel/Schedule）；`wails-window` 补 `WindowsWindow.DisableMenu` 与 macOS `Mac.CornerType/CornerRadius`；`wails-application` 新增 `application.System` 平台检测；`wails-advanced` 新增 Streams（`app.HandleStream`）与内置 MCP Server（`mcp` tag）两节 + 官方 `streams.md`/`streams-from-websockets.md` 参考；`wails-overview/references/changelog.md` 与 `INDEX.md` 基准刷新到 beta.9。
+- 2026-11-06（Wails v3.1.0 + Mantine）：`go.mod` 升到 `github.com/wailsapp/wails/v3 v3.1.0`（v3.0.0 GA 后首个 weekly；`go 1.26.0`），`@wailsio/runtime` 锁 `3.1.0`，Go API 面零改动；`build/` 资产按 v3.1.0 模板同步（各平台 Taskfile / Docker / Android / iOS / 新增 dmg 资源，修正 `foundation.exe` 命名），`build/config.yml` info.* 对齐为实际值，根 Taskfile 增加 `GOOS` 分发与 `install:msix:tools`。前端 UI 库 **MUI 9 → Mantine 9.7.5**：主题改为 `buildMantineTheme`（`--fd-*` CSS 变量 + `foundation` 主色阶 + 语义变量映射），样式文件 `<Name>.styles.ts` → `<Name>.module.css`；图标 `@mui/icons-material` → `@tabler/icons-react`；图表 `@mui/x-charts` → `@mantine/charts`（recharts 3），x-pro 八种高级图表改为封装原生组件（Gantt 保留 SVG）；x-pro DataGridPro/Premium 基于 `mantine-datatable` 重写（列类型 `DataGridColumn<T>`，全部 Pro/Premium 功能保留，表格文案独立 i18n）；移除全部 `@mui/*` / `@emotion/*`；`foundation-mui*` 11 个 skill 替换为 `foundation-mantine` / `-components` / `-icons` / `-charts` / `-datatable`。
+- 2026-11-06（v1.0.0 收尾）：**系统托盘端到端可用**（Go `SystrayService` Enable/Disable/IsEnabled/SetMenuLabels，开关持久化到 preferences `systray.enabled` 并启动恢复，面板失焦 / Esc 隐藏，托盘菜单文案走 i18n，面板「打开设置」驱动主窗口路由；移除 `src/settings.ts`）；**表格导出走原生「另存为」**（新增 `internal/services/exportsvc`：CSV 带 BOM / excelize 生成真 `.xlsx`，`filex.WriteAtomic` 落盘；前端 `services/export/ExportService`）；DataGrid 新增列菜单（排序 / 钉住 / 隐藏 / 管理列）、列宽拖拽、钉住行按实测行高定位；漏斗图支持横向；x-pro 图表独立语言包 `registerXProChartsLocales`，演示数据全部 i18n；**跨窗口设置同步**（后端 appsettings 写入后广播 `appsettings:changed`，主窗口 / 子窗口 / 托盘面板的主题与语言实时一致，子窗口不再固定 light）；分包修复（Vite 8 用 `rolldownOptions`，懒加载页骨架独立 `*.skeleton.module.css`、语言包从 `<sub>/lang` 导入，首屏不再预加载 recharts / datatable）；应用版本以 `build/config.yml` 为唯一事实源（前端 `__APP_VERSION__`），升到 **1.0.0**；GORM 日志忽略 record-not-found；wails-* skill 同步到 v3.1.0 文档（M-Press `docs/mpress/content`）；新增 `docs/MIGRATION-v1.md` 迁移指南。

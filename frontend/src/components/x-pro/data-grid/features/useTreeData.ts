@@ -1,68 +1,40 @@
-import { useState, useCallback, useMemo } from 'react';
-import type { GridRowModel, GridColDef } from '@mui/x-data-grid';
-import type { TreeDataConfig } from '../types';
-import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
-import UnfoldLessRounded from '@mui/icons-material/UnfoldLessRounded';
-import { createElement } from 'react';
-import { Box, IconButton } from '@mui/material';
+import { useCallback, useMemo, useState } from 'react';
+import type { DataGridRecord } from '../premium-types';
+import type { DataGridRow, DataGridRowId, TreeDataConfig } from '../types';
 
-interface TreeNode {
-  row: GridRowModel;
-  path: string[];
-  depth: number;
-  hasChildren: boolean;
-  key: string;
+// 树形数据：按 getTreeDataPath 构建层级，深度优先展开为显示记录。
+// 展开状态 = "默认展开深度" XOR "用户切换过"，避免在 render 中 setState。
+// 父节点被筛掉时，子节点作为根节点显示（保持缩进），不会丢数据。
+
+interface UseTreeDataParams<T extends DataGridRow> {
+  rows: T[];
+  config?: TreeDataConfig<T>;
+  getRowId: (row: T) => DataGridRowId;
 }
 
-interface UseTreeDataParams {
-  rows: GridRowModel[];
-  config?: TreeDataConfig;
-}
-
-interface UseTreeDataResult {
-  flattenedRows: GridRowModel[];
-  groupColumn: GridColDef | null;
+export interface UseTreeDataResult<T extends DataGridRow> {
   isTreeActive: boolean;
+  /** 已按层级展开的显示记录（未启用时为 null） */
+  treeRecords: DataGridRecord<T>[] | null;
+  toggleExpand: (treeKey: string) => void;
 }
 
-export function useTreeData({ rows, config }: UseTreeDataParams): UseTreeDataResult {
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(() => new Set());
+interface TreeNode<T> {
+  row: T;
+  path: string[];
+  key: string;
+  children: TreeNode<T>[];
+}
 
-  const tree = useMemo(() => {
-    if (!config) return null;
-    const { getTreeDataPath, defaultGroupingExpansionDepth = 0 } = config;
-    const nodes: TreeNode[] = [];
-    const childrenMap = new Map<string, boolean>();
-
-    for (const row of rows) {
-      const path = getTreeDataPath(row);
-      const key = path.join('/');
-      nodes.push({ row, path, depth: path.length - 1, hasChildren: false, key });
-      if (path.length > 1) {
-        const parentKey = path.slice(0, -1).join('/');
-        childrenMap.set(parentKey, true);
-      }
-    }
-
-    for (const node of nodes) {
-      node.hasChildren = childrenMap.has(node.key);
-    }
-
-    if (defaultGroupingExpansionDepth > 0) {
-      const autoExpand = new Set<string>();
-      for (const node of nodes) {
-        if (node.hasChildren && node.depth < defaultGroupingExpansionDepth) {
-          autoExpand.add(node.key);
-        }
-      }
-      setExpandedKeys(autoExpand);
-    }
-
-    return nodes;
-  }, [config, rows]);
+export function useTreeData<T extends DataGridRow>({
+  rows,
+  config,
+  getRowId,
+}: UseTreeDataParams<T>): UseTreeDataResult<T> {
+  const [toggled, setToggled] = useState<Set<string>>(() => new Set());
 
   const toggleExpand = useCallback((key: string) => {
-    setExpandedKeys((prev) => {
+    setToggled((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
@@ -70,52 +42,50 @@ export function useTreeData({ rows, config }: UseTreeDataParams): UseTreeDataRes
     });
   }, []);
 
-  const flattenedRows = useMemo(() => {
-    if (!tree) return rows;
-    const result: GridRowModel[] = [];
-    for (const node of tree) {
-      const parentKey = node.path.slice(0, -1).join('/');
-      const isVisible =
-        node.depth === 0 ||
-        (parentKey && expandedKeys.has(parentKey));
-      if (isVisible) {
-        result.push({ ...node.row, __treeDepth: node.depth, __treeKey: node.key, __hasChildren: node.hasChildren });
-      }
+  const roots = useMemo(() => {
+    if (!config) return null;
+    const nodes = new Map<string, TreeNode<T>>();
+    const ordered: TreeNode<T>[] = [];
+    for (const row of rows) {
+      const path = config.getTreeDataPath(row);
+      const node: TreeNode<T> = { row, path, key: path.join('/'), children: [] };
+      nodes.set(node.key, node);
+      ordered.push(node);
+    }
+    const result: TreeNode<T>[] = [];
+    for (const node of ordered) {
+      const parent = node.path.length > 1 ? nodes.get(node.path.slice(0, -1).join('/')) : undefined;
+      if (parent) parent.children.push(node);
+      else result.push(node);
     }
     return result;
-  }, [tree, rows, expandedKeys]);
+  }, [rows, config]);
 
-  const groupColumn: GridColDef | null = useMemo(() => {
-    if (!config) return null;
-    return {
-      field: '__tree_group__',
-      headerName: config.groupColDef?.headerName ?? '',
-      width: config.groupColDef?.width ?? 200,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        const depth = (params.row.__treeDepth as number) ?? 0;
-        const hasChildren = params.row.__hasChildren as boolean;
-        const key = params.row.__treeKey as string;
-        const isExpanded = expandedKeys.has(key);
-        const path = config.getTreeDataPath(params.row);
-        const label = path[path.length - 1] ?? '';
-
-        return createElement(
-          Box,
-          { sx: { display: 'flex', alignItems: 'center', pl: depth * 2 } },
-          hasChildren
-            ? createElement(
-                IconButton,
-                { size: 'small', onClick: () => toggleExpand(key) },
-                createElement(isExpanded ? UnfoldLessRounded : UnfoldMoreRounded, { fontSize: 'small' }),
-              )
-            : createElement(Box, { sx: { width: 28 } }),
-          label,
-        );
-      },
+  const treeRecords = useMemo(() => {
+    if (!config || !roots) return null;
+    const defaultDepth = config.defaultGroupingExpansionDepth ?? 0;
+    const out: DataGridRecord<T>[] = [];
+    const walk = (node: TreeNode<T>) => {
+      const depth = node.path.length - 1;
+      const hasChildren = node.children.length > 0;
+      const expanded = hasChildren && (depth < defaultDepth) !== toggled.has(node.key);
+      const rowId = getRowId(node.row);
+      out.push({
+        key: `row:${String(rowId)}`,
+        kind: 'row',
+        row: node.row,
+        rowId,
+        depth,
+        treeKey: node.key,
+        treeLabel: node.path[node.path.length - 1] ?? '',
+        hasChildren,
+        expanded,
+      });
+      if (expanded) node.children.forEach(walk);
     };
-  }, [config, expandedKeys, toggleExpand]);
+    roots.forEach(walk);
+    return out;
+  }, [config, roots, toggled, getRowId]);
 
-  return { flattenedRows, groupColumn, isTreeActive: !!config };
+  return { isTreeActive: !!config, treeRecords, toggleExpand };
 }

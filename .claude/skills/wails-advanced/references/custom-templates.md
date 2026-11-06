@@ -1,9 +1,9 @@
 ---
-title: Creating Custom Templates
-description: How to generate, customise, and host your own Wails v3 project templates
+title: "Creating Custom Templates"
+description: "How to generate, customise, and host your own Wails v3 project templates"
+slug: "guides/advanced/custom-templates"
+sourcePath: "guides/advanced/custom-templates.md"
 ---
-
-import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
 Wails ships with a set of built-in templates, but you can create your own and share them with the community. A custom template is just a Git repository — once it is hosted publicly, anyone can scaffold a project from it with a single command.
 
@@ -17,15 +17,15 @@ wails3 generate template -name MyTemplate
 
 All flags:
 
-| Flag           | Description                                        | Default           |
-|----------------|----------------------------------------------------|-------------------|
-| `-name`        | Template name (required)                           | —                 |
-| `-author`      | Author name                                        | —                 |
-| `-description` | Short description shown in the CLI                 | —                 |
-| `-helpurl`     | URL to documentation for this template             | —                 |
-| `-version`     | Initial version                                    | `v0.0.1`          |
-| `-frontend`    | Copy an existing frontend directory into the template | —              |
-| `-dir`         | Where to write the template directory              | Current directory |
+| Flag | Description | Default |
+| --- | --- | --- |
+| `-name` | Template name (required) | — |
+| `-author` | Author name | — |
+| `-description` | Short description shown in the CLI | — |
+| `-helpurl` | URL to documentation for this template | — |
+| `-version` | Initial version | `v0.0.1` |
+| `-frontend` | Copy an existing frontend directory into the template | — |
+| `-dir` | Where to write the template directory | Current directory |
 
 Example with all flags:
 
@@ -55,9 +55,10 @@ MyTemplate/
 └── frontend/              # Your frontend code
 ```
 
-:::tip[Read NEXTSTEPS.md]
+@note{type="tip" title="Read NEXTSTEPS.md"}
 The generated `NEXTSTEPS.md` contains detailed guidance on every part of the template. Read it before customising. Delete it before publishing — it must not appear in projects created from your template.
-:::
+
+@end
 
 ## Configure template metadata
 
@@ -82,25 +83,29 @@ The `wailsVersion` field is **required** and must be `3`. The `# yaml-language-s
 
 The `frontend/` directory is copied verbatim into every project created from your template. Replace the placeholder content with your actual frontend:
 
-<Tabs>
-  <TabItem label="Start from scratch">
-    ```bash
-    cd MyTemplate/frontend
-    npm create vite@latest .
-    ```
-    Follow the prompts, then install dependencies:
-    ```bash
-    npm install
-    ```
-  </TabItem>
-  <TabItem label="Use an existing project">
-    Pass `-frontend` when generating the template to copy an existing frontend in one step:
-    ```bash
-    wails3 generate template -name MyTemplate -frontend ./my-app/frontend
-    ```
-    Or copy it manually into the `frontend/` directory afterwards.
-  </TabItem>
-</Tabs>
+@tabs
+[Start from scratch]
+```bash
+cd MyTemplate/frontend
+npm create vite@latest .
+```
+
+Follow the prompts, then install dependencies:
+
+```bash
+npm install
+```
+
+[Use an existing project]
+Pass `-frontend` when generating the template to copy an existing frontend in one step:
+
+```bash
+wails3 generate template -name MyTemplate -frontend ./my-app/frontend
+```
+
+Or copy it manually into the `frontend/` directory afterwards.
+
+@end
 
 ### Build tasks
 
@@ -130,26 +135,27 @@ To edit it as a real Go file (with IDE support), temporarily rename it to `main.
 
 These variables are available in any `.tmpl` file:
 
-| Variable               | Description                              | Example                         |
-|------------------------|------------------------------------------|---------------------------------|
-| `{{.ProjectName}}`     | Project name supplied by the user        | `"MyApp"`                       |
-| `{{.BinaryName}}`      | Binary filename                          | `"myapp"`                       |
-| `{{.ProductName}}`     | Product display name                     | `"My Application"`              |
-| `{{.ProductDescription}}` | Product description                   | `"An awesome application"`      |
-| `{{.ProductVersion}}`  | Product version                          | `"1.0.0"`                       |
-| `{{.ProductCompany}}`  | Company / author name                    | `"My Company Ltd"`              |
-| `{{.ProductCopyright}}`| Copyright string                         | `"Copyright 2024 My Company Ltd"` |
-| `{{.ProductComments}}` | Additional product comments              | `"Built with Wails"`            |
-| `{{.ProductIdentifier}}`| Reverse-DNS product identifier          | `"com.mycompany.myapp"`         |
-| `{{.ModulePath}}`      | Go module path                           | `"github.com/you/myapp"`        |
-| `{{.WailsVersion}}`    | Wails version used to create the project | `"3.0.0"`                       |
-| `{{.Typescript}}`      | `true` if the template name ends in `-ts` | `true`                         |
-| `{{.Opn}}`             | Literal `{{` — escape inside templates   | `{{`                            |
-| `{{.Cls}}`             | Literal `}}` — escape inside templates   | `}}`                            |
+| Variable | Description | Example |
+| --- | --- | --- |
+| `{{.ProjectName}}` | Project name supplied by the user | `"MyApp"` |
+| `{{.BinaryName}}` | Binary filename | `"myapp"` |
+| `{{.ProductName}}` | Product display name | `"My Application"` |
+| `{{.ProductDescription}}` | Product description | `"An awesome application"` |
+| `{{.ProductVersion}}` | Product version | `"1.0.0"` |
+| `{{.ProductCompany}}` | Company / author name | `"My Company Ltd"` |
+| `{{.ProductCopyright}}` | Copyright string | `"Copyright 2024 My Company Ltd"` |
+| `{{.ProductComments}}` | Additional product comments | `"Built with Wails"` |
+| `{{.ProductIdentifier}}` | Reverse-DNS product identifier | `"com.mycompany.myapp"` |
+| `{{.ModulePath}}` | Go module path | `"github.com/you/myapp"` |
+| `{{.WailsVersion}}` | Wails version used to create the project | `"3.0.0"` |
+| `{{.Typescript}}` | `true` if the template name ends in `-ts` | `true` |
+| `{{.Opn}}` | Literal `{{` — escape inside templates | `{{` |
+| `{{.Cls}}` | Literal `}}` — escape inside templates | `}}` |
 
-:::tip
+@note{type="tip"}
 Any file in your template can be a `.tmpl` file — including HTML, JSON, and YAML files. Files without the `.tmpl` suffix are copied verbatim.
-:::
+
+@end
 
 ## Test your template locally
 
@@ -168,36 +174,32 @@ wails3 build  # production binary
 ```
 
 Check that:
+
 - Frontend hot reload works
 - Go code changes rebuild and relaunch the app
 - The production binary in `bin/` runs correctly
 
 ## Publish on GitHub
 
-<Steps>
+@steps
+### **Create a public GitHub repository** for your template. The repository root must contain `template.yaml`.
+### **Delete `NEXTSTEPS.md`** — this file is guidance for template authors and must not appear in projects users create from your template.
+### **Commit and push** the template directory contents as the repository root:
+```bash
+git init
+git add .
+git commit -m "Initial template"
+git remote add origin https://github.com/yourname/my-template.git
+git push -u origin main
+```
 
-1. **Create a public GitHub repository** for your template. The repository root must contain `template.yaml`.
+### **Tag a release** using semantic versioning:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
-2. **Delete `NEXTSTEPS.md`** — this file is guidance for template authors and must not appear in projects users create from your template.
-
-3. **Commit and push** the template directory contents as the repository root:
-
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial template"
-   git remote add origin https://github.com/yourname/my-template.git
-   git push -u origin main
-   ```
-
-4. **Tag a release** using semantic versioning:
-
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-
-</Steps>
+@end
 
 Users can now create projects from your template:
 
@@ -209,11 +211,14 @@ wails3 init -n myapp -t https://github.com/yourname/my-template
 wails3 init -n myapp -t https://github.com/yourname/my-template@v1.0.0
 ```
 
-:::caution[Third-party template warning]
+@note{type="caution" title="Third-party template warning"}
 When a user installs a remote template, Wails displays a warning explaining that the template is third-party code and that the Wails project takes no responsibility for its contents. Users must explicitly confirm before the project is created.
 
 As a template author you are responsible for the security and correctness of all code in your template.
-:::
+
+Templates are code. `Taskfile.yml` tasks are arbitrary shell commands, and `wails3 dev`, `wails3 build` and `wails3 package` run them, along with any `package.json` scripts they invoke, with your user's permissions. Review `Taskfile.yml`, the `build/` directory and `frontend/package.json` of a remote template before running any of these commands.
+
+@end
 
 ## Best practices
 

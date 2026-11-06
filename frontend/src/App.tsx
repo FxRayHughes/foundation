@@ -1,4 +1,6 @@
 import { AppLayout } from '@/components/AppLayout';
+import { registerDataGridLocales } from '@/components/x-pro/data-grid/lang';
+import { registerXProChartsLocales } from '@/components/x-pro/charts/lang';
 import { I18nProvider, registerFoundationLocales } from '@/i18n';
 import { registerHomePageLocales } from '@/pages/HomePage/lang';
 import { registerXProDemoPageLocales } from '@/pages/XProDemoPage/lang';
@@ -19,6 +21,8 @@ registerFoundationThemes();
 registerFoundationLocales();
 registerHomePageLocales();
 registerXProDemoPageLocales();
+registerDataGridLocales();
+registerXProChartsLocales();
 registerSettingsPageLocales();
 
 // Provider 嵌套顺序（自外向内）：

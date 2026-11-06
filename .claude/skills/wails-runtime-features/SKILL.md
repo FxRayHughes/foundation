@@ -1,6 +1,6 @@
 ---
 name: wails-runtime-features
-description: 剪贴板、通知（含 beta.9 声音/附件/定时字段）、屏幕、自启动、平台 API（dock）、键盘快捷键（应用级 KeyBinding + 系统级 GlobalShortcut）、平台检测（System.IsMobile/IsDesktop/...）、文件/HTML 拖放、浏览器集成、环境信息、前端 @wailsio/runtime。当用户问到「app.Clipboard / Notifications / app.Screen / Autostart / Dock / KeyBinding / GlobalShortcut / 全局快捷键 / System.IsMac / IsMobile / IsDesktop / EnableFileDrop / OpenURL / app.Env / @wailsio/runtime / Application Window WML Events Browser Dialogs Flags Screens System」等运行时功能时使用。
+description: 剪贴板、通知（含声音/附件/定时字段）、屏幕、自启动、平台 API（Dock 服务 / badge）、键盘快捷键（应用级 KeyBinding + 系统级 GlobalShortcut，macOS 键盘布局感知）、平台检测（System.IsMobile/IsDesktop/...）、文件/HTML 拖放、浏览器集成、环境信息、前端 @wailsio/runtime。当用户问到「app.Clipboard / Notifications / app.Screen / Autostart / Dock / KeyBinding / GlobalShortcut / 全局快捷键 / System.IsMac / IsMobile / IsDesktop / EnableFileDrop / OpenURL / app.Env / @wailsio/runtime / Application Window WML Events Browser Dialogs Flags Screens System」等运行时功能时使用。
 ---
 
 # Wails v3 - Runtime 功能合集
@@ -14,7 +14,7 @@ description: 剪贴板、通知（含 beta.9 声音/附件/定时字段）、屏
 - 多显示器、DPI 缩放查询
 - 注册开机自启动
 - macOS Dock badge / progress / 弹跳
-- 全局键盘快捷键
+- 应用级快捷键（KeyBinding）与系统级全局快捷键（GlobalShortcut）
 - OS 文件拖放到应用、HTML 元素拖放
 - 默认浏览器打开 URL / 文件
 - 系统环境信息（OS / Arch / Theme）
@@ -50,7 +50,7 @@ notifier.SendNotification(notifications.NotificationOptions{
     ID: "msg-1", Title: "新消息", Subtitle: "From Alice", Body: "点击查看",
 })
 
-// 交互式（先注册 category）
+// 交互式（先注册 category，再 SendNotificationWithActions）
 notifier.RegisterNotificationCategory(notifications.NotificationCategory{
     ID: "MESSAGE_CATEGORY",
     Actions: []notifications.NotificationAction{
@@ -58,14 +58,19 @@ notifier.RegisterNotificationCategory(notifications.NotificationCategory{
         {ID: "MARK_READ", Title: "已读"},
     },
 })
+notifier.OnNotificationResponse(func(r notifications.NotificationResult) { /* r.Response.ActionIdentifier ... */ })
 ```
+
+`NotificationOptions` 可选增强字段：`Sound` / `Attachments` / `ThreadID` / `InterruptionLevel`（`passive/active/timeSensitive/critical`）/ `Schedule`，平台不支持时忽略。行为变化：被**关闭/划走**的通知不再被报告为点击（v3.1.0）；Windows WinRT toast 失败时直接返回 error、不再回退 PowerShell（beta.31）。
 
 ### 屏幕（`app.Screen`）
 
 ```go
-all := app.Screen.GetAll()       // []Screen
+all := app.Screen.GetAll()       // []*Screen
 primary := app.Screen.GetPrimary()
-current := app.Screen.GetCurrent()  // 当前光标所在屏幕
+byID := app.Screen.GetByID(id)   // 也有 GetByIndex(i)；当前窗口所在屏幕用 window.GetScreen()
+// DIP ↔ 物理像素：DipToPhysicalPoint / PhysicalToDipRect / ScreenNearestDipPoint ...
+// （前端 Screens.GetCurrent() 存在；Go 侧 ScreenManager 没有 GetCurrent）
 
 for _, s := range all {
     fmt.Printf("%s %dx%d scale=%.2f primary=%v\n",
@@ -74,6 +79,7 @@ for _, s := range all {
 
 // Screen 字段：ID, Name, Size{Width,Height}, X, Y, ScaleFactor, IsPrimary,
 // WorkArea (可用区域，去除 dock/taskbar), Bounds (全屏区域)
+// v3.1.0：macOS 与 GTK 一律按 DIP 报告屏幕（修复混合 DPI 下的 bounds）
 ```
 
 ### 自启动（`app.Autostart`）
@@ -94,22 +100,25 @@ enabled, err := app.Autostart.IsEnabled()
 status, err := app.Autostart.Status()  // 完整状态
 ```
 
-### macOS Dock（`app.Dock`，仅 macOS）
+### Dock / 任务栏（`pkg/services/dock` 服务，**不是** `app.Dock` 字段）
 
 ```go
-// Badge
-app.Dock.SetBadge("3")
-app.Dock.SetBadge("")    // 清除
+import "github.com/wailsapp/wails/v3/pkg/services/dock"
 
-// Progress
-app.Dock.SetProgress(0.5)  // 0-1
-app.Dock.HideProgress()
+dockService := dock.New()            // 或 dock.NewWithOptions(dock.BadgeOptions{...})
+app := application.New(application.Options{
+    Services: []application.Service{application.NewService(dockService)},
+})
 
-// 弹跳
-app.Dock.RequestUserAttention(application.AttentionTypeCritical)
+dockService.SetBadge("3")            // macOS Dock / Windows 任务栏 badge
+dockService.SetCustomBadge("!", dock.BadgeOptions{ /* 颜色 / 字体 */ })
+dockService.RemoveBadge()
+label := dockService.GetBadge()      // *string
+dockService.HideAppIcon()            // macOS：隐藏 Dock 图标
+dockService.ShowAppIcon()
 ```
 
-### 全局键盘快捷键（`app.KeyBinding`）
+### 应用级快捷键（`app.KeyBinding`，应用聚焦时跨窗口生效）
 
 ```go
 app.KeyBinding.Add("Ctrl+S", func(window application.Window) {
@@ -121,8 +130,21 @@ app.KeyBinding.Add("CmdOrCtrl+N", func(w application.Window) { /* */ })
 app.KeyBinding.Add("CmdOrCtrl+Shift+P", func(w application.Window) { /* command palette */ })
 
 app.KeyBinding.Remove("Ctrl+S")
-app.KeyBinding.RemoveAll()
+all := app.KeyBinding.GetAll()   // []*KeyBinding（没有 RemoveAll）
 ```
+
+### 系统级全局快捷键（`app.GlobalShortcut`，应用未聚焦也触发）
+
+```go
+err := app.GlobalShortcut.Register("CmdOrCtrl+Shift+K", func() { /* 无参回调 */ })
+app.GlobalShortcut.Unregister("CmdOrCtrl+Shift+K")
+app.GlobalShortcut.UnregisterAll()          // 退出时自动调用
+ok := app.GlobalShortcut.IsRegistered("CmdOrCtrl+Shift+K")
+list := app.GlobalShortcut.GetAll()         // []string
+```
+- 原生实现：macOS Carbon Hot Keys、Windows `RegisterHotKey`、X11 `XGrabKey`、Wayland 走 XDG Desktop Portal global shortcuts。
+- **beta.29 起 macOS 键盘布局感知**：字母 accelerator 绑定到 AZERTY / QWERTZ / Dvorak 等布局上**标着该字母的键**，而非 QWERTY 物理位置（菜单 accelerator 同理）。
+- `Run()` 之前注册的会排队，Run 后生效。详见 `global-shortcuts.md`。
 
 ### 文件拖放（系统级）
 
@@ -174,13 +196,14 @@ info := app.Env.Info()
 // info.OSInfo.Name / Version
 // info.PlatformInfo: map[string]any （平台特定）
 
-isDark := app.Env.IsDarkMode()
+isDark := app.Env.IsDarkMode()      // Linux v3.1.0 起统一读 org.freedesktop.appearance portal
+accent := app.Env.GetAccentColor()
+focusFollowsMouse := app.Env.HasFocusFollowsMouse()
 
-// 显示文件在文件管理器中
-app.Env.ShowInFileManager("/path/to/file")
+// 在文件管理器中显示（selectFile=true 时选中该文件）
+err := app.Env.OpenFileManager("/path/to/file", true)
 
-// 打开默认应用
-app.Env.OpenWithDefaultApplication("/path/to/file.pdf")
+// 用默认应用打开文件 → app.Browser.OpenFile(path)
 ```
 
 ### 前端 Runtime SDK (`@wailsio/runtime`)
@@ -195,7 +218,6 @@ import {
 Application.Quit()
 Application.Hide()  // macOS
 Application.Show()
-Application.OpenContextMenu('menu-id', {x, y, data})
 
 // Window（操作当前窗口）
 Window.Center()
@@ -214,10 +236,13 @@ const sz = await Window.Size()
 const pos = await Window.Position()
 
 // Events
-Events.On(name, handler)
+Events.On(name, handler)          // 返回 unsubscribe
 Events.Once(name, handler)
-Events.Off(name)
-Events.Emit(name, data)
+Events.OnMultiple(name, handler, n)
+Events.Off(name, ...more)
+Events.OffAll()
+await Events.Emit(name, data)     // Promise<boolean>（true=被 hook 取消）
+// 事件名可用生成的常量：import { UserLogin } from './bindings/events'（beta.33+，见 wails-events）
 
 // Browser
 Browser.OpenURL(url)
@@ -227,11 +252,15 @@ const path = await Dialogs.OpenFile({title: "Select", filters: [...]})
 const choice = await Dialogs.Question({title, message, buttons: [...]})
 
 // Screens
-const screens = await Screens.GetAll()
+const screens = await Screens.GetAll()   // GetPrimary / GetCurrent / GetByID / GetByIndex
 
 // System
 const info = await System.Environment()  // OS / Arch / Theme
 const isDark = await System.IsDarkMode()
+System.IsMac(); System.IsMobile(); System.IsDesktop()   // 同步平台检测
+
+// CancellablePromise 可单独导入（beta.31+，不求值 runtime 根入口）：
+// import { CancellablePromise } from '@wailsio/runtime/cancellable'
 
 // Clipboard
 await Clipboard.SetText("hello")
@@ -255,7 +284,8 @@ Flags.Get("name")
 | 屏幕信息 | [screens.md](./references/screens.md) |
 | 自启动 | [autostart.md](./references/autostart.md) |
 | macOS Dock（badge/progress/attention） | [platform-dock.md](./references/platform-dock.md) |
-| 全局键盘快捷键 | [keyboard-shortcuts.md](./references/keyboard-shortcuts.md) |
+| 应用级键盘快捷键（KeyBinding） | [keyboard-shortcuts.md](./references/keyboard-shortcuts.md) |
+| 系统级全局快捷键（GlobalShortcut） | [global-shortcuts.md](./references/global-shortcuts.md) |
 | 文件拖放（OS 拖入） | [drag-and-drop-files.md](./references/drag-and-drop-files.md) |
 | HTML 拖放（webview 内） | [drag-and-drop-html.md](./references/drag-and-drop-html.md) |
 | 浏览器集成（OpenURL） | [browser-integration.md](./references/browser-integration.md) |

@@ -1,8 +1,8 @@
 ---
-title: HTML Drag & Drop
-description: Drag and drop elements within your application
-sidebar:
-  order: 2
+title: "HTML Drag \u0026 Drop"
+description: "Drag and drop elements within your application"
+slug: "features/drag-and-drop/html"
+sourcePath: "features/drag-and-drop/html.md"
 ---
 
 HTML5 drag-and-drop lets users drag elements within your app's UI - for example, reordering a list or moving items between columns. This is standard web functionality that works in Wails without any special setup.
@@ -176,7 +176,7 @@ document.querySelectorAll('.drop-zone').forEach(zone => {
 
 ## Combining with File Drop
 
-If your app uses both HTML drag-and-drop and [File Drop](./files), your HTML drop zones will also receive events when users drag files from the operating system. To prevent confusion, filter out file drags in your handlers:
+If your app uses both HTML drag-and-drop and [File Drop](/features/drag-and-drop/files/), your HTML drop zones will also receive events when users drag files from the operating system. To prevent confusion, filter out file drags in your handlers:
 
 ```javascript
 zone.addEventListener('dragenter', (e) => {
@@ -228,5 +228,5 @@ The data is stored as strings, so you'll need to serialize objects with `JSON.st
 
 ## Next Steps
 
-- [File Drop](./files) - Accept files from the operating system
+- [File Drop](/features/drag-and-drop/files/) - Accept files from the operating system
 - [MDN Drag and Drop API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API) - Full browser API reference

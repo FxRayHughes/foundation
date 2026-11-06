@@ -1,17 +1,16 @@
 ---
-title: Dialogs API
-description: Complete reference for native dialog APIs
-sidebar:
-  order: 5
+title: "Dialogs API"
+description: "Complete reference for native dialog APIs"
+slug: "reference/dialogs"
+sourcePath: "reference/dialogs.md"
 ---
-
-import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Overview
 
 The Dialogs API provides methods to show native file dialogs and message dialogs. Access dialogs through the `app.Dialog` manager.
 
 **Dialog Types:**
+
 - **File Dialogs** - Open and Save dialogs
 - **Message Dialogs** - Info, Error, Warning, and Question dialogs
 
@@ -41,6 +40,7 @@ func (dm *DialogManager) OpenFile() *OpenFileDialogStruct
 ```
 
 **Example:**
+
 ```go
 dialog := app.Dialog.OpenFile()
 ```
@@ -56,6 +56,7 @@ func (d *OpenFileDialogStruct) SetTitle(title string) *OpenFileDialogStruct
 ```
 
 **Example:**
+
 ```go
 dialog.SetTitle("Select Image")
 ```
@@ -69,10 +70,12 @@ func (d *OpenFileDialogStruct) AddFilter(displayName, pattern string) *OpenFileD
 ```
 
 **Parameters:**
+
 - `displayName` - Filter description shown to user (e.g., "Images", "Documents")
 - `pattern` - Semicolon-separated list of extensions (e.g., "*.png;*.jpg")
 
 **Example:**
+
 ```go
 dialog.AddFilter("Images", "*.png;*.jpg;*.gif").
     AddFilter("Documents", "*.pdf;*.docx").
@@ -88,6 +91,7 @@ func (d *OpenFileDialogStruct) SetDirectory(directory string) *OpenFileDialogStr
 ```
 
 **Example:**
+
 ```go
 homeDir, _ := os.UserHomeDir()
 dialog.SetDirectory(homeDir)
@@ -102,6 +106,7 @@ func (d *OpenFileDialogStruct) CanChooseDirectories(canChooseDirectories bool) *
 ```
 
 **Example (folder selection):**
+
 ```go
 // Select folders instead of files
 path, err := app.Dialog.OpenFile().
@@ -152,10 +157,12 @@ func (d *OpenFileDialogStruct) PromptForSingleSelection() (string, error)
 ```
 
 **Returns:**
+
 - `string` - Selected file path. Treat an empty string as "no selection" (the platform impls may return either an empty string or a non-nil error on cancellation depending on OS).
 - `error` - Non-nil if the dialog itself failed to present.
 
 **Example:**
+
 ```go
 path, err := app.Dialog.OpenFile().
     SetTitle("Select Image").
@@ -184,10 +191,12 @@ func (d *OpenFileDialogStruct) PromptForMultipleSelection() ([]string, error)
 ```
 
 **Returns:**
+
 - `[]string` - Array of selected file paths
 - `error` - Error if dialog failed
 
 **Example:**
+
 ```go
 paths, err := app.Dialog.OpenFile().
     SetTitle("Select Images").
@@ -212,6 +221,7 @@ func (dm *DialogManager) SaveFile() *SaveFileDialogStruct
 ```
 
 **Example:**
+
 ```go
 dialog := app.Dialog.SaveFile()
 ```
@@ -235,6 +245,7 @@ func (d *SaveFileDialogStruct) SetFilename(filename string) *SaveFileDialogStruc
 ```
 
 **Example:**
+
 ```go
 dialog.SetFilename("document.pdf")
 ```
@@ -248,6 +259,7 @@ func (d *SaveFileDialogStruct) AddFilter(displayName, pattern string) *SaveFileD
 ```
 
 **Example:**
+
 ```go
 dialog.AddFilter("PDF Document", "*.pdf").
     AddFilter("Text Document", "*.txt")
@@ -278,6 +290,7 @@ func (d *SaveFileDialogStruct) PromptForSingleSelection() (string, error)
 ```
 
 **Example:**
+
 ```go
 path, err := app.Dialog.SaveFile().
     SetTitle("Save Document").
@@ -327,6 +340,7 @@ func (dm *DialogManager) Info() *MessageDialog
 ```
 
 **Example:**
+
 ```go
 app.Dialog.Info().
     SetTitle("Success").
@@ -343,6 +357,7 @@ func (dm *DialogManager) Error() *MessageDialog
 ```
 
 **Example:**
+
 ```go
 app.Dialog.Error().
     SetTitle("Error").
@@ -359,6 +374,7 @@ func (dm *DialogManager) Warning() *MessageDialog
 ```
 
 **Example:**
+
 ```go
 app.Dialog.Warning().
     SetTitle("Warning").
@@ -375,6 +391,7 @@ func (dm *DialogManager) Question() *MessageDialog
 ```
 
 **Example:**
+
 ```go
 dialog := app.Dialog.Question().
     SetTitle("Confirm").
@@ -437,6 +454,7 @@ func (d *MessageDialog) AddButton(label string) *Button
 **Returns:** `*Button` - The button instance for further configuration
 
 **Example:**
+
 ```go
 button := dialog.AddButton("OK")
 button.OnClick(func() {
@@ -453,6 +471,7 @@ func (d *MessageDialog) SetDefaultButton(button *Button) *MessageDialog
 ```
 
 **Example:**
+
 ```go
 yes := dialog.AddButton("Yes")
 no := dialog.AddButton("No")
@@ -468,6 +487,7 @@ func (d *MessageDialog) SetCancelButton(button *Button) *MessageDialog
 ```
 
 **Example:**
+
 ```go
 ok := dialog.AddButton("OK")
 cancel := dialog.AddButton("Cancel")
@@ -779,26 +799,21 @@ func (s *Service) OpenWithDefaults(app *application.App) (string, error) {
 
 #### Linux Dialog Behavior
 
-On Linux, the default GTK4 build uses **xdg-desktop-portal** for file dialogs, which provides
-native desktop integration but means some options have no effect. The legacy GTK3 path
-(`-tags gtk3`) retains full programmatic control over these options:
+On Linux, the default GTK4 build uses **xdg-desktop-portal** for file dialogs, which provides native desktop integration but means some options have no effect. The legacy GTK3 path (`-tags gtk3`) retains full programmatic control over these options:
 
 | Option | GTK3 (`-tags gtk3`) | GTK4 (default) | Notes |
-|--------|---------------------|----------------|-------|
+| --- | --- | --- | --- |
 | `ShowHiddenFiles()` | ✅ Works | ❌ No effect | User controls via dialog's UI toggle (Ctrl+H or menu) |
 | `CanCreateDirectories()` | ✅ Works | ❌ No effect | Always enabled in the portal |
 | `ResolvesAliases()` | ✅ Works | ❌ No effect | Portal handles symlink resolution |
 | `SetButtonText()` | ✅ Works | ✅ Works | Custom accept button text works |
 
-**Why these limitations exist:** GTK4's portal-based dialogs delegate UI control to the desktop
-environment (GNOME, KDE, etc.). This is by design — the portal provides consistent UX across
-applications and respects user preferences.
+**Why these limitations exist:** GTK4's portal-based dialogs delegate UI control to the desktop environment (GNOME, KDE, etc.). This is by design — the portal provides consistent UX across applications and respects user preferences.
 
-:::note
-The default GTK4 build uses the portal-backed dialogs. If your application needs full
-programmatic control over the dialog options above, build with the legacy `-tags gtk3` path
-(supported through v3.0.x; removed in v3.1) — see [Linux Packaging - Legacy GTK3 Support](/guides/build/linux#legacy-gtk3-support).
-:::
+@note{type="info"}
+The default GTK4 build uses the portal-backed dialogs. If your application needs full programmatic control over the dialog options above, build with the legacy `-tags gtk3` path (supported through v3.0.x; removed in v3.1) — see [Linux Packaging - Legacy GTK3 Support](/guides/build/linux/#legacy-gtk3-support).
+
+@end
 
 ## Common Patterns
 

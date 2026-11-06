@@ -10,18 +10,16 @@ vars:
   #
   # Password is stored securely in system keychain. Run: wails3 setup signing
 
-  # Docker image for cross-compilation (used when building on non-Linux or no CC available)
+  # Docker image for cross-compiling cgo builds (not needed with -tags purego).
   CROSS_IMAGE: wails-cross
 
 tasks:
   build:
     summary: Builds the application for Linux
     cmds:
-      # Linux requires CGO - use Docker when:
-      # 1. Cross-compiling from non-Linux, OR
-      # 2. No C compiler is available, OR
-      # 3. Target architecture differs from host architecture (cross-arch compilation)
-      - task: '{{if and (eq OS "linux") (eq .HAS_CC "true") (eq .TARGET_ARCH ARCH)}}build:native{{else}}build:docker{{end}}'
+      # The experimental CGO-free backend (-tags purego, or WAILS_PUREGO=1) uses
+      # the Go toolchain directly on every host and architecture.
+      - task: '{{if or (ne .CGO_ENABLED "1") (and (eq OS "linux") (eq .HAS_CC "true") (eq .TARGET_ARCH ARCH))}}build:native{{else}}build:docker{{end}}'
         vars:
           ARCH: '{{.ARCH}}'
           DEV: '{{.DEV}}'
@@ -29,14 +27,16 @@ tasks:
           EXTRA_TAGS: '{{.EXTRA_TAGS}}'
           OBFUSCATED: '{{.OBFUSCATED}}'
           GARBLE_ARGS: '{{.GARBLE_ARGS}}'
+          CGO_ENABLED: '{{.CGO_ENABLED}}'
     vars:
       DEFAULT_OUTPUT: '{{.BIN_DIR}}/{{.APP_NAME}}'
       OUTPUT: '{{ .OUTPUT | default .DEFAULT_OUTPUT }}'
       # Determine target architecture (defaults to host ARCH if not specified)
       TARGET_ARCH: '{{.ARCH | default ARCH}}'
+      CGO_ENABLED: '{{.CGO_ENABLED | default (ternary "0" "1" (has "purego" (splitList "," (.EXTRA_TAGS | default ""))))}}'
       # Check if a C compiler is available (gcc or clang) — cross-platform via wails3 tool
       HAS_CC:
-        sh: 'wails3 tool has-cc'
+        sh: 'wails3 tool has "gcc|clang"'
 
   build:native:
     summary: Builds the application natively on Linux
@@ -64,7 +64,7 @@ tasks:
       OUTPUT: '{{ .OUTPUT | default .DEFAULT_OUTPUT }}'
     env:
       GOOS: linux
-      CGO_ENABLED: 1
+      CGO_ENABLED: '{{.CGO_ENABLED | default (ternary "0" "1" (has "purego" (splitList "," (.EXTRA_TAGS | default ""))))}}'
       GOARCH: '{{.ARCH | default ARCH}}'
 
   build:docker:
@@ -186,39 +186,35 @@ tasks:
     summary: Signs the DEB package
     desc: |
       Signs the .deb package with a PGP key.
-      Configure PGP_KEY in the vars section at the top of this file.
+      Set PGP_KEY in the vars section to override the key configured globally via
+      `wails3 setup` (~/.config/wails/defaults.yaml).
       Password is retrieved from system keychain (run: wails3 setup signing)
     deps:
       - task: create:deb
     cmds:
-      - wails3 tool sign --input "{{.BIN_DIR}}/{{.APP_NAME}}*.deb" --pgp-key {{.PGP_KEY}} {{if .SIGN_ROLE}}--role {{.SIGN_ROLE}}{{end}}
-    preconditions:
-      - sh: '[ -n "{{.PGP_KEY}}" ]'
-        msg: "PGP_KEY is required. Set it in the vars section at the top of build/linux/Taskfile.yml"
+      # PGP_KEY is optional: if unset, `wails3 tool sign` falls back to the key
+      # configured globally via `wails3 setup`.
+      - wails3 tool sign --input "{{.BIN_DIR}}/{{.APP_NAME}}*.deb" {{if .PGP_KEY}}--pgp-key "{{.PGP_KEY}}"{{end}} {{if .SIGN_ROLE}}--role "{{.SIGN_ROLE}}"{{end}}
 
   sign:rpm:
     summary: Signs the RPM package
     desc: |
       Signs the .rpm package with a PGP key.
-      Configure PGP_KEY in the vars section at the top of this file.
+      Set PGP_KEY in the vars section to override the key configured globally via
+      `wails3 setup` (~/.config/wails/defaults.yaml).
       Password is retrieved from system keychain (run: wails3 setup signing)
     deps:
       - task: create:rpm
     cmds:
-      - wails3 tool sign --input "{{.BIN_DIR}}/{{.APP_NAME}}*.rpm" --pgp-key {{.PGP_KEY}}
-    preconditions:
-      - sh: '[ -n "{{.PGP_KEY}}" ]'
-        msg: "PGP_KEY is required. Set it in the vars section at the top of build/linux/Taskfile.yml"
+      - wails3 tool sign --input "{{.BIN_DIR}}/{{.APP_NAME}}*.rpm" {{if .PGP_KEY}}--pgp-key "{{.PGP_KEY}}"{{end}}
 
   sign:packages:
     summary: Signs all Linux packages (DEB and RPM)
     desc: |
       Signs both .deb and .rpm packages with a PGP key.
-      Configure PGP_KEY in the vars section at the top of this file.
+      Set PGP_KEY in the vars section to override the key configured globally via
+      `wails3 setup` (~/.config/wails/defaults.yaml).
       Password is retrieved from system keychain (run: wails3 setup signing)
     cmds:
       - task: sign:deb
       - task: sign:rpm
-    preconditions:
-      - sh: '[ -n "{{.PGP_KEY}}" ]'
-        msg: "PGP_KEY is required. Set it in the vars section at the top of build/linux/Taskfile.yml"

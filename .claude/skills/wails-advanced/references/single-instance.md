@@ -1,15 +1,11 @@
 ---
-title: Single Instance
-description: Limiting your app to a single running instance
-sidebar:
-   order: 40
+title: "Single Instance"
+description: "Limiting your app to a single running instance"
+slug: "guides/single-instance"
+sourcePath: "guides/single-instance.md"
 ---
 
-import { Tabs, TabItem } from "@astrojs/starlight/components";
-
-Single instance locking is a mechanism that prevents multiple instances of your app from running at the same time.
-It is useful for apps that are designed to open files from the command line or from the OS file explorer.
-
+Single instance locking is a mechanism that prevents multiple instances of your app from running at the same time. It is useful for apps that are designed to open files from the command line or from the OS file explorer.
 
 ## Usage
 
@@ -38,17 +34,16 @@ The `SingleInstanceOptions` struct has the following fields:
 - `UniqueID`: A unique identifier for your application. This should be a unique string, typically in reverse domain notation (e.g., "com.company.appname").
 - `EncryptionKey`: Optional 32-byte array for encrypting data passed between instances using AES-256-GCM. If provided as a non-zero array, all communication between instances will be encrypted.
 - `OnSecondInstanceLaunch`: A callback function that is called when a second instance of your app is launched. The callback receives a `SecondInstanceData` struct containing:
-    - `Args`: The command line arguments passed to the second instance
-    - `WorkingDir`: The working directory of the second instance
-    - `AdditionalData`: Any additional data passed from the second instance (if provided)
+  - `Args`: The command line arguments passed to the second instance
+  - `WorkingDir`: The working directory of the second instance
+  - `AdditionalData`: Any additional data passed from the second instance (if provided)
+
 - `AdditionalData`: Optional map of string key-value pairs that will be passed to the first instance when subsequent instances are launched
 
-:::danger[Warning]
-The Single Instance feature implements an optional encryption protocol using AES-256-GCM. Without encryption enabled,
-data passed between instances is not secure. When using the single instance feature without encryption,
-your app should treat any data passed to it from second instance callback as untrusted.
-You should verify that args that you receive are valid and don't contain any malicious data.
-:::
+@note{type="danger" title="Warning"}
+The Single Instance feature implements an optional encryption protocol using AES-256-GCM. Without encryption enabled, data passed between instances is not secure. When using the single instance feature without encryption, your app should treat any data passed to it from second instance callback as untrusted. You should verify that args that you receive are valid and don't contain any malicious data.
+
+@end
 
 ### Secure Communication
 
@@ -72,11 +67,12 @@ SingleInstance: &application.SingleInstanceOptions{
 }
 ```
 
-:::tip[Security Best Practices]
+@note{type="tip" title="Security Best Practices"}
 - Use a unique key for your application
 - Store the key securely if loading it from configuration
 - Do not use the example key shown above - create your own!
-:::
+
+@end
 
 ### Window Management
 
@@ -100,20 +96,14 @@ When handling second instance launches, you'll often want to bring your applicat
 
 ## How it works
 
-<Tabs syncKey="platform">
-    <TabItem label="Mac" icon="apple">
+@tabs{sync-key="platform"}
+[Mac]
+Single instance lock using a named mutex. The mutex name is generated from the unique id that you provide. Data is passed to the first instance via [NSDistributedNotificationCenter](https://developer.apple.com/documentation/foundation/nsdistributednotificationcenter)
 
-        Single instance lock using a named mutex. The mutex name is generated from the unique id that you provide. Data is passed to the first instance via [NSDistributedNotificationCenter](https://developer.apple.com/documentation/foundation/nsdistributednotificationcenter)
+[Windows]
+Single instance lock using a named mutex. The mutex name is generated from the unique id that you provide. Data is passed to the first instance via a shared window using [SendMessage](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendmessage)
 
-    </TabItem>
-    <TabItem label="Windows" icon="seti:windows">
+[Linux]
+Single instance lock using [dbus](https://www.freedesktop.org/wiki/Software/dbus/). The dbus name is generated from the unique id that you provide. Data is passed to the first instance via [dbus](https://www.freedesktop.org/wiki/Software/dbus/)
 
-        Single instance lock using a named mutex. The mutex name is generated from the unique id that you provide. Data is passed to the first instance via a shared window using [SendMessage](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-sendmessage)
-
-    </TabItem>
-    <TabItem label="Linux" icon="linux">
-
-        Single instance lock using [dbus](https://www.freedesktop.org/wiki/Software/dbus/). The dbus name is generated from the unique id that you provide. Data is passed to the first instance via [dbus](https://www.freedesktop.org/wiki/Software/dbus/)
-
-    </TabItem>
-</Tabs>
+@end

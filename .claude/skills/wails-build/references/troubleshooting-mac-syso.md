@@ -1,6 +1,8 @@
 ---
-title: Syso files on macOS
-description: Troubleshoot Syso file build errors on macOS
+title: "Syso files on macOS"
+description: "Troubleshoot Syso file build errors on macOS"
+slug: "troubleshooting/mac-syso"
+sourcePath: "troubleshooting/mac-syso.md"
 ---
 
 ## Problem
@@ -15,8 +17,7 @@ clang: error: linker command failed with exit code 1 (use -v to see invocation)
 
 ## Why is this happening?
 
-When building for Windows, Wails will generate `.syso` files for the application icon, window icon, and menu icon. These files are required for the application to build on Windows.
-These `.syso` files can be found in the project's root directory and can cause issues when building for macOS. 
+When building for Windows, Wails will generate `.syso` files for the application icon, window icon, and menu icon. These files are required for the application to build on Windows. These `.syso` files can be found in the project's root directory and can cause issues when building for macOS.
 
 ## Solution
 

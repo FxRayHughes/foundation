@@ -1,11 +1,9 @@
 ---
-title: Method Bindings
-description: Call Go methods from JavaScript with type safety
-sidebar:
-  order: 1
+title: "Call Go from JavaScript"
+description: "Call Go methods from JavaScript with type safety"
+slug: "features/bindings/methods"
+sourcePath: "features/bindings/methods.md"
 ---
-
-import { FileTree, Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Type-Safe Go-JavaScript Bindings
 
@@ -92,6 +90,7 @@ app := application.New(application.Options{
 ```
 
 **Key points:**
+
 - Only **exported methods** (PascalCase) are bound
 - Methods can return values or `(value, error)`
 - Services are **singletons** (one instance per application)
@@ -101,7 +100,7 @@ app := application.New(application.Options{
 ```go
 type CounterService struct {
     count int
-    mu    sync.Mutex
+    mu    sync.RWMutex
 }
 
 func (c *CounterService) Increment() int {
@@ -180,14 +179,14 @@ INFO  Output directory: /myproject/frontend/bindings
 
 **Generated structure:**
 
-<FileTree>
+@filetree
 - frontend/bindings
   - myapp
     - calculatorservice.js
     - counterservice.js
     - databaseservice.js
     - index.js
-</FileTree>
+@end
 
 ### TypeScript Generation
 
@@ -282,6 +281,7 @@ try {
 ```
 
 **Benefits:**
+
 - Full type checking
 - IDE autocomplete
 - Compile-time errors
@@ -312,7 +312,7 @@ const sum = await CalculatorService.Add(5, 3)
 ### Primitive Types
 
 | Go Type | JavaScript/TypeScript |
-|---------|----------------------|
+| --- | --- |
 | `string` | `string` |
 | `bool` | `boolean` |
 | `int`, `int8`, `int16`, `int32`, `int64` | `number` |
@@ -323,22 +323,23 @@ const sum = await CalculatorService.Add(5, 3)
 
 ### Complex Types
 
-| Go Type | JavaScript/TypeScript |
-|---------|----------------------|
-| `[]T` | `T[]` |
-| `[N]T` | `T[]` |
-| `map[string]T` | `{ [_: string]: T }` (string-keyed map) |
-| `map[K]V` | `{ [_ in K]?: V }` (non-string `K` is rendered as a mapped type, **not** a JS `Map`) |
-| `[]byte` | `Uint8Array` |
-| `struct` | `class` (with fields) |
-| `time.Time` | `Date` |
-| `*T` | `T \| null` (pointer-nullable) |
-| `any` / `interface{}` | `any` |
-| `error` | Exception (thrown) |
+| Go Type | JavaScript/TypeScript | Notes |
+| --- | --- | --- |
+| `[]T` | `T[]` | - |
+| `[N]T` | `T[]` | - |
+| `map[string]T` | `{ [_: string]: T }` | string-keyed map |
+| `map[K]V` | `{ [_ in K]?: V }` | non-string `K` is rendered as a mapped type, **not** a JS `Map` |
+| `[]byte` | `string` | base64-encoded |
+| `struct` | `class` / `interface` | with fields |
+| `time.Time` | `string` (default) or `Date` | `-time-type` selects the generated representation; JSON uses an RFC3339Nano string |
+| `*T` | `T \| null` | pointer means nullable |
+| `any` / `interface{}` | `any` | - |
+| `error` | `any` / `Exception` | Exception if as return value else any |
 
 ### Unsupported Types
 
 These types **cannot** be passed across the bridge:
+
 - `chan T` (channels)
 - `func()` (functions)
 - Complex interfaces (except `interface{}`)
@@ -400,6 +401,8 @@ func (d *DatabaseService) GetUser(id int) (*User, error) {
 
 ### JavaScript Side
 
+When a bound method fails, the returned promise rejects with a JavaScript `Error` object:
+
 ```javascript
 import { GetUser } from './bindings/changeme/databaseservice'
 
@@ -407,15 +410,106 @@ try {
     const user = await GetUser(123)
     console.log("User:", user)
 } catch (error) {
-    console.error("Error:", error)
-    // Error: "user 123 not found"
+    console.error(error.message)
+    // "user 123 not found"
 }
 ```
 
-**Error types:**
-- Go `error` → JavaScript exception
-- Error message preserved
-- Stack trace available
+The runtime throws a different error type depending on what went wrong:
+
+| Error type | Thrown when |
+| --- | --- |
+| `TypeError` | The call has the wrong number of arguments, or an argument cannot be converted to the Go type |
+| `RuntimeError` | The method returned an error, or panicked while running |
+| `Error` | Any other failure, for example a call to a method that does not exist |
+
+Every error provides:
+
+- `name`: the error type from the table above
+- `message`: the message of the Go error
+- `cause`: the Go error serialised as JSON, where available. If the method returned multiple errors, `cause` is an array with one entry per error.
+
+The `RuntimeError` class is exported by the `@wailsio/runtime` package, so you can distinguish errors returned by your Go code from other failures:
+
+```javascript
+import { Call } from '@wailsio/runtime'
+import { GetUser } from './bindings/changeme/databaseservice'
+
+try {
+    const user = await GetUser(123)
+} catch (error) {
+    if (error instanceof Call.RuntimeError) {
+        // GetUser returned an error
+    } else {
+        // The call itself failed
+    }
+}
+```
+
+@note{type="info"}
+In earlier versions of the runtime, every failed call rejected with a plain `Error` whose message contained the raw JSON of the underlying error.
+
+@end
+
+### Structured Error Data
+
+Returning a custom error type from Go makes its JSON form available on the `cause` property of the thrown error:
+
+```go
+type ValidationError struct {
+    Field  string `json:"field"`
+    Reason string `json:"reason"`
+}
+
+func (e *ValidationError) Error() string {
+    return fmt.Sprintf("%s: %s", e.Field, e.Reason)
+}
+
+func (s *UserService) UpdateEmail(id int, email string) error {
+    if !strings.Contains(email, "@") {
+        return &ValidationError{Field: "email", Reason: "invalid email address"}
+    }
+    // ...
+    return nil
+}
+```
+
+```javascript
+import { UpdateEmail } from './bindings/changeme/userservice'
+
+try {
+    await UpdateEmail(1, "not-an-email")
+} catch (error) {
+    console.log(error.message)  // "email: invalid email address"
+    console.log(error.cause)    // { field: "email", reason: "invalid email address" }
+}
+```
+
+Errors are serialised with the standard `encoding/json` package, so only exported fields are included. Errors created with `errors.New` or `fmt.Errorf` have no exported fields and serialise as an empty object.
+
+For full control over how errors are serialised, provide a `MarshalError` function in the service options:
+
+```go
+app := application.New(application.Options{
+    Services: []application.Service{
+        application.NewServiceWithOptions(&UserService{}, application.ServiceOptions{
+            MarshalError: func(err error) []byte {
+                var validationErr *ValidationError
+                if errors.As(err, &validationErr) {
+                    data, _ := json.Marshal(map[string]string{
+                        "type":  "validation",
+                        "field": validationErr.Field,
+                    })
+                    return data
+                }
+                return nil // fall back to the default serialisation
+            },
+        }),
+    },
+})
+```
+
+`MarshalError` must return valid JSON, or `nil` to fall back to the default serialisation.
 
 ## Performance
 
@@ -430,6 +524,7 @@ JavaScript → Bridge → Go → Bridge → JavaScript
 ```
 
 **Compared to alternatives:**
+
 - HTTP/REST: 5-50ms
 - IPC: 1-10ms
 - Wails: &lt;1ms
@@ -617,32 +712,32 @@ app.loadTodos()
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Services" icon="puzzle">
-    Deep dive into the service system.
-    
-    [Learn More →](/features/bindings/services)
-  </Card>
+@cards{cols="2"}
+◆ Services
+Deep dive into the service system.
 
-  <Card title="Models" icon="document">
-    Bind complex data structures.
-    
-    [Learn More →](/features/bindings/models)
-  </Card>
+[Learn More →](/features/bindings/services/)
 
-  <Card title="Go-Frontend Bridge" icon="rocket">
-    Understand the bridge mechanism.
-    
-    [Learn More →](/concepts/bridge)
-  </Card>
+---
+📖 Models
+Bind complex data structures.
 
-  <Card title="Events" icon="star">
-    Use events for pub/sub communication.
-    
-    [Learn More →](/features/events/system)
-  </Card>
-</CardGrid>
+[Learn More →](/features/bindings/models/)
+
+---
+🚀 Go-Frontend Bridge
+Understand the bridge mechanism.
+
+[Learn More →](/concepts/bridge/)
+
+---
+★ Events
+Use events for pub/sub communication.
+
+[Learn More →](/features/events/system/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [binding examples](https://github.com/wailsapp/wails/tree/master/v3/examples/binding).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [binding examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/binding).

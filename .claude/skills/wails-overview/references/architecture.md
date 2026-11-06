@@ -1,11 +1,9 @@
 ---
-title: How Wails Works
-description: Understanding the Wails architecture and how it achieves native performance
-sidebar:
-  order: 1
+title: "How Wails Works"
+description: "Understanding the Wails architecture and how it achieves native performance"
+slug: "concepts/architecture"
+sourcePath: "concepts/architecture.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 Wails is a framework for building desktop applications using **Go for the backend** and **web technologies for the frontend**. But unlike Electron, Wails doesn't bundle a browser—it uses the **operating system's native WebView**.
 
@@ -24,7 +22,7 @@ Wails App: {
     shape: sequence_diagram
     backend."Serves Static Web App"
     backend -> frontend: HTML / JS / CSS
-    frontend."Render Site via WebKit"
+    frontend."Render Site via OS-native WebView"
   }
   Regular Communication: {
     shape: sequence_diagram
@@ -42,7 +40,7 @@ Wails App: {
 **Key differences from Electron:**
 
 | Aspect | Wails | Electron |
-|--------|-------|----------|
+| --- | --- | --- |
 | **Browser** | OS-provided WebView | Bundled Chromium (~100MB) |
 | **Backend** | Go (compiled) | Node.js (interpreted) |
 | **Communication** | In-memory bridge | IPC (inter-process) |
@@ -56,33 +54,35 @@ Wails App: {
 
 Wails uses the operating system's built-in web rendering engine:
 
-<Tabs syncKey="platform">
-  <TabItem label="Windows" icon="seti:windows">
-    **WebView2** (Microsoft Edge WebView2)
-    - Based on Chromium (same as Edge browser)
-    - Pre-installed on Windows 10/11
-    - Automatic updates via Windows Update
-    - Full modern web standards support
-  </TabItem>
+@tabs{sync-key="platform"}
+[Windows]
+**WebView2** (Microsoft Edge WebView2)
 
-  <TabItem label="macOS" icon="apple">
-    **WebKit** (Safari's rendering engine)
-    - Built into macOS
-    - Same engine as Safari browser
-    - Excellent performance and battery life
-    - Full modern web standards support
-  </TabItem>
+- Based on Chromium (same as Edge browser)
+- Pre-installed on Windows 10/11
+- Automatic updates via Windows Update
+- Full modern web standards support
 
-  <TabItem label="Linux" icon="linux">
-    **WebKitGTK** (GTK port of WebKit)
-    - Installed via package manager
-    - Same engine as GNOME Web (Epiphany)
-    - Good standards support
-    - Lightweight and performant
-  </TabItem>
-</Tabs>
+[macOS]
+**WebKit** (Safari's rendering engine)
+
+- Built into macOS
+- Same engine as Safari browser
+- Excellent performance and battery life
+- Full modern web standards support
+
+[Linux]
+**WebKitGTK** (GTK port of WebKit)
+
+- Installed via package manager
+- Same engine as GNOME Web (Epiphany)
+- Good standards support
+- Lightweight and performant
+
+@end
 
 **Why this matters:**
+
 - **No bundled browser** → Smaller app size
 - **OS-native** → Better integration and performance
 - **Auto-updates** → Security patches from OS updates
@@ -139,6 +139,7 @@ Bridge.Decoder -> Frontend: "5. Decode to JS\nPromise resolves"
 6. **Promise resolves** in JavaScript with the result
 
 **Performance characteristics:**
+
 - **In-memory**: No network overhead, no HTTP
 - **Zero-copy** where possible (for large data)
 - **Async by default**: Non-blocking on both sides
@@ -172,12 +173,14 @@ app := application.New(application.Options{
 ```
 
 **Service discovery:**
+
 - Wails **scans your struct** at startup
 - **Exported methods** become callable from frontend
 - **Type information** is extracted for TypeScript bindings
 - **Error handling** is automatic (Go errors → JS exceptions)
 
 **Generated TypeScript binding:**
+
 ```typescript
 // Auto-generated in frontend/bindings/GreetService.ts
 export function Greet(name: string): Promise<string>
@@ -185,12 +188,13 @@ export function GetTime(): Promise<Date>
 ```
 
 **Why services?**
+
 - **Type-safe**: Full TypeScript support
 - **Auto-discovery**: No manual registration of methods
 - **Organised**: Group related functionality
 - **Testable**: Services are just Go structs
 
-[Learn more about services →](/features/bindings/services)
+[Learn more about services →](/features/bindings/services/)
 
 ### 4. Event System
 
@@ -209,21 +213,25 @@ Wails Event System: {
   Event Driver: {
     shape: sequence_diagram
     window1."Subscribe to 'data-updated' events"
+    window2."Subscribe to 'data-updated' events"
     backend.a."App Emit('data-updated', data)"
     backend.a -> window1.a:"JSON Event Bus"
     backend.a -> window2:"JSON Event Bus"
     window1.a."Subscriber processes On('data-updated', handler)"
+    window2."Subscriber processes On('data-updated', handler)"
   }
 }
 ```
 
 **Use cases:**
+
 - **Window communication**: One window notifies others
 - **Background tasks**: Go service notifies UI of progress
 - **State synchronisation**: Keep multiple windows in sync
 - **Loose coupling**: Components don't need direct references
 
 **Example:**
+
 ```go
 // Go: Emit an event
 app.Event.Emit("user-logged-in", user)
@@ -238,7 +246,7 @@ Events.On('user-logged-in', (user) => {
 })
 ```
 
-[Learn more about events →](/features/events/system)
+[Learn more about events →](/features/events/system/)
 
 ## Application Lifecycle
 
@@ -323,7 +331,7 @@ app := application.New(application.Options{
 
 There is no `OnStartup` field on `application.Options`. Startup work belongs in a service's `ServiceStartup(ctx, options)`, in a callback registered via `app.Event.OnApplicationEvent(events.Common.ApplicationStarted, ...)`, or simply before `app.Run()`.
 
-[Learn more about lifecycle →](/concepts/lifecycle)
+[Learn more about lifecycle →](/concepts/lifecycle/)
 
 ## Build Process
 
@@ -386,156 +394,160 @@ Build.Embed -> Output.Binary
 **Build steps:**
 
 1. **Analyse Go code**
-   - Scan services for exported methods
-   - Extract parameter and return types
-   - Generate method signatures
+  - Scan services for exported methods
+  - Extract parameter and return types
+  - Generate method signatures
+
 
 2. **Generate TypeScript bindings**
-   - Create `.ts` files for each service
-   - Include full type definitions
-   - Add JSDoc comments
+  - Create `.ts` files for each service
+  - Include full type definitions
+  - Add JSDoc comments
+
 
 3. **Build frontend**
-   - Run your bundler (Vite, webpack, etc.)
-   - Minify and optimise
-   - Output to `frontend/dist/`
+  - Run your bundler (Vite, webpack, etc.)
+  - Minify and optimise
+  - Output to `frontend/dist/`
+
 
 4. **Compile Go**
-   - Compile with optimisations (`-ldflags="-s -w"`)
-   - Include build metadata
-   - Platform-specific compilation
+  - Compile with optimisations (`-ldflags="-s -w"`)
+  - Include build metadata
+  - Platform-specific compilation
+
 
 5. **Embed assets**
-   - Embed frontend files into Go binary
-   - Compress assets
-   - Create single executable
+  - Embed frontend files into Go binary
+  - Compress assets
+  - Create single executable
+
 
 **Result:** A single native executable with everything embedded.
 
-[Learn more about building →](/guides/build/building)
+[Learn more about building →](/guides/build/building/)
 
 ## Development vs Production
 
 Wails behaves differently in development and production:
 
-<Tabs syncKey="mode">
-  <TabItem label="Development (wails3 dev)" icon="seti:config">
-    **Characteristics:**
-    - **Hot reload**: Frontend changes reload instantly
-    - **Source maps**: Debug with original source
-    - **DevTools**: Browser DevTools available
-    - **Logging**: Verbose logging enabled
-    - **External frontend**: Served from dev server (Vite)
+@tabs{sync-key="mode"}
+[Development (wails3 dev)]
+**Characteristics:**
 
-    **How it works:**
-    ```d2
-    direction: right
-    
-    WailsApp: "Wails App" {
-      shape: rectangle
-      style.fill: "#00ADD8"
-    }
-    
-    DevServer: "Vite Dev Server\n(localhost:5173)" {
-      shape: rectangle
-      style.fill: "#8B5CF6"
-    }
-    
-    WebView: "WebView" {
-      shape: rectangle
-      style.fill: "#6B7280"
-    }
-    
-    WailsApp -> DevServer: "Proxy requests"
-    DevServer -> WebView: "Serve with HMR"
-    WebView -> WailsApp: "Call Go methods"
-    ```
+- **Hot reload**: Frontend changes reload instantly
+- **Source maps**: Debug with original source
+- **DevTools**: Browser DevTools available
+- **Logging**: Verbose logging enabled
+- **External frontend**: Served from dev server (Vite)
 
-    **Benefits:**
-    - Instant feedback on changes
-    - Full debugging capabilities
-    - Faster iteration
-  </TabItem>
+**How it works:**
 
-  <TabItem label="Production (wails3 build)" icon="rocket">
-    **Characteristics:**
-    - **Embedded assets**: Frontend built into binary
-    - **Optimised**: Minified, compressed
-    - **No DevTools**: Disabled by default
-    - **Minimal logging**: Errors only
-    - **Single file**: Everything in one executable
+```d2
+direction: right
 
-    **How it works:**
-    ```d2
-    direction: right
-    
-    Binary: "Single Binary\n(myapp.exe)" {
-      GoCode: "Compiled Go" {
-        shape: rectangle
-        style.fill: "#00ADD8"
-      }
-      
-      Assets: "Embedded Assets\n(HTML/CSS/JS)" {
-        shape: rectangle
-        style.fill: "#8B5CF6"
-      }
-    }
-    
-    WebView: "WebView" {
-      shape: rectangle
-      style.fill: "#6B7280"
-    }
-    
-    Binary.Assets -> WebView: "Serve from memory"
-    WebView -> Binary.GoCode: "Call Go methods"
-    ```
+WailsApp: "Wails App" {
+  shape: rectangle
+  style.fill: "#00ADD8"
+}
 
-    **Benefits:**
-    - Single file distribution
-    - Smaller size (minified)
-    - Better performance
-    - No external dependencies
-  </TabItem>
-</Tabs>
+DevServer: "Vite Dev Server\n(localhost:5173)" {
+  shape: rectangle
+  style.fill: "#8B5CF6"
+}
+
+WebView: "WebView" {
+  shape: rectangle
+  style.fill: "#6B7280"
+}
+
+WailsApp -> DevServer: "Proxy requests"
+DevServer -> WebView: "Serve with HMR"
+WebView -> WailsApp: "Call Go methods"
+```
+
+**Benefits:**
+
+- Instant feedback on changes
+- Full debugging capabilities
+- Faster iteration
+
+[Production (wails3 build)]
+**Characteristics:**
+
+- **Embedded assets**: Frontend built into binary
+- **Optimised**: Minified, compressed
+- **No DevTools**: Disabled by default
+- **Minimal logging**: Errors only
+- **Single file**: Everything in one executable
+
+**How it works:**
+
+```d2
+direction: right
+
+Binary: "Single Binary\n(myapp.exe)" {
+  GoCode: "Compiled Go" {
+    shape: rectangle
+    style.fill: "#00ADD8"
+  }
+  
+  Assets: "Embedded Assets\n(HTML/CSS/JS)" {
+    shape: rectangle
+    style.fill: "#8B5CF6"
+  }
+}
+
+WebView: "WebView" {
+  shape: rectangle
+  style.fill: "#6B7280"
+}
+
+Binary.Assets -> WebView: "Serve from memory"
+WebView -> Binary.GoCode: "Call Go methods"
+```
+
+**Benefits:**
+
+- Single file distribution
+- Smaller size (minified)
+- Better performance
+- No external dependencies
+
+@end
 
 ## Memory Model
 
 Understanding memory usage helps you build efficient applications.
 
-{/* VISUAL PLACEHOLDER: Memory Diagram
-Description: Memory layout diagram showing:
-1. Go Heap (services, application state)
-2. WebView Memory (DOM, JavaScript heap)
-3. Shared Memory (bridge communication)
-4. Arrows showing data flow between regions
-5. Annotations for zero-copy optimisations
-Style: Technical diagram with memory regions as boxes, clear labels, size indicators
-*/}
-
 **Memory regions:**
 
 1. **Go Heap**
-   - Your services and application state
-   - Managed by Go garbage collector
-   - Typically 5-10MB for simple apps
+  - Your services and application state
+  - Managed by Go garbage collector
+  - Typically 5-10MB for simple apps
+
 
 2. **WebView Memory**
-   - DOM, JavaScript heap, CSS
-   - Managed by WebView's engine
-   - Typically 10-20MB for simple apps
+  - DOM, JavaScript heap, CSS
+  - Managed by WebView's engine
+  - Typically 10-20MB for simple apps
+
 
 3. **Bridge Memory**
-   - Message buffers for communication
-   - Minimal overhead (\<1MB)
-   - Zero-copy for large data where possible
+  - Message buffers for communication
+  - Minimal overhead (<1MB)
+  - Zero-copy for large data where possible
+
 
 **Optimisation tips:**
+
 - **Avoid large data transfers**: Pass IDs, fetch details on demand
 - **Use events for updates**: Don't poll from frontend
 - **Stream large files**: Don't load entirely into memory
 - **Clean up listeners**: Remove event listeners when done
 
-[Learn more about performance →](/guides/advanced/performance)
+[Learn more about performance →](/guides/performance/)
 
 ## Security Model
 
@@ -569,47 +581,48 @@ Bridge -> Frontend: "Send response"
 **Security features:**
 
 1. **Method whitelisting**
-   - Only exported methods are callable
-   - Private methods are inaccessible
-   - Explicit service registration required
+  - Only exported methods are callable
+  - Private methods are inaccessible
+  - Explicit service registration required
+
 
 2. **Type validation**
-   - Arguments checked against Go types
-   - Invalid types rejected
-   - Prevents injection attacks
+  - Arguments checked against Go types
+  - Invalid types rejected
+  - Prevents injection attacks
+
 
 3. **No eval()**
-   - Frontend can't execute arbitrary Go code
-   - Only predefined methods callable
-   - No dynamic code execution
+  - Frontend can't execute arbitrary Go code
+  - Only predefined methods callable
+  - No dynamic code execution
+
 
 4. **Context isolation**
-   - Each window has its own context
-   - Services can check caller context
-   - Permissions per window possible
+  - Each window has its own context
+  - Services can check caller context
+  - Permissions per window possible
+
 
 **Best practices:**
+
 - **Validate user input** in Go (don't trust frontend)
 - **Use context** for authentication/authorisation
 - **Sanitise file paths** before file operations
 - **Rate limit** expensive operations
 
-[Learn more about security →](/guides/advanced/security)
+[Learn more about security →](/guides/security/)
 
 ## Next Steps
 
-**Application Lifecycle** - Understand startup, shutdown, and lifecycle hooks  
-[Learn More →](/concepts/lifecycle)
+**Application Lifecycle** - Understand startup, shutdown, and lifecycle hooks [Learn More →](/concepts/lifecycle/)
 
-**Go-Frontend Bridge** - Deep dive into how the bridge works  
-[Learn More →](/concepts/bridge)
+**Go-Frontend Bridge** - Deep dive into how the bridge works [Learn More →](/concepts/bridge/)
 
-**Build System** - Understand how Wails builds your application  
-[Learn More →](/concepts/build-system)
+**Build System** - Understand how Wails builds your application [Learn More →](/concepts/build-system/)
 
-**Start Building** - Apply what you've learned in a tutorial
-[Tutorials →](/tutorials/03-notes-vanilla)
+**Start Building** - Apply what you've learned in a tutorial [Tutorials →](/tutorials/03-notes-vanilla/)
 
 ---
 
-**Questions about architecture?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [API reference](/reference/overview).
+**Questions about architecture?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [API reference](/reference/overview/).

@@ -1,7 +1,15 @@
 export { DataGridPro } from './DataGridPro';
 export { DataGridPremium } from './DataGridPremium';
+export { registerDataGridLocales } from './lang';
 export type {
   DataGridProProps,
+  DataGridColumn,
+  DataGridRow,
+  DataGridRowId,
+  DataGridFilterModel,
+  DataGridFilterItem,
+  DataGridFilterOperator,
+  DataGridSortModel,
   PinnedColumns,
   PinnedRows,
   TreeDataConfig,
@@ -9,9 +17,11 @@ export type {
   LazyLoadingConfig,
   HeaderFilterConfig,
   ClipboardPasteConfig,
+  ClipboardPasteContext,
 } from './types';
 export type {
   DataGridPremiumProps,
+  DataGridRecord,
   AggregationModel,
   AggregationFunction,
   CustomAggregationFn,

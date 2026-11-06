@@ -1,17 +1,24 @@
 import { useMemo } from 'react';
 import { Window } from '@wailsio/runtime';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { IconAlertCircle, IconAlertTriangle, IconInfoCircle } from '@tabler/icons-react';
+import type { Icon } from '@tabler/icons-react';
 import { getChildWindowParams, emitResult } from '@/services/childwindow';
+import { FOUNDATION_CSS_VARS } from '@/styles/themes';
 
 export type MessageVariant = 'info' | 'warning' | 'error';
 
-const iconMap = {
-  info: InfoOutlinedIcon,
-  warning: WarningAmberRoundedIcon,
-  error: ErrorOutlineRoundedIcon,
-} as const;
+const iconMap: Record<MessageVariant, Icon> = {
+  info: IconInfoCircle,
+  warning: IconAlertTriangle,
+  error: IconAlertCircle,
+};
+
+// 图标颜色：引用 --fd-* 变量（而非具体色值），主题切换自动生效
+const colorMap: Record<MessageVariant, string> = {
+  info: FOUNDATION_CSS_VARS.accent,
+  warning: FOUNDATION_CSS_VARS.status.warning,
+  error: FOUNDATION_CSS_VARS.status.danger,
+};
 
 function detectVariant(title: string): MessageVariant {
   const lower = title.toLowerCase();
@@ -24,8 +31,9 @@ export interface UseMessageWindowReturn {
   title: string;
   message: string;
   variant: MessageVariant;
-  icon: typeof InfoOutlinedIcon;
-  iconColor: (fp: Record<string, unknown>) => string;
+  icon: Icon;
+  // CSS 颜色值（var(--fd-*) 引用）
+  iconColor: string;
   handleOk: () => void;
 }
 
@@ -33,15 +41,6 @@ export const useMessageWindow = (): UseMessageWindowReturn => {
   const params = getChildWindowParams();
 
   const variant = useMemo(() => detectVariant(params.title), [params.title]);
-
-  const icon = iconMap[variant];
-
-  const iconColor = (fp: Record<string, unknown>): string => {
-    const status = fp.status as Record<string, string> | undefined;
-    if (variant === 'error') return status?.danger ?? '#f44336';
-    if (variant === 'warning') return status?.warning ?? '#ff9800';
-    return fp.accent as string ?? '#2196f3';
-  };
 
   const handleOk = (): void => {
     emitResult('ok');
@@ -52,8 +51,8 @@ export const useMessageWindow = (): UseMessageWindowReturn => {
     title: params.title,
     message: params.message,
     variant,
-    icon,
-    iconColor,
+    icon: iconMap[variant],
+    iconColor: colorMap[variant],
     handleOk,
   };
 };

@@ -21,15 +21,22 @@
 | [wails-advanced](./wails-advanced/SKILL.md) | 自定义传输、单实例、文件关联、协议、更新器、性能、安全、panic、raw msg、路由、Gin、测试、自定义模板 | guides/* (高级与杂项) |
 | [wails-tutorials-migration](./wails-tutorials-migration/SKILL.md) | 完整教程（todo/notes/self-update）+ v2→v3 迁移 | tutorials/* + migration/* |
 | [wails-upgrade-sop](./wails-upgrade-sop/SKILL.md) | **维护/SOP**：升级 Wails 版本 + 同步 skill + 发版的完整标准流程 | 拉参考源码 → 核对 API 变更 → 升后端/前端/bindings → 同步 skill → 构建验证 → 发布；含本机代理/pnpm/GOBIN 坑 |
-| [foundation-theme](./foundation-theme/SKILL.md) | **本项目**：主题注册系统使用与扩展 | 注册新主题、切换主题、消费 `theme.palette.foundation` |
+| [foundation-theme](./foundation-theme/SKILL.md) | **本项目**：主题注册系统使用与扩展 | 注册新主题、切换主题、`mantineOverrides`、消费 `--fd-*` / `FOUNDATION_CSS_VARS` / `useFoundationPalette`、跨窗口同步（`appsettings:changed`） |
 | [foundation-i18n](./foundation-i18n/SKILL.md) | **本项目**：国际化系统（注册式 + 页面级语言包） | 注册新语言、写页面级语言包、消费 `useT()`、铁律：人类可见字符串必须走 `t()` |
 | [foundation-persistence](./foundation-persistence/SKILL.md) | **本项目**：持久化层（SQLite + GORM + AutoMigrate） | 加新表三步、业务 service 接入 Holder、前端 service 包装、路径切换、表统计与清空、PRAGMA / 并发、Provider 异步化模式 |
 | [foundation-utils](./foundation-utils/SKILL.md) | **本项目**：工具层（httpx / procx / cryptox / logx / filex） | HTTP 客户端、子进程（含 Windows JobObject）、AES-GCM、slog 日志、原子写；含 subprocess 白名单 service |
+| [foundation-mantine](./foundation-mantine/SKILL.md) | **本项目**：前端 UI 总入口（Mantine 9.7.5）—— 写任何组件 / module.css / 从 MUI 迁移时先读 | 全部 UI 铁律（`--fd-*` 配色、CSS Modules、圆角、Tabler 图标、`t()`、NativeDialogs、禁 localStorage）、`buildMantineTheme` 编译原理（foundation 色阶 / cssVariablesResolver / 全局组件覆盖）、MUI→Mantine 对照表 + Mantine 官方主题 / 样式文档 |
+| [foundation-mantine-components](./foundation-mantine-components/SKILL.md) | **本项目**：Mantine 核心组件实战（布局 / 输入 / 浮层反馈 / 导航 / 数据展示 / hooks） | 项目式示例、onChange 签名对照、新组件检查清单 + 78 篇 Mantine 官方组件 / hooks 文档（9.7.5） |
+| [foundation-mantine-icons](./foundation-mantine-icons/SKILL.md) | **本项目**：图标规范（@tabler/icons-react 3.50） | 尺寸 / stroke 约定、在 node_modules 查图标名、路由 `Icon` 类型、MUI 图标 → Tabler 对照 |
+| [foundation-mantine-charts](./foundation-mantine-charts/SKILL.md) | **本项目**：图表（@mantine/charts 9.7.5 + x-pro 图表） | 配色规则（`FOUNDATION_CSS_VARS` / `useChartColors`）、Bar/Donut/Line… 用法、x-pro Heatmap/Funnel/Radar/Candlestick/Sankey/Gantt/Treemap/Zoomable props + 官方 charts 文档 |
+| [foundation-mantine-datatable](./foundation-mantine-datatable/SKILL.md) | **本项目**：数据表格（mantine-datatable 9.4.0 + x-pro DataGridPro/Premium） | DataTable 用法与主题色 props、DataGridColumn、钉住 / 树形 / 主从 / 懒加载 / 表头筛选 / 粘贴 / 拖拽 / 分组 / 聚合 / 单元格选择 / 导出 + 完整 d.ts |
+| [foundation-childwindow](./foundation-childwindow/SKILL.md) | **本项目**：子窗口系统 | `ChildWindowService.{open,close,list}`、事件总线（定向 / 广播）、预设类型 confirm / message / blank、新增子窗口类型 |
+| [foundation-systray](./foundation-systray/SKILL.md) | **本项目**：系统托盘 | `SystrayService.{Enable,Disable,IsEnabled,SetMenuLabels}`（开关持久化 + 启动恢复）、托盘面板模块注册、右键菜单 i18n |
 
 ## 内容来源
 
-所有 SKILL 内容源自官方仓库 `wailsapp/wails`（`docs/src/content/docs/`，Astro Starlight）。
-最新基准：`v3.0.0-beta.9`（tag `9b3cd78`，2026-08-17 拉取）。此前基准为 master @ `6329e9d2bec9`（2026-05-28，对应 alpha.96）。
+所有 SKILL 内容源自官方仓库 `wailsapp/wails` 的 `docs/mpress/content/`（M-Press，纯 `.md`；只取英文，不含翻译 / blog / community）。beta.21 起官方文档站由 Astro Starlight（`docs/src/content/docs/*.mdx`）迁到 M-Press，主题目录（concepts / features / guides / reference / tutorials / migration / getting-started / quick-start / troubleshooting）不变，另有根级 `changelog.md` / `whats-new.md` / `faq.md` / `status.md`。
+最新基准：`v3.1.0`（2026-11-06 同步；v3.1.0 于 2026-11-01 发布，为 v3.0.0 GA 后首个 weekly）。此前基准：`v3.0.0-beta.9`（tag `9b3cd78`，2026-08-17，Starlight 布局）、master @ `6329e9d2bec9`（2026-05-28，对应 alpha.96）。
 
 每个 SKILL 文件夹结构：
 
@@ -40,6 +47,8 @@ wails-<name>/
 ```
 
 ## 与官方文档对应表
+
+路径均相对 `docs/mpress/content/`（下表沿用的 `.mdx` 后缀在新布局中均为 `.md`）。
 
 | 文档目录 | 归属 SKILL |
 |---------|-----------|
@@ -88,5 +97,5 @@ export GOPROXY="https://goproxy.cn,direct" GOSUMDB="sum.golang.google.cn"
 
 ## 版本
 
-当前基准 `v3.0.0-beta.9`（见上方"内容来源"）。跟进新版本走 `/wails-upgrade-sop`。
+当前基准 `v3.1.0`（见上方"内容来源"）。跟进新版本走 `/wails-upgrade-sop`。
 

@@ -1,0 +1,27 @@
+/* XProDemoPage 骨架屏样式：从 XProDemoPage.module.css 复制骨架所需的版式类。
+   独立成文件是为了分包 —— 骨架随首屏静态加载，若与懒加载页面共用同一个 CSS Module，
+   打包器会把页面 chunk（连同 recharts / mantine-datatable）拖进首屏预加载。改版式时两边同步。 */
+
+.root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--fd-bg-content);
+  overflow: hidden;
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.chartRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
+}

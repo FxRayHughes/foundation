@@ -1,16 +1,16 @@
 ---
-title: Why Wails?
-description: Understand why Wails is the right choice for your desktop application
-sidebar:
-  order: 1
+title: "Why Wails?"
+description: "Understand why Wails is the right choice for your desktop application"
+slug: "quick-start/why-wails"
+sourcePath: "quick-start/why-wails.md"
 ---
-
 
 Wails combines **Go's performance and simplicity** with **modern web UI flexibility**, enabling you to build beautiful, native desktop applications with the tools you already know.
 
 ## Performance That Users Notice
 
 **Wails Applications:**
+
 - **~15MB binaries** (vs Electron's 150MB)
 - **~10MB baseline memory** (vs Electron's 100MB+)
 - **&lt;0.5s startup time** (vs Electron's 2-3s)
@@ -21,6 +21,7 @@ Users perceive your application as fast, lightweight, and professional.
 ## Developer Experience
 
 **Write Once, Run Everywhere:**
+
 - One Go codebase for Windows, macOS, and Linux
 - Use any web framework (React, Vue, Svelte, vanilla JS)
 - Hot reload during development
@@ -31,6 +32,7 @@ Ship faster with less code to maintain.
 ## Production-Ready Features
 
 **Everything you need:**
+
 - Multiple windows with independent lifecycles
 - Native menus (application, context, system tray)
 - File dialogs with platform-native UI
@@ -58,15 +60,17 @@ Build professional applications, not prototypes.
 
 ## Real-World Success Stories
 
-:::tip[Production Applications]
+@note{type="tip" title="Production Applications"}
 Wails powers real applications used by thousands of users:
+
 - **Database management tools** with complex UIs
 - **Financial dashboards** processing real-time data
 - **Video editing tools** with native performance
 - **Development utilities** used by engineering teams
 
-[See the showcase →](/community/showcase)
-:::
+[See the showcase →](/community/showcase/)
+
+@end
 
 ## How Wails Works
 
@@ -77,39 +81,13 @@ Unlike Electron which bundles an entire browser and Node.js runtime, Wails takes
 Wails applications consist of two main parts that communicate seamlessly: a Go backend handling business logic and system operations, and a web-based frontend for your user interface. The OS-provided WebView renders your UI without bundling a browser, while the bindings layer provides type-safe communication between Go and JavaScript.
 
 <div style="display: flex; justify-content: center; align-items: center; margin: 2rem 0;">
-<div style="max-width: 600px;">
-
-```d2
-direction: down
-
-Application: {
-Go: "Go Backend" {
-  shape: rectangle
-  style.fill: "#00ADD8"
-}
-WebView: "Native WebView" {
-  shape: rectangle
-  style.fill: "#3B82F6"
-
-    Frontend: "Your UI\n(React/Vue/etc)" {
-      shape: rectangle
-      style.fill: "#8B5CF6"
-    }
-
-}
-Go <-> WebView: "Bindings & Events"
-}
-
-
-
-```
-
-</div>
+  <img src="/img/architecture.svg" alt="Wails architecture: a Go backend and your web UI compiled into one native binary, connected by generated bindings and rendered by the operating system's WebView" style="max-width: 640px; width: 100%;" />
 </div>
 
 This simple architecture enables JavaScript code to call Go functions directly (through auto-generated bindings), while Go can send events and data back to the frontend. Both layers communicate through an efficient in-memory bridge with sub-millisecond overhead.
 
 **How Wails achieves performance:**
+
 1. **No runtime bundled** - Uses Go's compiled binary
 2. **Native WebView** - OS-provided rendering engine
 3. **Direct Go ↔ JS bridge** - In-memory communication, no network overhead
@@ -119,14 +97,11 @@ This simple architecture enables JavaScript code to call Go functions directly (
 
 Now that you understand what Wails provides, let's get you set up:
 
-1. **Install Wails** - Set up your development environment in 5 minutes  
-   [Installation Guide →](/quick-start/installation)
+1. **Install Wails** - Set up your development environment in 5 minutes [Installation Guide →](/quick-start/installation/)
 
-2. **Build Your First App** - Create a working application and understand the basics  
-   [First App Tutorial →](/quick-start/first-app)
+2. **Build Your First App** - Create a working application and understand the basics [First App Tutorial →](/quick-start/first-app/)
 
-3. **Explore Features** - Discover what Wails can do for your application  
-   [Feature Overview →](/quick-start/next-steps)
+3. **Explore Features** - Discover what Wails can do for your application [Feature Overview →](/quick-start/next-steps/)
 
 ---
 

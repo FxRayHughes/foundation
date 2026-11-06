@@ -1,0 +1,48 @@
+/* Skeleton 样式：取色全部走 --fd-* 变量，跟随主题切换。
+   shimmer 与 frontend/index.html 启动骨架（.ssk-block / @keyframes ssk-shimmer）完全同款：
+   - 底色 bg.elevated，扫光带 bg.hover，linear-gradient 90deg 0/50/100%
+   - background-size 200%，1.4s ease-in-out 无限循环
+   - 用 background-position 平移，比 transform translateX 性能更稳（不会创建合成层闪烁） */
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.base {
+  background-color: var(--fd-bg-elevated);
+  background-image: linear-gradient(
+    90deg,
+    var(--fd-bg-elevated) 0%,
+    var(--fd-bg-hover) 50%,
+    var(--fd-bg-elevated) 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* 浏览器在低性能模式下尊重 prefers-reduced-motion：关掉扫光，仅保留底色 */
+@media (prefers-reduced-motion: reduce) {
+  .base {
+    animation: none;
+  }
+}
+
+.rect {
+  border-radius: 6px;
+}
+
+.text {
+  border-radius: 2px;
+  height: 12px;
+}
+
+.circle {
+  border-radius: 50%;
+}
+
+.textGroup {
+  display: flex;
+  flex-direction: column;
+}

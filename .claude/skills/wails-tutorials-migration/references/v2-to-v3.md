@@ -1,15 +1,14 @@
 ---
-title: Migrating from v2 to v3
-description: Complete guide to migrating your Wails v2 application to v3
-sidebar:
-  order: 1
+title: "Migrating from v2 to v3"
+description: "Complete guide to migrating your Wails v2 application to v3"
+slug: "migration/v2-to-v3"
+sourcePath: "migration/v2-to-v3.md"
 ---
-
-import { Card, CardGrid, Tabs, TabItem } from "@astrojs/starlight/components";
 
 Wails v3 is a **complete rewrite** with significant improvements in architecture, performance, and developer experience. This guide helps you migrate your v2 application to v3.
 
 **Key changes:**
+
 - New application structure
 - Improved bindings system
 - Enhanced window management
@@ -260,17 +259,17 @@ window2.SetSize(1024, 768)
 ```go
 module myapp
 
-go 1.21
+go 1.25.0
 
 require (
-    github.com/wailsapp/wails/v3 v3.0.0-alpha.1
+    github.com/wailsapp/wails/v3 v3.0.0
 )
 ```
 
 **Update:**
 
 ```bash
-go get github.com/wailsapp/wails/v3@latest
+go get github.com/wailsapp/wails/v3@v3.0.0
 go mod tidy
 ```
 
@@ -675,52 +674,48 @@ wails3 generate bindings
 
 ### Resources
 
-- [Documentation](/quick-start/why-wails)
+- [Documentation](/quick-start/why-wails/)
 - [Discord Community](https://discord.gg/JDdSxwjhGf)
 - [GitHub Issues](https://github.com/wailsapp/wails/issues)
-- [Examples](https://github.com/wailsapp/wails/tree/master/v3/examples)
+- [Examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples)
 
 ### Common Questions
 
-**Q: Can I run v2 and v3 side by side?**  
-A: Yes, they use different import paths.
+**Q: Can I run v2 and v3 side by side?** A: Yes, they use different import paths.
 
-**Q: Is v3 production-ready?**  
-A: v3 is in alpha/beta. Test thoroughly before production.
+**Q: Is v3 production-ready?** Wails v3.0.0 is the stable release for desktop applications on Windows, macOS and Linux. Android and iOS support remains experimental and is outside the stable desktop compatibility contract.
 
-**Q: Will v2 be maintained?**  
-A: Yes, v2 will receive critical updates.
+**Q: Will v2 be maintained?** A: Yes, v2 will receive critical updates.
 
-**Q: How long does migration take?**  
-A: 1-4 hours for typical applications.
+**Q: How long does migration take?** A: 1-4 hours for typical applications.
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Quick Start" icon="rocket">
-    Get started with Wails v3.
-    
-    [Learn More →](/quick-start/installation)
-  </Card>
+@cards{cols="2"}
+🚀 Quick Start
+Get started with Wails v3.
 
-  <Card title="Core Concepts" icon="star">
-    Understand v3 architecture.
-    
-    [Learn More →](/concepts/architecture)
-  </Card>
+[Learn More →](/quick-start/installation/)
 
-  <Card title="Bindings" icon="puzzle">
-    Learn the new bindings system.
-    
-    [Learn More →](/features/bindings/methods)
-  </Card>
+---
+★ Core Concepts
+Understand v3 architecture.
 
-  <Card title="Examples" icon="open-book">
-    See complete v3 examples.
-    
-    [View Examples →](https://github.com/wailsapp/wails/tree/master/v3/examples)
-  </Card>
-</CardGrid>
+[Learn More →](/concepts/architecture/)
+
+---
+◆ Bindings
+Learn the new bindings system.
+
+[Learn More →](/features/bindings/methods/)
+
+---
+📖 Examples
+See complete v3 examples.
+
+[View Examples →](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples)
+
+@end
 
 ---
 

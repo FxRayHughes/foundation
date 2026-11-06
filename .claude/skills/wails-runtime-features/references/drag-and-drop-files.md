@@ -1,11 +1,15 @@
 ---
-title: File Drop
-description: Accept files dragged from the operating system into your application
-sidebar:
-  order: 1
+title: "File Drop"
+description: "Accept files dragged from the operating system into your application"
+slug: "features/drag-and-drop/files"
+sourcePath: "features/drag-and-drop/files.md"
 ---
 
 Wails lets users drag files from the operating system (file manager, desktop) into your application. Unlike HTML5 drag-and-drop which only works within the browser, this gives you access to actual file paths on disk.
+
+![A Wails drag-and-drop example with an external file-drop zone on macOS](/assets/screenshots/file-drop-macos.png)
+
+The external drop zone is part of the webview, while Wails supplies the native operating-system file drop events.
 
 ## Enable File Drop
 
@@ -208,5 +212,5 @@ This ensures your HTML drop handlers only respond to internal drags (like moving
 
 ## Next Steps
 
-- [HTML Drag & Drop](./html) - Drag elements within your app
-- [Window Options](/features/windows/options) - All window configuration options
+- [HTML Drag & Drop](/features/drag-and-drop/html/) - Drag elements within your app
+- [Window Options](/features/windows/options/) - All window configuration options

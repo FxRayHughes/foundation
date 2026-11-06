@@ -1,11 +1,9 @@
 ---
-title: Application API
-description: Complete reference for the Application API
-sidebar:
-  order: 1
+title: "Application API"
+description: "Complete reference for the Application API"
+slug: "reference/application"
+sourcePath: "reference/application.md"
 ---
-
-import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Overview
 
@@ -379,9 +377,10 @@ func (s *MyService) ProcessData(data string) error {
 
 For applications that need direct, low-level control over frontend-to-backend communication, Wails provides the `RawMessageHandler` option. This bypasses the standard binding system.
 
-:::note
+@note{type="info"}
 Raw messages should only be used as a last resort. The standard binding system is highly optimized and sufficient for almost all applications. Only use raw messages if you have profiled your application and confirmed that bindings are a bottleneck.
-:::
+
+@end
 
 ### RawMessageHandler
 
@@ -394,7 +393,7 @@ type Options struct {
 }
 ```
 
-`OriginInfo` carries `Origin`, `TopOrigin`, and `IsMainFrame` (platforms populate different subsets — see the [Raw Messages Guide](/guides/raw-messages) for the per-platform matrix).
+`OriginInfo` carries `Origin`, `TopOrigin`, and `IsMainFrame` (platforms populate different subsets — see the [Raw Messages Guide](/guides/raw-messages/) for the per-platform matrix).
 
 **Example:**
 
@@ -411,10 +410,9 @@ app := application.New(application.Options{
 })
 ```
 
+For more details, see the [Raw Messages Guide](/guides/raw-messages/).
 
-For more details, see the [Raw Messages Guide](/guides/raw-messages).
-
-## Platform Detection: `application.System`（beta.9 新增）
+## Platform Detection: `application.System`（beta.9 起，v3.1.0 仍有效；官方 reference 未收录，本地补充）
 
 `application.System` 是一个全局单例，用于在**共享代码**里做运行时平台判断——无需 build tag、在每个目标平台都能编译，因此可以直接 `if` 分支而不必拆 `_darwin.go` / `_windows.go` 文件。
 
@@ -465,11 +463,12 @@ app := application.New(application.Options{
 ```
 
 **Browser Flags:**
+
 - `EnabledFeatures` - WebView2 feature flags to enable
 - `DisabledFeatures` - WebView2 feature flags to disable
 - `AdditionalBrowserArgs` - Chromium command-line arguments
 
-See [Window Options - Application-Level Windows Options](/features/windows/options#application-level-windows-options) for detailed documentation.
+See [Window Options - Application-Level Windows Options](/features/windows/options/#application-level-windows-options) for detailed documentation.
 
 ### Mac Options
 
@@ -530,4 +529,3 @@ func main() {
     app.Run()
 }
 ```
-

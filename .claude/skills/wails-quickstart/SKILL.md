@@ -1,6 +1,6 @@
 ---
 name: wails-quickstart
-description: Wails v3 安装、依赖检查、新建项目、第一个应用、项目结构解析。当用户问到「如何安装 wails3 / wails3 init / wails3 doctor / 项目目录结构 / 新手开始 / Go 版本要求 / WebView2 依赖」时使用。
+description: Wails v3 安装、wails3 setup 引导向导、依赖检查、新建项目、第一个应用、项目结构解析、调试、接入其他前端框架。当用户问到「如何安装 wails3 / wails3 setup / setup wizard / wails3 init / wails3 doctor / 项目目录结构 / 新手开始 / Go 版本要求（Go 1.26）/ WebView2 依赖 / GTK4 WebKitGTK 6.0 / 调试 debugging / devtools / 其他前端框架」时使用。
 ---
 
 # Wails v3 - 快速开始
@@ -20,27 +20,38 @@ description: Wails v3 安装、依赖检查、新建项目、第一个应用、�
 ### 系统要求
 
 - Windows 10/11 AMD64/ARM64
-- macOS 10.15+ AMD64（部署到 10.13+）/ macOS 11.0+ ARM64
-- Ubuntu 24.04 AMD64/ARM64（其他 Linux 也可能可用）
+- macOS AMD64/ARM64：标准构建任务的部署目标为 **macOS 12.0+**（`build/darwin/Taskfile.yml` 的 `-mmacosx-version-min=12.0`）
+- Ubuntu 24.04 AMD64/ARM64（其他 Linux 也可能可用；默认需要 GTK4 + WebKitGTK 6.0）
 
 ### 必装依赖
 
 | 依赖 | 要求 | 验证 |
 |------|------|------|
-| Go | ≥1.24（推荐 1.25） | `go version` |
+| Go | **≥1.26**（v3 模块声明 `go 1.26.0`；推荐 1.26.10 / 1.27.3+，含 `crypto/x509` 安全修复；旧 Go 可借 `GOTOOLCHAIN=auto` 自动拉取） | `go version` |
 | npm | 模板需要（可选） | `npm --version` |
 | Xcode CLT | macOS 必需 | `xcode-select --install` |
 | WebView2 Runtime | Windows 必需 | `wails3 doctor` |
 | gcc + gtk4 + webkitgtk-6.0 | Linux 必需 | `wails3 doctor` 会给出安装命令 |
 
-Linux 旧栈：可用 `-tags gtk3` 切回 GTK3 + WebKit2GTK 4.1（v3.1 前保留）。
+Linux 旧栈：可用 `-tags gtk3` 切回 GTK3 + WebKit2GTK 4.1（Ubuntu 22.04 / Debian 12 / RHEL 9 等只有 4.1 的发行版需要）。官方文档称「v3.1 移除」，但 **v3.1.0 源码中该 tag 仍在**，按过渡选项对待。
 
 ### 安装 CLI
 
-正式版：
+正式版（`@latest` 只解析到 weekly / hotfix，不会拿到 nightly；需要可复现时写精确版本如 `@v3.1.0`）：
 ```sh
 go install -v github.com/wailsapp/wails/v3/cmd/wails3@latest
 ```
+
+### `wails3 setup` 引导向导（v3 GA 新增，标注实验性）
+
+```sh
+wails3 setup                 # 在浏览器打开向导：依赖检查 / 全局默认值 / 可选 Docker 跨平台 / 签名凭据
+wails3 setup signing         # 子命令：配置代码签名
+wails3 setup entitlements    # 子命令：配置 macOS entitlements
+```
+- 全局偏好写到 `$XDG_CONFIG_HOME/wails/defaults.yaml`（回退 `~/.config/wails/defaults.yaml`），供 `wails3 init` 复用；与项目的 `build/config.yml` 无关。
+- ⚠️ 官方 setup.md 的「Sub-Commands」写成 `wails3 signing` / `wails3 entitlements`，**源码（cmd/wails3/main.go）实际是 `wails3 setup signing` / `wails3 setup entitlements`**，以源码为准。
+- 向导主要在 Linux 上测试；有问题退回 `wails3 doctor` + 手动安装依赖。
 
 开发版：
 ```sh
@@ -78,7 +89,9 @@ myfirstapp/
 │   ├── Taskfile.yml          # 顶层构建任务
 │   ├── darwin/               # macOS（Info.plist、icons.icns）
 │   ├── linux/                # AppImage / NFPM 打包
-│   └── windows/              # NSIS、icon.ico、wails.exe.manifest
+│   ├── windows/              # NSIS、MSIX、icon.ico、wails.exe.manifest
+│   ├── android/ ios/         # 移动端工程（实验性）
+│   └── docker/               # 跨平台交叉编译镜像
 ├── frontend/                 # 前端代码
 │   ├── index.html
 │   ├── main.js
@@ -107,6 +120,9 @@ myfirstapp/
 | 你的第一个应用（含视频步骤） | [your-first-app.md](./references/your-first-app.md) |
 | 安装替代版（quick-start） | [quick-installation.md](./references/quick-installation.md) |
 | 项目结构详解 | [project-structure.md](./references/project-structure.md) |
+| `wails3 setup` 向导 | [setup.md](./references/setup.md) |
+| 调试（devtools / Go 调试器） | [debugging.md](./references/debugging.md) |
+| 接入其他前端框架 | [frontend-frameworks.md](./references/frontend-frameworks.md) |
 
 ## 链接到其他 SKILL
 

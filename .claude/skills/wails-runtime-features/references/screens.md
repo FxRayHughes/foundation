@@ -1,11 +1,9 @@
 ---
-title: Screen Information
-description: Get information about displays and monitors
-sidebar:
-  order: 1
+title: "Screen Information"
+description: "Get information about displays and monitors"
+slug: "features/screens/info"
+sourcePath: "features/screens/info.md"
 ---
-
-import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Screen Information
 
@@ -123,6 +121,7 @@ fmt.Printf("Scale: %.2f\n", screen.ScaleFactor)
 ```
 
 **Common scale factors:**
+
 - `1.0` - Standard DPI (96 DPI)
 - `1.25` - 125% scaling (120 DPI)
 - `1.5` - 150% scaling (144 DPI)
@@ -446,32 +445,32 @@ func visualiseScreenLayout() string {
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Windows" icon="laptop">
-    Learn about window management.
-    
-    [Learn More →](/features/windows/basics)
-  </Card>
+@cards{cols="2"}
+▣ Windows
+Learn about window management.
 
-  <Card title="Window Options" icon="seti:config">
-    Configure window appearance.
-    
-    [Learn More →](/features/windows/options)
-  </Card>
+[Learn More →](/features/windows/basics/)
 
-  <Card title="Multiple Windows" icon="puzzle">
-    Multi-window patterns.
-    
-    [Learn More →](/features/windows/multiple)
-  </Card>
+---
+⚙ Window Options
+Configure window appearance.
 
-  <Card title="Bindings" icon="rocket">
-    Call Go functions from JavaScript.
-    
-    [Learn More →](/features/bindings/methods)
-  </Card>
-</CardGrid>
+[Learn More →](/features/windows/options/)
+
+---
+◆ Multiple Windows
+Multi-window patterns.
+
+[Learn More →](/features/windows/multiple/)
+
+---
+🚀 Bindings
+Call Go functions from JavaScript.
+
+[Learn More →](/features/bindings/methods/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [screen examples](https://github.com/wailsapp/wails/tree/master/v3/examples).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [screen examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples).

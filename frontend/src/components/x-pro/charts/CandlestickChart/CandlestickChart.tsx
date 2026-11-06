@@ -1,10 +1,11 @@
-import { useTheme } from '@mui/material/styles';
-import { Box } from '@mui/material';
-import { useChartDimensions } from '../shared/hooks';
-import { useChartTooltip } from '../shared/useChartTooltip';
-import { Tooltip } from '../shared/Tooltip';
-import { Legend } from '../shared/Legend';
-import type { ChartMargin } from '../shared/types';
+import {
+  CandlestickChart as MantineCandlestickChart,
+  type CandlestickChartLabels,
+} from '@mantine/charts';
+import { useMemo } from 'react';
+import { FOUNDATION_CSS_VARS } from '@/styles/themes';
+import { useChartsI18n } from '../shared';
+import type { ChartMargin } from '../shared';
 
 export interface CandlestickDataPoint {
   date: string;
@@ -20,131 +21,57 @@ export interface CandlestickChartProps {
   downColor?: string;
   width?: number;
   height?: number;
+  /** 透传给 Recharts ComposedChart 的 margin（坐标轴由底层绘制，默认不需要设置） */
   margin?: ChartMargin;
+  /**
+   * Tooltip 中 open/high/low/close 的文案。
+   * 缺省取 x-pro 图表语言包 `xproCharts.candlestick.*`（随当前语言切换）；传入的字段逐项覆盖默认值。
+   */
+  labels?: Partial<CandlestickChartLabels>;
+  /** 图表容器的无障碍名称；缺省 `xproCharts.candlestick.ariaLabel` */
+  ariaLabel?: string;
 }
 
-const DEFAULT_MARGIN: ChartMargin = { top: 16, right: 16, bottom: 32, left: 48 };
-
+// K 线图：@mantine/charts CandlestickChart 的薄封装。
+// 涨 / 跌默认色取主题 success / danger。
 export function CandlestickChart({
   data,
   upColor,
   downColor,
   width,
   height,
-  margin = DEFAULT_MARGIN,
+  margin,
+  labels,
+  ariaLabel,
 }: CandlestickChartProps) {
-  const theme = useTheme();
-  const fp = theme.palette.foundation;
-  const { ref, dimensions } = useChartDimensions(width, height, margin);
-  const { tooltip, show, hide } = useChartTooltip();
-
-  const up = upColor ?? fp.status.success;
-  const down = downColor ?? fp.status.danger;
-
-  const { innerWidth, innerHeight } = dimensions;
-  const candleCount = data.length;
-
-  if (candleCount === 0) {
-    return <Box ref={ref} sx={{ width: width ?? '100%', height: height ?? 300 }} />;
-  }
-
-  const allHighs = data.map((d) => d.high);
-  const allLows = data.map((d) => d.low);
-  const priceMax = Math.max(...allHighs);
-  const priceMin = Math.min(...allLows);
-  const priceRange = priceMax - priceMin || 1;
-
-  const candleWidth = Math.max(1, (innerWidth / candleCount) * 0.6);
-  const gap = innerWidth / candleCount;
-
-  const scaleY = (price: number) =>
-    margin.top + innerHeight - ((price - priceMin) / priceRange) * innerHeight;
-
-  const scaleX = (index: number) => margin.left + gap * index + gap / 2;
-
-  const handleMouseEnter = (e: React.MouseEvent, d: CandlestickDataPoint) => {
-    const rect = (e.currentTarget as SVGElement).ownerSVGElement?.getBoundingClientRect();
-    if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    show(x, y, `${d.date}\nO:${d.open} H:${d.high} L:${d.low} C:${d.close}`);
-  };
-
-  const legendItems = [
-    { label: 'Up', color: up },
-    { label: 'Down', color: down },
-  ];
+  const { t } = useChartsI18n();
+  const resolvedLabels = useMemo<CandlestickChartLabels>(
+    () => ({
+      open: labels?.open ?? t('xproCharts.candlestick.open'),
+      high: labels?.high ?? t('xproCharts.candlestick.high'),
+      low: labels?.low ?? t('xproCharts.candlestick.low'),
+      close: labels?.close ?? t('xproCharts.candlestick.close'),
+    }),
+    [labels?.open, labels?.high, labels?.low, labels?.close, t],
+  );
 
   return (
-    <Box ref={ref} sx={{ width: width ?? '100%', height: height ?? 300, position: 'relative' }}>
-      <Legend items={legendItems} />
-      <svg
-        width={dimensions.width}
-        height={dimensions.height - 28}
-        style={{ display: 'block' }}
-      >
-        {data.map((d, i) => {
-          const isUp = d.close >= d.open;
-          const color = isUp ? up : down;
-          const cx = scaleX(i);
-          const bodyTop = scaleY(Math.max(d.open, d.close));
-          const bodyBottom = scaleY(Math.min(d.open, d.close));
-          const bodyHeight = Math.max(1, bodyBottom - bodyTop);
-
-          return (
-            <g
-              key={d.date + i}
-              onMouseEnter={(e) => handleMouseEnter(e, d)}
-              onMouseLeave={hide}
-              style={{ cursor: 'pointer' }}
-            >
-              <line
-                x1={cx}
-                y1={scaleY(d.high)}
-                x2={cx}
-                y2={scaleY(d.low)}
-                stroke={color}
-                strokeWidth={1}
-              />
-              <rect
-                x={cx - candleWidth / 2}
-                y={bodyTop}
-                width={candleWidth}
-                height={bodyHeight}
-                fill={isUp ? color : color}
-                stroke={color}
-                strokeWidth={0.5}
-              />
-            </g>
-          );
-        })}
-        {Array.from({ length: 5 }).map((_, i) => {
-          const price = priceMin + (priceRange / 4) * i;
-          const y = scaleY(price);
-          return (
-            <g key={`axis-${i}`}>
-              <line
-                x1={margin.left}
-                y1={y}
-                x2={dimensions.width - margin.right}
-                y2={y}
-                stroke={fp.divider}
-                strokeDasharray="2,2"
-              />
-              <text
-                x={margin.left - 4}
-                y={y + 4}
-                textAnchor="end"
-                fontSize={10}
-                fill={fp.text.muted}
-              >
-                {price.toFixed(2)}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-      <Tooltip state={tooltip} />
-    </Box>
+    <MantineCandlestickChart
+      role="figure"
+      aria-label={ariaLabel ?? t('xproCharts.candlestick.ariaLabel')}
+      w={width ?? '100%'}
+      h={height ?? 300}
+      data={data}
+      dataKey="date"
+      upColor={upColor ?? FOUNDATION_CSS_VARS.status.success}
+      downColor={downColor ?? FOUNDATION_CSS_VARS.status.danger}
+      gridColor={FOUNDATION_CSS_VARS.divider}
+      textColor={FOUNDATION_CSS_VARS.text.muted}
+      strokeDasharray="2 2"
+      gridAxis="y"
+      labels={resolvedLabels}
+      valueFormatter={(v) => v.toFixed(2)}
+      composedChartProps={margin ? { margin } : undefined}
+    />
   );
 }

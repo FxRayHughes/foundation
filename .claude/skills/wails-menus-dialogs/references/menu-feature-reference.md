@@ -1,11 +1,9 @@
 ---
-title: Menu Reference
-description: Complete reference for menu item types, properties, and methods
-sidebar:
-  order: 4
+title: "Menu Reference"
+description: "Complete reference for menu item types, properties, and methods"
+slug: "features/menus/reference"
+sourcePath: "features/menus/reference.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## Menu Reference
 
@@ -55,6 +53,7 @@ menu.AddRadio("Large", false)
 **Use for:** Mutually exclusive choices (size, theme, mode)
 
 **How grouping works:**
+
 - Adjacent radio items form a group automatically
 - Selecting one deselects others in the group
 - Separate groups with a separator or regular item
@@ -104,6 +103,25 @@ menu.Add("Item 2")
 
 **Best practice:** Don't start or end menus with separators.
 
+### Section Headers
+
+Native, non-interactive labels for a group of menu items on **macOS 14+**:
+
+```go
+menu.AddSectionHeader("Build server")
+menu.Add("Start build").OnClick(startBuild)
+menu.Add("View logs").OnClick(viewLogs)
+```
+
+`AddSectionHeader` uses AppKit's standard section-header appearance. It returns
+no menu item and does not attach an action. On older macOS versions, Windows,
+Linux, mobile and server builds, the call is a no-op and inserts no row.
+
+Use it in tray, context or application menus to label related commands. Use
+`AddSeparator()` to separate radio groups across all platforms, since omitted
+headers do not break radio groups. See [Menu API](/reference/menu#addsectionheader)
+for the method signature and the `systray-menu` example for a hostname heading.
+
 ## Menu Item Properties
 
 ### Label
@@ -150,11 +168,12 @@ menu.Update()  // Important: Call this after changing enabled state!
 isEnabled := menuItem.Enabled()
 ```
 
-:::caution[Windows Menu Behaviour]
+@note{type="caution" title="Windows Menu Behaviour"}
 On Windows, menus need to be reconstructed when their state changes. **Always call `menu.Update()` after enabling/disabling menu items**, especially if the item was created whilst disabled.
 
 **Why:** Windows menus are rebuilt from scratch when updated. If you don't call `Update()`, click handlers won't fire properly.
-:::
+
+@end
 
 **Example: Dynamic enable/disable**
 
@@ -233,6 +252,7 @@ quitMenuItem.SetAccelerator("CmdOrCtrl+Q")
 ```
 
 **Accelerator format:**
+
 - `CmdOrCtrl` - Cmd on macOS, Ctrl on Windows/Linux
 - `Shift`, `Alt`, `Option` - Modifier keys
 - `A-Z`, `0-9` - Letter/number keys
@@ -271,6 +291,7 @@ menuItem.SetTooltip("Configure advanced settings")
 ```
 
 **Platform support:**
+
 - **Windows:** ✅ Supported
 - **macOS:** ❌ Not supported (tooltips not standard for menus)
 - **Linux:** ⚠️ Varies by desktop environment
@@ -307,6 +328,7 @@ menuItem.OnClick(func(ctx *application.Context) {
 ```
 
 **Context provides:**
+
 - `ctx.ClickedMenuItem()` - The menu item that was clicked
 - Window context (if from window menu)
 - Application context
@@ -357,6 +379,7 @@ menuItem.SetEnabled(true)
 ```
 
 **Why this matters:**
+
 - **Windows:** Menus are reconstructed when updated
 - **macOS/Linux:** Less critical but still recommended
 - **Click handlers:** Won't fire properly without Update()
@@ -390,11 +413,13 @@ func rebuildFileMenu() {
 ```
 
 **When to rebuild:**
+
 - Recent files list changes
 - Plugin menus change
 - Major state transitions
 
 **When to update:**
+
 - Enable/disable items
 - Change labels
 - Toggle checkboxes
@@ -424,7 +449,7 @@ onUndoStackChanged(updateEditMenu)
 ### Menu Bar Location
 
 | Platform | Location | Notes |
-|----------|----------|-------|
+| --- | --- | --- |
 | **macOS** | Top of screen | Global menu bar |
 | **Windows** | Top of window | Per-window menu |
 | **Linux** | Top of window | Per-window (usually) |
@@ -432,11 +457,13 @@ onUndoStackChanged(updateEditMenu)
 ### Standard Menus
 
 **macOS:**
+
 - Has "Application" menu (with app name)
 - "Preferences" in Application menu
 - "Quit" in Application menu
 
 **Windows/Linux:**
+
 - No Application menu
 - "Preferences" in Edit or Tools menu
 - "Exit" in File menu
@@ -469,16 +496,19 @@ if runtime.GOOS == "darwin" {
 ### Accelerator Conventions
 
 **macOS:**
+
 - `Cmd+` for most shortcuts
 - `Cmd+,` for Preferences
 - `Cmd+Q` for Quit
 
 **Windows:**
+
 - `Ctrl+` for most shortcuts
 - `Ctrl+P` or `Ctrl+,` for Preferences
 - `Alt+F4` for Exit (or `Ctrl+Q`)
 
 **Linux:**
+
 - Generally follows Windows conventions
 - Desktop environment may override
 
@@ -534,6 +564,7 @@ menu.Update()
 **Symptom:** Keyboard shortcuts don't trigger menu items
 
 **Causes:**
+
 1. Accelerator format incorrect
 2. Conflict with system shortcuts
 3. Window doesn't have focus
@@ -552,11 +583,11 @@ menuItem.SetAccelerator("Ctrl+S")       // ❌ Wrong (macOS uses Cmd)
 
 ## Next Steps
 
-- [Application Menus](/features/menus/application) - Create application menu bars
-- [Context Menus](/features/menus/context) - Right-click context menus
-- [System Tray Menus](/features/menus/systray) - System tray/menu bar menus
-- [Menu Patterns](/guides/patterns/menus) - Common menu patterns and best practices
+- [Application Menus](/features/menus/application/) - Create application menu bars
+- [Context Menus](/features/menus/context/) - Right-click context menus
+- [System Tray Menus](/features/menus/systray/) - System tray/menu bar menus
+- [Menu Patterns](/guides/menus/) - Common menu patterns and best practices
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [menu examples](https://github.com/wailsapp/wails/tree/master/v3/examples/menu).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [menu examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/menu).

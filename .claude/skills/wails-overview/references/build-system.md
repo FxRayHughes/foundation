@@ -1,11 +1,9 @@
 ---
-title: Build System
-description: Understanding how Wails builds and packages your application
-sidebar:
-  order: 4
+title: "Build System"
+description: "Understanding how Wails builds and packages your application"
+slug: "concepts/build-system"
+sourcePath: "concepts/build-system.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## Unified Build System
 
@@ -19,13 +17,7 @@ wails3 build
 
 ## Build Process Overview
 
-{/*
-TODO: Fix D2 diagram generation or embed as image.
-The previous D2 code block was causing MDX parsing errors in the build pipeline.
-*/}
-
 **[Build Process Diagram Placeholder]**
-
 
 ## Build Phases
 
@@ -44,6 +36,7 @@ func (g *GreetService) Greet(name string) string {
 ```
 
 **What Wails extracts:**
+
 - Service name: `GreetService`
 - Method name: `Greet`
 - Parameter types: `string`
@@ -69,6 +62,7 @@ export function Greet($0) {
 ```
 
 **Benefits:**
+
 - Full type safety
 - IDE autocomplete
 - Compile-time errors
@@ -84,6 +78,7 @@ vite build --outDir dist
 ```
 
 **What happens:**
+
 - JavaScript/TypeScript compiled
 - CSS processed and minified
 - Assets optimised
@@ -101,11 +96,13 @@ go build -ldflags="-s -w" -o myapp.exe
 ```
 
 **Flags:**
+
 - `-s`: Strip symbol table
 - `-w`: Strip DWARF debugging info
 - Result: Smaller binary (~30% reduction)
 
 **Platform-specific:**
+
 - Windows: `.exe` with icon embedded
 - macOS: `.app` bundle structure
 - Linux: ELF binary
@@ -124,6 +121,7 @@ var assets embed.FS
 ### 4. Output
 
 **Single native binary:**
+
 - Windows: `myapp.exe` (~15MB)
 - macOS: `myapp.app` (~15MB)
 - Linux: `myapp` (~15MB)
@@ -132,55 +130,58 @@ var assets embed.FS
 
 ## Development vs Production
 
-<Tabs syncKey="mode">
-  <TabItem label="Development (wails3 dev)" icon="seti:config">
-    **Optimised for speed:**
-    
-    ```bash
-    wails3 dev
-    ```
-    
-    **What happens:**
-    1. Starts frontend dev server (Vite on port 9245 by default)
-    2. Compiles Go without optimisations
-    3. Launches app pointing to dev server
-    4. Enables hot reload
-    5. Includes source maps
-    
-    **Characteristics:**
-    - **Fast rebuilds** (&lt;1s for frontend changes)
-    - **No asset embedding** (served from dev server)
-    - **Debug symbols** included
-    - **Source maps** enabled
-    - **Verbose logging**
-    
-    **File size:** Larger (~50MB with debug symbols)
-  </TabItem>
+@tabs{sync-key="mode"}
+[Development (wails3 dev)]
+**Optimised for speed:**
 
-  <TabItem label="Production (wails3 build)" icon="rocket">
-    **Optimised for size and performance:**
-    
-    ```bash
-    wails3 build
-    ```
-    
-    **What happens:**
-    1. Builds frontend for production (minified)
-    2. Compiles Go with optimisations
-    3. Strips debug symbols
-    4. Embeds assets
-    5. Creates single binary
-    
-    **Characteristics:**
-    - **Optimised code** (minified, tree-shaken)
-    - **Assets embedded** (no external files)
-    - **Debug symbols stripped**
-    - **No source maps**
-    - **Minimal logging**
-    
-    **File size:** Smaller (~15MB)
-  </TabItem>
-</Tabs>
+```bash
+wails3 dev
+```
+
+**What happens:**
+
+1. Starts frontend dev server (Vite on port 9245 by default)
+2. Compiles Go without optimisations
+3. Launches app pointing to dev server
+4. Enables hot reload
+5. Includes source maps
+
+**Characteristics:**
+
+- **Fast rebuilds** (&lt;1s for frontend changes)
+- **No asset embedding** (served from dev server)
+- **Debug symbols** included
+- **Source maps** enabled
+- **Verbose logging**
+
+**File size:** Larger (~50MB with debug symbols)
+
+[Production (wails3 build)]
+**Optimised for size and performance:**
+
+```bash
+wails3 build
+```
+
+**What happens:**
+
+1. Builds frontend for production (minified)
+2. Compiles Go with optimisations
+3. Strips debug symbols
+4. Embeds assets
+5. Creates single binary
+
+**Characteristics:**
+
+- **Optimised code** (minified, tree-shaken)
+- **Assets embedded** (no external files)
+- **Debug symbols stripped**
+- **No source maps**
+- **Minimal logging**
+
+**File size:** Smaller (~15MB)
+
+@end
 
 ## Build Commands
 
@@ -320,12 +321,14 @@ func main() {
 ```
 
 **At build time:**
+
 1. Frontend built to `frontend/dist/`
 2. `//go:embed` directive includes files
 3. Files compiled into binary
 4. Binary contains everything
 
 **At runtime:**
+
 1. App starts
 2. Assets served from memory
 3. No disk I/O for assets
@@ -375,6 +378,7 @@ export default {
 ```
 
 **Results:**
+
 - JavaScript minified (~70% reduction)
 - CSS minified (~60% reduction)
 - Images optimised
@@ -410,6 +414,7 @@ upx --best bin/myapp.exe
 ```
 
 **Results:**
+
 - ~50% size reduction
 - Slightly slower startup (~100ms)
 - Not recommended for macOS (code signing issues)
@@ -421,6 +426,7 @@ upx --best bin/myapp.exe
 **Output:** `myapp.exe`
 
 **Includes:**
+
 - Application icon
 - Version information
 - Manifest (UAC settings)
@@ -498,6 +504,7 @@ wails3 task darwin:build:universal
 **Output:** `myapp` (ELF binary)
 
 **Dependencies:**
+
 - GTK3
 - WebKitGTK
 
@@ -531,7 +538,7 @@ sudo cp icon.png /usr/share/icons/hicolor/256x256/apps/myapp.png
 ### Typical Build Times
 
 | Phase | Time | Notes |
-|-------|------|-------|
+| --- | --- | --- |
 | Analysis | &lt;1s | Go code scanning |
 | Binding Generation | &lt;1s | TypeScript generation |
 | Frontend Build | 5-30s | Depends on project size |
@@ -560,7 +567,7 @@ wails3 task windows:build           # rebuild only the Windows binary
 
 **3. Parallel builds (multi-machine / CI):**
 
-Cross-compilation between Linux/Windows/macOS in v3 generally happens in a Docker `wails-cross` container or on dedicated runners per platform — `wails3 build` itself targets the host OS. See [Cross-platform Builds](/guides/build/cross-platform) for the supported workflows.
+Cross-compilation between Linux/Windows/macOS in v3 generally happens in a Docker `wails-cross` container or on dedicated runners per platform — `wails3 build` itself targets the host OS. See [Cross-platform Builds](/guides/build/cross-platform/) for the supported workflows.
 
 **4. Use faster tools:**
 
@@ -578,24 +585,27 @@ Cross-compilation between Linux/Windows/macOS in v3 generally happens in a Docke
 **Common causes:**
 
 1. **Go compilation error**
-   ```bash
-   # Check Go code compiles
-   go build
-   ```
+  ```bash
+  # Check Go code compiles
+  go build
+  ```
+
 
 2. **Frontend build error**
-   ```bash
-   # Check frontend builds
-   cd frontend
-   npm run build
-   ```
+  ```bash
+  # Check frontend builds
+  cd frontend
+  npm run build
+  ```
+
 
 3. **Missing dependencies**
-   ```bash
-   # Install dependencies
-   npm install
-   go mod download
-   ```
+  ```bash
+  # Install dependencies
+  npm install
+  go mod download
+  ```
+
 
 ### Binary Too Large
 
@@ -606,15 +616,17 @@ Cross-compilation between Linux/Windows/macOS in v3 generally happens in a Docke
 1. **Strip debug symbols** (the shipped Taskfile already passes `-ldflags="-s -w"` to `go build`).
 
 2. **Check embedded assets**
-   ```bash
-   # Remove unnecessary files from frontend/dist/
-   # Check for large images, videos, etc.
-   ```
+  ```bash
+  # Remove unnecessary files from frontend/dist/
+  # Check for large images, videos, etc.
+  ```
+
 
 3. **Use UPX compression**
-   ```bash
-   upx --best bin/myapp.exe
-   ```
+  ```bash
+  upx --best bin/myapp.exe
+  ```
+
 
 ### Slow Builds
 
@@ -623,24 +635,27 @@ Cross-compilation between Linux/Windows/macOS in v3 generally happens in a Docke
 **Solutions:**
 
 1. **Use build cache**
-   - Go cache is automatic
-   - Frontend cache (Vite) is automatic
+  - Go cache is automatic
+  - Frontend cache (Vite) is automatic
+
 
 2. **Run only the task you need**
-   ```bash
-   wails3 task common:build:frontend
-   wails3 task windows:build
-   ```
+  ```bash
+  wails3 task common:build:frontend
+  wails3 task windows:build
+  ```
+
 
 3. **Optimise frontend build**
-   ```javascript
-   // vite.config.js
-   export default {
-     build: {
-       minify: 'esbuild',  // Faster than terser
-     },
-   }
-   ```
+  ```javascript
+  // vite.config.js
+  export default {
+    build: {
+      minify: 'esbuild',  // Faster than terser
+    },
+  }
+  ```
+
 
 ## Best Practices
 
@@ -663,15 +678,12 @@ Cross-compilation between Linux/Windows/macOS in v3 generally happens in a Docke
 
 ## Next Steps
 
-**Building Applications** - Detailed guide to building and packaging  
-[Learn More →](/guides/building)
+**Building Applications** - Detailed guide to building and packaging [Learn More →](/guides/build/building/)
 
-**Cross-Platform Builds** - Build for all platforms from one machine  
-[Learn More →](/guides/cross-platform)
+**Cross-Platform Builds** - Build for all platforms from one machine [Learn More →](/guides/build/cross-platform/)
 
-**Creating Installers** - Create installers for end users  
-[Learn More →](/guides/installers)
+**Creating Installers** - Create installers for end users [Learn More →](/guides/installers/)
 
 ---
 
-**Questions about building?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [build examples](https://github.com/wailsapp/wails/tree/master/v3/examples/build).
+**Questions about building?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [build examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/build).

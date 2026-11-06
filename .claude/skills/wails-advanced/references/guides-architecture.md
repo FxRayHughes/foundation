@@ -1,8 +1,8 @@
 ---
-title: Architecture Patterns
-description: Design patterns for Wails applications
-sidebar:
-  order: 7
+title: "Architecture Patterns"
+description: "Design patterns for Wails applications"
+slug: "guides/architecture"
+sourcePath: "guides/architecture.md"
 ---
 
 ## Overview
@@ -195,5 +195,5 @@ func (s *AppState) GetUser() *User {
 
 ## Next Steps
 
-- [Security](/guides/security) - Security best practices
-- [Best Practices](/features/bindings/best-practices) - Bindings best practices
+- [Security](/guides/security/) - Security best practices
+- [Best Practices](/features/bindings/best-practices/) - Bindings best practices

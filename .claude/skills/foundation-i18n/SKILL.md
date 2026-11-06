@@ -1,6 +1,6 @@
 ---
 name: foundation-i18n
-description: Foundation 脚手架的国际化（i18n）系统使用指南。说明语言注册、文案查找、模板插值、页面级语言包、运行时切换；以及"任何人类可见字符串都必须走 i18n"的铁律。
+description: Foundation 脚手架的国际化（i18n）系统使用指南。说明语言注册、文案查找、模板插值、页面级 / 组件级语言包、运行时切换与跨窗口同步（appsettings:changed）；以及"任何人类可见字符串都必须走 i18n"的铁律。
 ---
 
 # Foundation i18n 系统
@@ -10,7 +10,8 @@ Foundation 脚手架内置一套**注册式 + 页面级语言包**的轻量 i18n
 - 全局公用文案（标题栏、侧边栏、路由 label、common.* 通用术语）放在 `src/i18n/locales/<code>.ts`；
 - 页面级文案下沉到 `src/pages/<Name>/lang/<code>.ts`，由该 page 自注册到 `localeRegistry`；
 - 文案以**点路径**取值（`t('home.hero')`），支持模板插值（`{{var}}`）；
-- 切换语言走 `useI18n().setChoice(code | 'auto')`，写入 localStorage 持久化；
+- 切换语言走 `useI18n().setChoice(code | 'auto')`，经 `AppSettingsService.setLocaleChoice` 写入 SQLite（`app_settings.locale_choice`）持久化；
+- 后端写库成功后广播 `appsettings:changed`，托盘面板 / 子窗口 / 主窗口的 `I18nProvider` 各自重拉，语言跨窗口实时同步；
 - `'auto'` 跟随浏览器语言，根据 `navigator.languages` 命中已注册 locale。
 
 > 默认注册了 `zh-CN`（默认）与 `en-US`。
@@ -42,14 +43,20 @@ src/pages/<Name>/lang/    ← 页面级语言包
 `App.tsx` 顶部按顺序调用：
 
 ```tsx
+import { registerDataGridLocales } from '@/components/x-pro/data-grid/lang';
+import { registerXProChartsLocales } from '@/components/x-pro/charts/lang';
 import { I18nProvider, registerFoundationLocales } from '@/i18n';
-import { registerHomePageLocales } from '@/pages/HomePage';
-import { registerSettingsPageLocales } from '@/pages/SettingsPage';
+import { registerHomePageLocales } from '@/pages/HomePage/lang';
+import { registerXProDemoPageLocales } from '@/pages/XProDemoPage/lang';
+import { registerSettingsPageLocales } from '@/pages/SettingsPage/lang';
 
 // 1) 公用 locale 必须先就位（页面级 extend 的目标）
 registerFoundationLocales();
-// 2) 各页面把自己的命名空间合并上去
+// 2) 各页面 / 组件把自己的命名空间合并上去
 registerHomePageLocales();
+registerXProDemoPageLocales();
+registerDataGridLocales();
+registerXProChartsLocales();
 registerSettingsPageLocales();
 
 export const App = () => (
@@ -58,6 +65,23 @@ export const App = () => (
   </I18nProvider>
 );
 ```
+
+> 注册函数一律从 `<Name>/lang` 导入，**不要**从 `<Name>` 的 index 导入：index 会连带导出 View，把懒加载页面静态拉进首屏 chunk（见 `frontend/vite.config.ts` 注释）。设置页子目录同理：`SettingsPage/lang/index.ts` 从 `../<sub>/lang` 导入 `register<Sub>Locales`，不从 `../<sub>`。
+
+### 已注册的语言包一览
+
+| 注册函数 | 位置 | 命名空间 | 注册点 |
+|------|------|------|------|
+| `registerFoundationLocales` | `src/i18n/` | `app.*`（含 `app.trayMenu.*`）/ `sidebar.*` / `titleBar.*` / `route.*` / `common.*` | 三个入口（`App.tsx` / `child.tsx` / `systrayEntry.tsx`） |
+| `registerHomePageLocales` | `pages/HomePage/lang` | `home.*` | `App.tsx` |
+| `registerXProDemoPageLocales` | `pages/XProDemoPage/lang` | x-pro 演示页 | `App.tsx` |
+| `registerSettingsPageLocales` | `pages/SettingsPage/lang` | `settings.*`（内部再注册 personalization / language / database 子页） | `App.tsx` |
+| `registerDataGridLocales` | `components/x-pro/data-grid/lang` | DataGridPro / Premium 组件文案 | `App.tsx`（组件模块加载时也会自注册） |
+| `registerXProChartsLocales` | `components/x-pro/charts/lang` | x-pro 图表组件文案 | `App.tsx`（图表模块加载时经 `shared/useChartsT.ts` 也会自注册） |
+| `registerConfirmWindowLocales` / `registerMessageWindowLocales` / `registerBlankWindowLocales` | `childwindows/<Name>/lang` | 子窗口文案 | `child.tsx` |
+| `registerSystrayLocales` | `systray/lang` | `systray.*` | `systrayEntry.tsx` |
+
+组件级语言包（data-grid / charts）没有固定的启动点，采用"自注册 + 公用 locale 未就绪时订阅 registry 补注册"的幂等模式，App 启动时仍显式调用一次。
 
 注册顺序若反了：`extend` 找不到目标 locale 会**静默忽略**，应用不会崩，但页面文案会回落到 key 字面量。开发期发现 UI 上出现 `home.hero` 这种字符串时，第一反应是检查注册顺序与 key 拼写。
 
@@ -191,7 +215,7 @@ localeRegistry.register(jaJP);
   id: 'account',
   labelKey: 'route.account', // ← Sidebar tooltip / 设置页等会读这个 key
   label: 'Account',           // ← 兜底字面量
-  icon: PersonRoundedIcon,
+  icon: IconUser,             // @tabler/icons-react
   element: <AccountPage />,
 }
 ```
@@ -265,7 +289,25 @@ const DEFAULT_RESULT = 'Please enter your name and tap Greet 👇'; // ← 应�
 
 ---
 
-## 9. 与主题系统的关系
+## 9. 跨窗口同步（appsettings:changed）
+
+主窗口、子窗口（`child.tsx`）、托盘面板（`systrayEntry.tsx`）是三棵独立的 React 树，各自挂一个 `<I18nProvider>`。语言一致性靠后端事件：
+
+```
+任一窗口 setChoice('en-US')
+  └── AppSettingsService.setLocaleChoice → 后端 appsettings.Service 写库
+      └── app.Event.Emit("appsettings:changed", "localeChoice")   // internal/events/events.go AppSettingsChanged
+          └── 每个窗口的 I18nProvider：AppSettingsService.onChanged(field)
+              → field === 'localeChoice' 时重新 AppSettingsService.get() → setChoice
+```
+
+- `I18nProvider` 时序：mount 用 `'auto'` 初值渲染 → `AppSettingsService.get()` 拉 `localeChoice`（合法且已注册才覆盖）→ 订阅 `onChanged`。
+- 托盘原生右键菜单不在 React 里，由主窗口 `useAppLayout` 在 `t` 变化时调用 `SystrayService.setMenuLabels({ showWindow: t('app.trayMenu.showWindow'), quit: t('app.trayMenu.quit') })` 推给后端。
+- 业务代码**不要**自己订阅 `appsettings:changed` 去切语言；交给 Provider。
+
+---
+
+## 10. 与主题系统的关系
 
 i18n 与主题（`src/styles/themes/`）**互不依赖**：
 
@@ -277,20 +319,20 @@ i18n 与主题（`src/styles/themes/`）**互不依赖**：
 
 ---
 
-## 10. localStorage key 一览（便于排查）
+## 11. 持久化位置一览（便于排查）
 
-| key | 作用 |
-|------|------|
-| `foundation:locale` | 用户语言选择（'auto' / 'zh-CN' / 'en-US' ...） |
-| `foundation:theme-choice` | 用户主题选择 |
-| `foundation:custom-theme` | 自定义主题数据 |
-| `foundation:preferences` | 显示偏好（showLogo / showTooltip） |
+前端**禁用** localStorage / sessionStorage，所有选择都在 SQLite（详见 `foundation-persistence`）：
 
-清掉以上 key 即可恢复出厂状态。
+| 存储 | 字段 / 键 | 作用 |
+|------|------|------|
+| `app_settings` 单行表 | `locale_choice` | 用户语言选择（'auto' / 'zh-CN' / 'en-US' ...） |
+| `app_settings` 单行表 | `theme_choice` | 用户主题选择 |
+| `app_settings` 单行表 | `custom_theme` | 自定义主题 JSON |
+| `preferences` KV 表 | `showLogo` / `showTooltip` 等 | 显示偏好（`PreferencesProvider` 经 `PreferencesService`） |
 
 ---
 
-## 11. 设计约束摘要
+## 12. 设计约束摘要
 
 - 公用 locale 文件保持精简：只放跨页面 key；
 - 页面级语言包文件名固定为 `<code>.ts`（与全局 locale code 对齐）；

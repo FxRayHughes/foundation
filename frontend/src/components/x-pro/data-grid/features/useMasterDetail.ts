@@ -1,102 +1,33 @@
-import { useState, useCallback, useMemo } from 'react';
-import type { GridRowModel, GridColDef } from '@mui/x-data-grid';
-import type { ReactNode } from 'react';
-import type { MasterDetailConfig } from '../types';
-import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
-import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
-import { createElement } from 'react';
-import { IconButton, Box } from '@mui/material';
+import { useCallback, useState } from 'react';
+import type { DataGridRow, MasterDetailConfig } from '../types';
 
-interface UseMasterDetailParams {
-  rows: GridRowModel[];
-  config?: MasterDetailConfig;
-  getRowId?: (row: GridRowModel) => string | number;
+// 主从明细：维护展开的记录 key 集合；实际渲染走 mantine-datatable 原生 rowExpansion
+// （受控 expanded + trigger 'never'，由展开列里的按钮切换，见 useDataGridPro）。
+
+interface UseMasterDetailParams<T extends DataGridRow> {
+  config?: MasterDetailConfig<T>;
 }
 
-interface DetailRow extends GridRowModel {
-  __isDetailRow: true;
-  __parentId: string | number;
-  __detailContent: ReactNode;
-  __detailHeight: number | 'auto';
+export interface UseMasterDetailResult {
+  isActive: boolean;
+  expandedKeys: string[];
+  setExpandedKeys: (keys: unknown[]) => void;
+  isExpanded: (key: string) => boolean;
+  toggleExpand: (key: string) => void;
 }
 
-interface UseMasterDetailResult {
-  processedRows: GridRowModel[];
-  expandColumn: GridColDef | null;
-  isDetailRow: (row: GridRowModel) => boolean;
-}
-
-export function useMasterDetail({
-  rows,
+export function useMasterDetail<T extends DataGridRow>({
   config,
-  getRowId = (row) => row.id,
-}: UseMasterDetailParams): UseMasterDetailResult {
-  const [expandedIds, setExpandedIds] = useState<Set<string | number>>(new Set());
+}: UseMasterDetailParams<T>): UseMasterDetailResult {
+  const [expandedKeys, setKeys] = useState<string[]>([]);
 
-  const toggleExpand = useCallback((id: string | number) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const toggleExpand = useCallback((key: string) => {
+    setKeys((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   }, []);
 
-  const processedRows = useMemo(() => {
-    if (!config) return rows;
-    const result: GridRowModel[] = [];
-    for (const row of rows) {
-      result.push(row);
-      const id = getRowId(row);
-      if (expandedIds.has(id)) {
-        const detailRow: DetailRow = {
-          id: `__detail_${id}`,
-          __isDetailRow: true,
-          __parentId: id,
-          __detailContent: config.getDetailPanelContent(row),
-          __detailHeight: config.getDetailPanelHeight?.(row) ?? 'auto',
-        };
-        result.push(detailRow);
-      }
-    }
-    return result;
-  }, [rows, config, expandedIds, getRowId]);
+  const isExpanded = useCallback((key: string) => expandedKeys.includes(key), [expandedKeys]);
 
-  const expandColumn: GridColDef | null = useMemo(() => {
-    if (!config) return null;
-    return {
-      field: '__expand__',
-      headerName: '',
-      width: 50,
-      sortable: false,
-      filterable: false,
-      disableColumnMenu: true,
-      renderCell: (params) => {
-        if (params.row.__isDetailRow) return null;
-        const id = getRowId(params.row);
-        const isExpanded = expandedIds.has(id);
-        return createElement(
-          IconButton,
-          { size: 'small', onClick: () => toggleExpand(id) },
-          createElement(isExpanded ? ExpandLessRounded : ExpandMoreRounded, { fontSize: 'small' }),
-        );
-      },
-    };
-  }, [config, expandedIds, getRowId, toggleExpand]);
+  const setExpandedKeys = useCallback((keys: unknown[]) => setKeys(keys.map(String)), []);
 
-  const isDetailRow = useCallback(
-    (row: GridRowModel) => row.__isDetailRow === true,
-    [],
-  );
-
-  return { processedRows, expandColumn, isDetailRow };
-}
-
-export function DetailPanelCell({ row }: { row: GridRowModel }) {
-  if (!row.__isDetailRow) return null;
-  return createElement(
-    Box,
-    { sx: { p: 2, width: '100%' } },
-    (row as DetailRow).__detailContent,
-  );
+  return { isActive: !!config, expandedKeys, setExpandedKeys, isExpanded, toggleExpand };
 }

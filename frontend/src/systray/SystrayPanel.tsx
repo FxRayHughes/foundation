@@ -1,26 +1,24 @@
-import { Box, Typography, useTheme } from '@mui/material';
+import { Text } from '@mantine/core';
 import { useT } from '@/i18n';
 import { useSystrayPanel } from './useSystrayPanel';
-import { systrayPanelStyles } from './SystrayPanel.styles';
+import classes from './SystrayPanel.module.css';
 
 export const SystrayPanel = () => {
-  const theme = useTheme();
-  const styles = systrayPanelStyles(theme);
   const t = useT();
   const { modules } = useSystrayPanel();
 
   return (
-    <Box sx={styles.root}>
-      <Box sx={styles.header}>
-        <Typography sx={styles.appName}>{t('systray.appName')}</Typography>
-      </Box>
-      <Box sx={styles.content}>
+    <div className={classes.root}>
+      <div className={classes.header}>
+        <Text className={classes.appName}>{t('systray.appName')}</Text>
+      </div>
+      <div className={classes.content}>
         {modules.map((mod) => (
-          <Box key={mod.id}>
+          <div key={mod.id}>
             <mod.component />
-          </Box>
+          </div>
         ))}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

@@ -1,19 +1,14 @@
 ---
-title: Frontend Routing
-description: Using frontend routing in your Wails application
-sidebar:
-  order: 35
+title: "Frontend Routing"
+description: "Using frontend routing in your Wails application"
+slug: "guides/routing"
+sourcePath: "guides/routing.md"
 ---
 
-import { Tabs, TabItem } from "@astrojs/starlight/components";
+Frontend routing is a popular way to switch views in a single-page application. This guide covers recommended approaches for different frontend frameworks when using Wails.
 
-Frontend routing is a popular way to switch views in a single-page application.
-This guide covers recommended approaches for different frontend frameworks when using Wails.
-
-
-<Tabs syncKey="framework">
-    <TabItem label="Vue" icon="seti:vue">
-
+@tabs{sync-key="framework"}
+[Vue]
 The recommended approach for routing in Vue is [Hash Mode](https://next.router.vuejs.org/guide/essentials/history-mode.html#hash-mode):
 
 ```javascript
@@ -27,12 +22,9 @@ const router = createRouter({
 });
 ```
 
-Hash mode uses the URL hash to render different views, avoiding issues with the Wails runtime
-interfering with routing by using the hash-based URL format.
+Hash mode uses the URL hash to render different views, avoiding issues with the Wails runtime interfering with routing by using the hash-based URL format.
 
-    </TabItem>
-    <TabItem label="Angular" icon="seti:angular">
-
+[Angular]
 The recommended approach for routing in Angular is [HashLocationStrategy](https://codecraft.tv/courses/angular/routing/routing-strategies#%5Fhashlocationstrategy):
 
 ```typescript
@@ -41,9 +33,7 @@ RouterModule.forRoot(routes, { useHash: true });
 
 Using hash-based URLs ensures routing works correctly with Wails' window handling on all platforms.
 
-    </TabItem>
-    <TabItem label="React" icon="seti:react">
-
+[React]
 The recommended approach for routing in React is [HashRouter](https://reactrouter.com/en/main/router-components/hash-router):
 
 ```jsx
@@ -65,9 +55,7 @@ ReactDOM.createRoot(root).render(
 
 HashRouter uses URL hashes instead of paths, which works reliably with Wails across all platforms.
 
-    </TabItem>
-    <TabItem label="Svelte" icon="seti:svelte">
-
+[Svelte]
 The recommended approach for routing in Svelte is [svelte-spa-router](https://github.com/ItalyPaleAle/svelte-spa-router):
 
 ```svelte
@@ -89,13 +77,11 @@ The recommended approach for routing in Svelte is [svelte-spa-router](https://gi
 
 svelte-spa-router supports hash-based routing, making it compatible with Wails applications.
 
-    </TabItem>
-</Tabs>
+@end
 
 ## Why Hash Routing?
 
-Wails embeds your frontend into a native webview window. Using hash-based routing (#/page instead of /page)
-avoids conflicts with:
+Wails embeds your frontend into a native webview window. Using hash-based routing (#/page instead of /page) avoids conflicts with:
 
 - The Wails runtime's internal routing
 - Native window URL handling on different platforms

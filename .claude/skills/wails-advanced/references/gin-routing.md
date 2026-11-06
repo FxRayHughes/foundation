@@ -1,6 +1,8 @@
 ---
-title: Using Gin for Routing
-description: A comprehensive guide to integrating Gin web framework with Wails v3 applications
+title: "Using Gin for Routing"
+description: "A comprehensive guide to integrating Gin web framework with Wails v3 applications"
+slug: "guides/gin-routing"
+sourcePath: "guides/gin-routing.md"
 ---
 
 This guide demonstrates how to integrate the [Gin web framework](https://github.com/gin-gonic/gin) with Wails v3. Gin is a high-performance HTTP web framework written in Go that makes it easy to build web applications and APIs.

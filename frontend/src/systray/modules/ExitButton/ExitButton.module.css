@@ -1,0 +1,14 @@
+.root {
+  padding: 12px 16px;
+  border-top: 1px solid var(--fd-divider);
+}
+
+/* 双类选择器覆盖 Mantine subtle 按钮默认的 primary 文字色 / hover 底色 */
+.exit.exit {
+  color: var(--fd-danger);
+  border-radius: 6px;
+  background-color: transparent;
+}
+.exit.exit:hover {
+  background-color: color-mix(in srgb, var(--fd-danger) 8%, transparent);
+}

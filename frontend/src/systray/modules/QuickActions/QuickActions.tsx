@@ -1,12 +1,10 @@
-import { Box, Button, Typography, useTheme } from '@mui/material';
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
+import { Button, Text } from '@mantine/core';
+import { IconEye, IconSettings } from '@tabler/icons-react';
 import { useT } from '@/i18n';
 import { broadcast, getWindowId } from '@/services/childwindow';
+import classes from './QuickActions.module.css';
 
 export const QuickActions = () => {
-  const theme = useTheme();
-  const fp = theme.palette.foundation;
   const t = useT();
 
   const handleShowWindow = () => {
@@ -18,28 +16,30 @@ export const QuickActions = () => {
   };
 
   return (
-    <Box sx={{ px: 2, py: 1.5, borderTop: `1px solid ${fp.divider}` }}>
-      <Typography sx={{ fontSize: 11, fontWeight: 600, color: fp.text.muted, textTransform: 'uppercase', letterSpacing: 0.5, mb: 1 }}>
-        {t('systray.quickActions.title')}
-      </Typography>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+    <div className={classes.root}>
+      <Text className={classes.sectionTitle}>{t('systray.quickActions.title')}</Text>
+      <div className={classes.list}>
         <Button
-          size="small"
-          startIcon={<VisibilityRoundedIcon />}
+          variant="subtle"
+          size="xs"
+          justify="flex-start"
+          leftSection={<IconEye size={18} stroke={1.75} />}
           onClick={handleShowWindow}
-          sx={{ justifyContent: 'flex-start', textTransform: 'none', color: fp.text.primary, borderRadius: 1.5, '&:hover': { backgroundColor: fp.bg.hover } }}
+          className={classes.action}
         >
           {t('systray.quickActions.showWindow')}
         </Button>
         <Button
-          size="small"
-          startIcon={<SettingsRoundedIcon />}
+          variant="subtle"
+          size="xs"
+          justify="flex-start"
+          leftSection={<IconSettings size={18} stroke={1.75} />}
           onClick={handleOpenSettings}
-          sx={{ justifyContent: 'flex-start', textTransform: 'none', color: fp.text.primary, borderRadius: 1.5, '&:hover': { backgroundColor: fp.bg.hover } }}
+          className={classes.action}
         >
           {t('systray.quickActions.openSettings')}
         </Button>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

@@ -1,8 +1,8 @@
 ---
-title: Bindings Best Practices
-description: Design patterns and best practices for Go-JavaScript bindings
-sidebar:
-  order: 4
+title: "Bindings Best Practices"
+description: "Design patterns and best practices for Go-JavaScript bindings"
+slug: "features/bindings/best-practices"
+sourcePath: "features/bindings/best-practices.md"
 ---
 
 ## Bindings Best Practices
@@ -693,11 +693,11 @@ func TestUserService_WithMock(t *testing.T) {
 
 ## Next Steps
 
-- [Methods](/features/bindings/methods) - Learn method binding basics
-- [Services](/features/bindings/services) - Understand service architecture
-- [Models](/features/bindings/models) - Bind complex data structures
-- [Events](/features/events/system) - Use events for pub/sub
+- [Methods](/features/bindings/methods/) - Learn method binding basics
+- [Services](/features/bindings/services/) - Understand service architecture
+- [Models](/features/bindings/models/) - Bind complex data structures
+- [Events](/features/events/system/) - Use events for pub/sub
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [binding examples](https://github.com/wailsapp/wails/tree/master/v3/examples/binding).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [binding examples](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/binding).

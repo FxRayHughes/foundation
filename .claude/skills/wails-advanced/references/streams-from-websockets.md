@@ -1,29 +1,19 @@
 ---
-title: Migrating a WebSocket to Streams
-description: Step-by-step conversion of an existing WebSocket implementation to Wails streams, including the differences that break silently
-sidebar:
-    order: 55
+title: "Migrating a WebSocket to Streams"
+description: "Step-by-step conversion of an existing WebSocket implementation to Wails streams, including the differences that break silently"
+slug: "guides/streams-from-websockets"
+sourcePath: "guides/streams-from-websockets.md"
 ---
 
-A mechanical guide for converting an app that currently runs a WebSocket server to
-[Streams](/guides/streams/). Written to be followed literally, including by an agent.
+A mechanical guide for converting an app that currently runs a WebSocket server to [Streams](/guides/streams/). Written to be followed literally, including by an agent.
 
-The payoff is deleting the listener: no bound TCP port, no origin check, no token, nothing
-for a firewall or endpoint-security product to object to. The API is close enough that most
-frontend code is untouched — but **three differences break silently**, and they are listed
-first because they are the ones that will cost you an afternoon.
+The payoff is deleting the listener: no bound TCP port, no origin check, no token, nothing for a firewall or endpoint-security product to object to. The API is close enough that most frontend code is untouched — but **three differences break silently**, and they are listed first because they are the ones that will cost you an afternoon.
 
 ## The common case: a local HTTP server as a workaround
 
-The usual reason a Wails app has a WebSocket is that there was no other way to push a
-continuous feed to the frontend, so the app stands up its own `http.Server` on a local
-port and the frontend connects back to it. If that is your shape, this migration deletes
-the server outright — and several things you built *around* it go with it.
+The usual reason a Wails app has a WebSocket is that there was no other way to push a continuous feed to the frontend, so the app stands up its own `http.Server` on a local port and the frontend connects back to it. If that is your shape, this migration deletes the server outright — and several things you built *around* it go with it.
 
-**The port discovery mechanism goes.** Something has to tell the frontend which port to
-connect to: a bound `GetServerPort()`, a fixed port with a fallback when it is taken, an
-injected global, or a value stashed in `localStorage`. All of it disappears — a stream is
-addressed by name, and the name is a compile-time constant on both sides.
+**The port discovery mechanism goes.** Something has to tell the frontend which port to connect to: a bound `GetServerPort()`, a fixed port with a fallback when it is taken, an injected global, or a value stashed in `localStorage`. All of it disappears — a stream is addressed by name, and the name is a compile-time constant on both sides.
 
 ```go
 // BEFORE
@@ -35,19 +25,11 @@ port := ln.Addr().(*net.TCPAddr).Port     // ...and a binding to hand `port` to 
 app.HandleStream("feed", handler)         // that is the entire replacement
 ```
 
-**CORS configuration goes.** The webview's origin is `wails://` or
-`http://wails.localhost` depending on platform, so a local server needs `CheckOrigin`, an
-`Access-Control-Allow-Origin` header, or both. Streams ride the asset server the page was
-loaded from, so there is no cross-origin request to permit.
+**CORS configuration goes.** The webview's origin is `wails://` or `http://wails.localhost` depending on platform, so a local server needs `CheckOrigin`, an `Access-Control-Allow-Origin` header, or both. Streams ride the asset server the page was loaded from, so there is no cross-origin request to permit.
 
-**Any auth token you invented goes.** A port bound on localhost is reachable by every
-process on the machine, so a careful implementation adds a token or a nonce to stop other
-software connecting. There is no port to reach any more.
+**Any auth token you invented goes.** A port bound on localhost is reachable by every process on the machine, so a careful implementation adds a token or a nonce to stop other software connecting. There is no port to reach any more.
 
-**Non-WebSocket endpoints move to asset server middleware.** These servers rarely stay
-pure — a file download, an image endpoint, a health check tend to accumulate alongside the
-socket. Streams do not replace those, but you do not need a second server for them either.
-Mount the same handlers on the asset server:
+**Non-WebSocket endpoints move to asset server middleware.** These servers rarely stay pure — a file download, an image endpoint, a health check tend to accumulate alongside the socket. Streams do not replace those, but you do not need a second server for them either. Mount the same handlers on the asset server:
 
 ```go
 app := application.New(application.Options{
@@ -66,15 +48,13 @@ app := application.New(application.Options{
 })
 ```
 
-The frontend then calls `/api/...` as a same-origin relative URL — no host, no port, no
-CORS. Between streams and this, the local server has nothing left to do.
+The frontend then calls `/api/...` as a same-origin relative URL — no host, no port, no CORS. Between streams and this, the local server has nothing left to do.
 
 ## Read this before you start
 
 ### 1. `ev.data` is an `ArrayBuffer`, never a string
 
-This is the big one. A WebSocket delivers text messages as strings; a stream delivers every
-message as bytes. Code like this **compiles, runs, and misbehaves**:
+This is the big one. A WebSocket delivers text messages as strings; a stream delivers every message as bytes. Code like this **compiles, runs, and misbehaves**:
 
 ```js
 // BEFORE — works with WebSocket
@@ -90,8 +70,7 @@ const dec = new TextDecoder();
 s.onmessage = (ev) => { const msg = JSON.parse(dec.decode(ev.data)); ... };
 ```
 
-Or, if your traffic is JSON — which it usually is — use `JSONStream` instead of `Stream`
-and skip the problem entirely:
+Or, if your traffic is JSON — which it usually is — use `JSONStream` instead of `Stream` and skip the problem entirely:
 
 ```js
 import { JSONStream } from "@wailsio/runtime";
@@ -101,22 +80,15 @@ s.onmessage = (ev) => dispatch(ev.data);   // already an object
 s.send({ hello: true });                   // stringified for you
 ```
 
-That is the shortest migration for a JSON WebSocket: swap the constructor, drop the
-`JSON.parse` and `JSON.stringify` calls, and the rest of the handler is unchanged. For
-non-JSON traffic, wrap once and leave every handler untouched — see
-[the compatibility shim](#compatibility-shim).
+That is the shortest migration for a JSON WebSocket: swap the constructor, drop the `JSON.parse` and `JSON.stringify` calls, and the rest of the handler is unchanged. For non-JSON traffic, wrap once and leave every handler untouched — see [the compatibility shim](#compatibility-shim).
 
 ### 2. Sending is compatible; receiving is not
 
-`send()` accepts a string and encodes it as UTF-8, so `s.send(JSON.stringify(x))` works
-unchanged. Only the receive path needs editing. The asymmetry is easy to miss because half
-your code keeps working.
+`send()` accepts a string and encodes it as UTF-8, so `s.send(JSON.stringify(x))` works unchanged. Only the receive path needs editing. The asymmetry is easy to miss because half your code keeps working.
 
 ### 3. There is no URL
 
-A WebSocket carries connection parameters in its URL — path, query string, subprotocol,
-auth token. A stream has only a name. Anything you passed in the URL has to move into the
-first frame, or into a bound method called before connecting.
+A WebSocket carries connection parameters in its URL — path, query string, subprotocol, auth token. A stream has only a name. Anything you passed in the URL has to move into the first frame, or into a bound method called before connecting.
 
 ```js
 // BEFORE
@@ -171,7 +143,7 @@ app.HandleStream("feed", func(c *application.StreamConn) {
 ```
 
 | WebSocket | Stream |
-|---|---|
+| --- | --- |
 | `upgrader.Upgrade` / `websocket.Accept` | *(nothing — `HandleStream` is the whole registration)* |
 | `conn.ReadMessage()` / `conn.Read(ctx)` | `c.Receive()` |
 | `conn.WriteMessage(TextMessage, b)` | `c.Send(b)` |
@@ -181,8 +153,7 @@ app.HandleStream("feed", func(c *application.StreamConn) {
 | ping/pong keepalive | **delete** — there is no idle socket to keep alive |
 | `r.Context()` | `c.Context()` |
 
-The handler goroutine's lifetime is the connection's lifetime, exactly like a gorilla
-handler, so the structure of your existing loop carries over unchanged.
+The handler goroutine's lifetime is the connection's lifetime, exactly like a gorilla handler, so the structure of your existing loop carries over unchanged.
 
 ## Frontend side
 
@@ -203,13 +174,11 @@ s.onmessage = (ev) => dispatch(JSON.parse(dec.decode(ev.data)));
 s.onclose   = () => scheduleReconnect();             // unchanged
 ```
 
-`readyState`, the four state constants, `addEventListener`, `close(code, reason)` and
-`bufferedAmount` all behave as they do on a `WebSocket`.
+`readyState`, the four state constants, `addEventListener`, `close(code, reason)` and `bufferedAmount` all behave as they do on a `WebSocket`.
 
 ### Compatibility shim
 
-If you would rather not touch handlers at all, wrap the constructor once. Existing code
-that expects string messages then works verbatim:
+If you would rather not touch handlers at all, wrap the constructor once. Existing code that expects string messages then works verbatim:
 
 ```js
 import { Stream } from "@wailsio/runtime";
@@ -273,8 +242,7 @@ Then `const ws = TextStream("feed")` is a drop-in for `new WebSocket(url)`.
 
 ## Broadcasting
 
-A WebSocket server usually keeps a registry so it can fan out. Streams have no built-in
-broadcast — keep the registry, just store `*StreamConn` instead of `*websocket.Conn`:
+A WebSocket server usually keeps a registry so it can fan out. Streams have no built-in broadcast — keep the registry, just store `*StreamConn` instead of `*websocket.Conn`:
 
 ```go
 type hub struct {
@@ -307,15 +275,11 @@ app.HandleStream("feed", func(c *application.StreamConn) {
 })
 ```
 
-Two rules worth keeping: release the lock before sending, and prefer `TrySend` in a
-fan-out so a single slow consumer cannot stall every other client.
+Two rules worth keeping: release the lock before sending, and prefer `TrySend` in a fan-out so a single slow consumer cannot stall every other client.
 
 ## The other case: the frontend talks to a broker directly
 
-Less common in a Wails app, but worth knowing. If the frontend opens a WebSocket **to a
-broker rather than to your app** — `nats.ws` to a NATS server, MQTT over WebSocket — a
-stream is not a drop-in, because a stream connects the frontend to *your Go code*, not to a
-third party.
+Less common in a Wails app, but worth knowing. If the frontend opens a WebSocket **to a broker rather than to your app** — `nats.ws` to a NATS server, MQTT over WebSocket — a stream is not a drop-in, because a stream connects the frontend to *your Go code*, not to a third party.
 
 The migration is an architecture change, and usually a good one:
 
@@ -324,8 +288,7 @@ BEFORE   frontend ──ws──► NATS server            (credentials in the f
 AFTER    frontend ──stream──► Go ──►  NATS       (credentials stay in Go)
 ```
 
-Move the broker client into Go, where the native library is better than the browser one,
-and expose the parts the frontend needs over a stream:
+Move the broker client into Go, where the native library is better than the browser one, and expose the parts the frontend needs over a stream:
 
 ```go
 nc, _ := nats.Connect(url, nats.UserCredentials(credsPath))  // creds never reach the frontend
@@ -372,12 +335,9 @@ app.HandleStream("nats", func(c *application.StreamConn) {
 })
 ```
 
-Note `TrySend` inside the subscription callback: that callback runs on the broker client's
-goroutine, and blocking it would stall delivery for every subscription on the connection.
+Note `TrySend` inside the subscription callback: that callback runs on the broker client's goroutine, and blocking it would stall delivery for every subscription on the connection.
 
-What you gain: broker credentials never reach the frontend, no WebSocket port exposed to
-the machine, and reconnection/backoff handled by the mature Go client instead of the
-browser one.
+What you gain: broker credentials never reach the frontend, no WebSocket port exposed to the machine, and reconnection/backoff handled by the mature Go client instead of the browser one.
 
 ## Migration checklist
 
@@ -402,8 +362,8 @@ WriteMessage       ListenAndServe     CheckOrigin
 
 ## Behaviour differences to expect
 
-| | WebSocket | Stream |
-|---|---|---|
+|  | WebSocket | Stream |
+| --- | --- | --- |
 | Message type | text or binary | bytes only |
 | `ev.data` | string or `Blob`/`ArrayBuffer` | always `ArrayBuffer` (unless `binaryType = "blob"`) |
 | `binaryType` default | `"blob"` | `"arraybuffer"` |
@@ -420,9 +380,7 @@ WriteMessage       ListenAndServe     CheckOrigin
 
 Sanity checks that catch the common mistakes:
 
-1. Reload the page repeatedly — the handler should exit and a fresh one start each time,
-   never accumulating.
+1. Reload the page repeatedly — the handler should exit and a fresh one start each time, never accumulating.
 2. Send a message larger than 512 KB in each direction.
 3. Leave it idle for over a minute; traffic should resume without a reconnect.
-4. Open devtools and pause on a breakpoint under load, then resume — the producer should
-   block and recover rather than lose data or grow without bound.
+4. Open devtools and pause on a breakpoint under load, then resume — the producer should block and recover rather than lose data or grow without bound.

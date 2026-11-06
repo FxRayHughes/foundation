@@ -1,0 +1,343 @@
+/* DataGrid Pro / Premium（mantine-datatable）样式。
+   - 颜色一律 --fd-*；mantine-datatable 自身的灰阶（排序 hover / 未排序图标 / 拖拽高亮）在这里改写为主题变量
+   - 钉住行（置顶 / 置底）用 sticky td 实现，偏移量 = 之前各钉住行的实测高度之和（usePinnedRowOffsets）
+   - z-index 阶梯（header = 4，见 mantine-datatable）：
+       钉住列普通单元格 1 < 钉住行单元格 2 < 钉住行 × 钉住列交叉格 3 < 表头 4 */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--fd-divider);
+  background-color: var(--fd-bg-surface);
+}
+
+/* ---------- 工具栏（Premium） ---------- */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--fd-divider);
+  flex-shrink: 0;
+}
+
+.toolbarSpacer {
+  flex: 1;
+}
+
+.toolbarInfo {
+  font-size: 12px;
+  color: var(--fd-text-secondary);
+}
+
+/* ---------- 表格 ---------- */
+
+.tableWrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.table {
+  font-size: 13px;
+}
+
+.table :global(.mantine-datatable-header) th {
+  font-weight: 600;
+  color: var(--fd-text-primary);
+  background-color: var(--fd-bg-surface);
+}
+
+.table :global(.mantine-datatable-header-cell-sortable:hover:not(:has(button:hover))) {
+  background-color: var(--fd-bg-hover);
+}
+
+.table :global(.mantine-datatable-header-cell-sortable-unsorted-icon) {
+  color: var(--fd-text-muted);
+}
+
+.table th:hover :global(.mantine-datatable-header-cell-sortable-unsorted-icon) {
+  color: var(--fd-text-secondary);
+}
+
+.table :global(.mantine-datatable-footer) th {
+  background-color: var(--fd-bg-elevated);
+  font-weight: 500;
+}
+
+.table :global(.mantine-datatable-empty-state) {
+  color: var(--fd-text-muted);
+}
+
+.table :global(.mantine-datatable-row-expansion-cell-content) {
+  background-color: var(--fd-bg-elevated);
+}
+
+.table :global(.mantine-datatable-pagination) {
+  border-top: 1px solid var(--fd-divider);
+  color: var(--fd-text-secondary);
+}
+
+/* ---------- 表头：可拖拽标题 + 列菜单 + 列宽手柄 + 筛选输入 ---------- */
+
+/* th：给列宽手柄做定位容器（钉住列的 th 由内联 sticky 覆盖，sticky 同样是定位容器） */
+.headerCell {
+  position: relative;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.headerRow > .headerLabel {
+  flex: 1;
+}
+
+.headerMenu {
+  display: inline-flex;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.headerCell:hover .headerMenu,
+.headerMenu:focus-within,
+.headerMenu:has([aria-expanded='true']) {
+  opacity: 1;
+}
+
+.headerMenu :global(.mantine-ActionIcon-root) {
+  color: var(--fd-text-secondary);
+}
+
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 1;
+}
+
+.resizeHandle::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  right: 3px;
+  width: 2px;
+  border-radius: 1px;
+  background-color: var(--fd-divider);
+  opacity: 0;
+  transition: opacity 160ms ease, background-color 160ms ease;
+}
+
+.headerCell:hover .resizeHandle::after {
+  opacity: 1;
+}
+
+.resizeHandle:hover::after,
+.resizeHandle[data-resizing]::after {
+  opacity: 1;
+  background-color: var(--fd-accent);
+}
+
+.headerTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.headerLabel {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  border-radius: 4px;
+  transition: background-color 160ms ease;
+}
+
+.headerLabel[data-draggable] {
+  cursor: grab;
+}
+
+.headerLabel[data-draggable]:active {
+  cursor: grabbing;
+}
+
+.headerLabel[data-dragging] {
+  opacity: 0.5;
+}
+
+.headerLabel[data-drop-target] {
+  background-color: color-mix(in srgb, var(--fd-accent) 18%, transparent);
+  box-shadow: inset 2px 0 0 var(--fd-accent);
+}
+
+.headerGrip {
+  flex-shrink: 0;
+  color: var(--fd-text-muted);
+}
+
+.headerText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerFilterInput {
+  font-weight: 400;
+}
+
+.headerFilterInput input {
+  height: 24px;
+  min-height: 24px;
+  font-size: 12px;
+  padding-inline: 6px;
+}
+
+/* ---------- 行 ---------- */
+
+.pinnedRow td {
+  background-color: var(--fd-bg-elevated);
+}
+
+.pinnedRowTopLast td {
+  box-shadow: inset 0 -2px 0 var(--fd-divider);
+}
+
+.pinnedRowBottomFirst td {
+  box-shadow: inset 0 2px 0 var(--fd-divider);
+}
+
+.groupRow td {
+  background-color: var(--fd-bg-elevated);
+  font-weight: 500;
+}
+
+.rowDragging {
+  opacity: 0.4;
+}
+
+.rowDropTarget td {
+  box-shadow: inset 0 2px 0 var(--fd-accent);
+}
+
+/* ---------- 单元格 ---------- */
+
+.cellFocusable:focus-visible {
+  outline: 2px solid var(--fd-accent);
+  outline-offset: -2px;
+}
+
+.cellSelectable {
+  cursor: cell;
+  user-select: none;
+}
+
+.cellSelected {
+  background-color: color-mix(in srgb, var(--fd-accent) 16%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fd-accent) 50%, transparent);
+}
+
+.utilityCell {
+  padding-inline: 4px !important;
+}
+
+.dragHandle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  color: var(--fd-text-muted);
+  cursor: grab;
+  opacity: 0.6;
+  transition: opacity 160ms ease, background-color 160ms ease;
+}
+
+.dragHandle:hover {
+  opacity: 1;
+  background-color: var(--fd-bg-hover);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.treeCell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  /* 每级缩进 16px，由内联 --dg-depth 驱动 */
+  padding-left: calc(var(--dg-depth, 0) * 16px);
+}
+
+.treeSpacer {
+  width: 22px;
+  flex-shrink: 0;
+}
+
+.treeLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupCount {
+  color: var(--fd-text-secondary);
+  font-weight: 400;
+}
+
+.aggregate {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.aggregateLabel {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--fd-text-muted);
+  text-transform: lowercase;
+}
+
+.detailPanel {
+  padding: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+.lazyLoader {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 8px;
+  background-color: var(--fd-bg-elevated);
+  border: 1px solid var(--fd-divider);
+}

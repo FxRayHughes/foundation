@@ -1,11 +1,9 @@
 ---
-title: Environment
-description: Access system environment information in your Wails application
-sidebar:
-  order: 59
+title: "Environment"
+description: "Access system environment information in your Wails application"
+slug: "features/environment/info"
+sourcePath: "features/environment/info.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 Wails provides comprehensive environment information through the EnvironmentManager API. This allows your application to detect system properties, theme preferences, and integrate with the operating system's file manager.
 
@@ -275,6 +273,8 @@ func setupProductionFeatures(app *application.App) {
 }
 ```
 
+**Private API on macOS:** `OpenDevTools()` requires `private_mac_apis`; otherwise the call is a no-op. Production builds also require `devtools`. See the [Web Inspector build matrix](/guides/build/private-macos-apis/#web-inspector).
+
 ## Environment Information Dialog
 
 ### Display System Information
@@ -319,112 +319,108 @@ Platform Information:`,
 
 ## Platform Considerations
 
-<Tabs>
-  <TabItem label="macOS" icon="fa-brands:apple">
-    
-    On macOS:
-    
-    - Dark mode detection uses system appearance settings
-    - File manager operations use Finder
-    - Platform info includes macOS version details
-    - Architecture may be "arm64" on Apple Silicon Macs
-    
-    ```go
-    if envInfo.OS == "darwin" {
-        // macOS-specific handling
-        if envInfo.Arch == "arm64" {
-            app.Logger.Info("Running on Apple Silicon")
+@tabs
+[macOS]
+On macOS:
+
+- Dark mode detection uses system appearance settings
+- File manager operations use Finder
+- Platform info includes macOS version details
+- Architecture may be "arm64" on Apple Silicon Macs
+
+```go
+if envInfo.OS == "darwin" {
+    // macOS-specific handling
+    if envInfo.Arch == "arm64" {
+        app.Logger.Info("Running on Apple Silicon")
+    }
+}
+```
+
+[Windows]
+On Windows:
+
+- Dark mode detection uses Windows theme settings
+- File manager operations use Windows Explorer
+- Platform info includes Windows version details
+- May include additional Windows-specific information
+
+```go
+if envInfo.OS == "windows" {
+    // Windows-specific handling
+    for key, value := range envInfo.PlatformInfo {
+        if key == "windows_version" {
+            app.Logger.Info("Windows version", "version", value)
         }
     }
-    ```
-    
-  </TabItem>
-  
-  <TabItem label="Windows" icon="fa-brands:windows">
-    
-    On Windows:
-    
-    - Dark mode detection uses Windows theme settings
-    - File manager operations use Windows Explorer
-    - Platform info includes Windows version details
-    - May include additional Windows-specific information
-    
-    ```go
-    if envInfo.OS == "windows" {
-        // Windows-specific handling
-        for key, value := range envInfo.PlatformInfo {
-            if key == "windows_version" {
-                app.Logger.Info("Windows version", "version", value)
-            }
-        }
+}
+```
+
+[Linux]
+On Linux:
+
+- Dark mode detection varies by desktop environment
+- File manager operations use system default file manager
+- Platform info includes distribution details
+- Behavior may vary between different Linux distributions
+
+```go
+if envInfo.OS == "linux" {
+    // Linux-specific handling
+    if distro, ok := envInfo.PlatformInfo["distribution"]; ok {
+        app.Logger.Info("Linux distribution", "distro", distro)
     }
-    ```
-    
-  </TabItem>
-  
-  <TabItem label="Linux" icon="fa-brands:linux">
-    
-    On Linux:
-    
-    - Dark mode detection varies by desktop environment
-    - File manager operations use system default file manager
-    - Platform info includes distribution details
-    - Behavior may vary between different Linux distributions
-    
-    ```go
-    if envInfo.OS == "linux" {
-        // Linux-specific handling
-        if distro, ok := envInfo.PlatformInfo["distribution"]; ok {
-            app.Logger.Info("Linux distribution", "distro", distro)
-        }
-    }
-    ```
-    
-  </TabItem>
-</Tabs>
+}
+```
+
+@end
 
 ## Best Practices
 
 1. **Cache Environment Information**: Environment info rarely changes during runtime:
-   ```go
-   type App struct {
-       envInfo *application.EnvironmentInfo
-   }
-   
-   func (a *App) getEnvInfo() application.EnvironmentInfo {
-       if a.envInfo == nil {
-           info := a.app.Env.Info()
-           a.envInfo = &info
-       }
-       return *a.envInfo
-   }
-   ```
+  ```go
+  type App struct {
+      envInfo *application.EnvironmentInfo
+  }
+
+  func (a *App) getEnvInfo() application.EnvironmentInfo {
+      if a.envInfo == nil {
+          info := a.app.Env.Info()
+          a.envInfo = &info
+      }
+      return *a.envInfo
+  }
+  ```
+
 
 2. **Handle Theme Changes**: Listen for system theme changes:
-   ```go
-   app.Event.OnApplicationEvent(events.Common.ThemeChanged, func(event *application.ApplicationEvent) {
-       updateTheme(app.Env.IsDarkMode())
-   })
-   ```
+  ```go
+  app.Event.OnApplicationEvent(events.Common.ThemeChanged, func(event *application.ApplicationEvent) {
+      updateTheme(app.Env.IsDarkMode())
+  })
+  ```
+
 
 3. **Graceful File Manager Failures**: Always handle file manager errors:
-   ```go
-   func openFileManagerSafely(app *application.App, path string) {
-       err := app.Env.OpenFileManager(path, false)
-       if err != nil {
-           // Provide fallback or user notification
-           app.Logger.Warn("Could not open file manager", "path", path)
-       }
-   }
-   ```
+  ```go
+  func openFileManagerSafely(app *application.App, path string) {
+      err := app.Env.OpenFileManager(path, false)
+      if err != nil {
+          // Provide fallback or user notification
+          app.Logger.Warn("Could not open file manager", "path", path)
+      }
+  }
+  ```
+
 
 4. **Platform-Specific Features**: Use environment info to enable platform features:
-   ```go
-   envInfo := app.Env.Info()
-   if envInfo.OS == "darwin" {
-       // Enable macOS-specific features
-   }
-   ```
+  ```go
+  envInfo := app.Env.Info()
+  if envInfo.OS == "darwin" {
+      // Enable macOS-specific features
+  }
+  ```
+
 
 ## Complete Example
 
@@ -612,10 +608,12 @@ func toggleTheme(app *application.App) {
 }
 ```
 
-:::tip[Pro Tip]
+@note{type="tip" title="Pro Tip"}
 Use environment information to provide platform-appropriate user experiences. For example, use Command key shortcuts on macOS and Control key shortcuts on Windows/Linux.
-:::
 
-:::danger[Warning]
+@end
+
+@note{type="danger" title="Warning"}
 Environment information is generally stable during application runtime, but theme preferences can change. Always listen for theme change events to keep your UI synchronized.
-:::
+
+@end

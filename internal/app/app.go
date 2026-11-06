@@ -3,6 +3,7 @@
 package app
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"log/slog"
@@ -10,6 +11,7 @@ import (
 
 	"foundation/internal/events"
 	"foundation/internal/services/appsettings"
+	"foundation/internal/services/exportsvc"
 	"foundation/internal/services/greet"
 	"foundation/internal/services/preferences"
 	"foundation/internal/services/storagesvc"
@@ -60,17 +62,21 @@ func Run(assets embed.FS, trayIcon []byte) error {
 	//   先 new 一个空 service 占位，然后在 app.New 之后回填 app 引用。
 	subSvc := subprocess.New(nil) // app 暂为 nil
 	childWinSvc := NewChildWindowService()
+	prefsSvc := preferences.New(holder)
+	systraySvc := NewSystrayService(prefsSvc, trayIcon)
 
 	app := application.New(application.Options{
 		Name:        "Foundation",
-		Description: "Wails v3 + React 19 + MUI scaffold",
+		Description: "Wails v3 + React 19 + Mantine scaffold",
 		Services: []application.Service{
 			application.NewService(greet.New()),
-			application.NewService(preferences.New(holder)),
+			application.NewService(prefsSvc),
 			application.NewService(appsettings.New(holder)),
 			application.NewService(storagesvc.New(holder, cfgMgr)),
+			application.NewService(exportsvc.New()),
 			application.NewService(subSvc),
 			application.NewService(childWinSvc),
+			application.NewService(systraySvc),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
@@ -82,10 +88,12 @@ func Run(assets embed.FS, trayIcon []byte) error {
 	subSvc.AttachApp(app)
 	childWinSvc.AttachApp(app)
 
-	app.Window.NewWithOptions(windowOptions())
+	mainWindow := app.Window.NewWithOptions(windowOptions())
 
-	// 系统托盘默认禁用，后续通过配置启用
-	// setupSystray(app, trayIcon)
+	// 系统托盘默认禁用：由前端 SystrayService.enable() 开启，开关持久化在 preferences 表，
+	// 这里按上次会话的状态恢复（app.Run 之前创建的托盘 / 窗口会延迟到事件循环启动后生效）。
+	systraySvc.attach(app, mainWindow)
+	systraySvc.restore(context.Background())
 
 	go emitTimeLoop(app)
 

@@ -1,13 +1,11 @@
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import { Box, IconButton, Tooltip, Typography, useTheme } from '@mui/material';
-import type { ComponentType, ReactElement } from 'react';
+import { ActionIcon, Box, Tooltip } from '@mantine/core';
+import { IconHome } from '@tabler/icons-react';
+import type { ReactElement } from 'react';
 import { useT } from '@/i18n';
 import { useRouter } from '@/router';
 import type { RouteDefinition } from '@/router';
 import { usePreferences } from '@/preferences';
-import { sidebarStyles } from './Sidebar.styles';
-
-type IconComponent = ComponentType<{ fontSize?: 'small' | 'medium' | 'large' | 'inherit' }>;
+import classes from './Sidebar.module.css';
 
 // 左侧侧边栏（扁平化，宽 64px）：
 //  - 顶部：品牌方块（默认 "F"，文案走 i18n key sidebar.brand）+ 短 divider
@@ -17,8 +15,6 @@ type IconComponent = ComponentType<{ fontSize?: 'small' | 'medium' | 'large' | '
 //  - Tooltip 可在偏好里关闭（aria-label 仍保留，可访问性不掉）
 // 不接受 props —— 路由表是唯一事实源，新增页面只改 routes.tsx。
 export const Sidebar = () => {
-  const theme = useTheme();
-  const styles = sidebarStyles(theme);
   const { primary, footer, active, navigate } = useRouter();
   const { preferences } = usePreferences();
   const t = useT();
@@ -30,7 +26,7 @@ export const Sidebar = () => {
   const wrapTooltip = (label: string, child: ReactElement): ReactElement => {
     if (!preferences.showTooltip) return child;
     return (
-      <Tooltip title={label} placement="right" arrow>
+      <Tooltip label={label} position="right">
         {child}
       </Tooltip>
     );
@@ -39,55 +35,42 @@ export const Sidebar = () => {
   const renderItem = (r: RouteDefinition) => {
     const isActive = r.id === active.id;
     const label = labelOf(r);
-    const Icon: IconComponent = r.icon ?? HomeRoundedIcon;
+    const Icon = r.icon ?? IconHome;
     return (
-      <Box key={r.id} sx={styles.itemWrap}>
-        {isActive && <Box sx={styles.indicator} aria-hidden />}
+      <div key={r.id} className={classes.itemWrap}>
+        {isActive && <div className={classes.indicator} aria-hidden />}
         {wrapTooltip(
           label,
-          <IconButton
+          <ActionIcon
             onClick={() => navigate(r.id)}
-            sx={isActive ? styles.itemActive : styles.item}
+            className={classes.item}
+            data-active={isActive || undefined}
             aria-label={label}
             aria-current={isActive ? 'page' : undefined}
           >
-            <Icon fontSize="medium" />
-          </IconButton>,
+            <Icon size={24} stroke={1.75} />
+          </ActionIcon>,
         )}
-      </Box>
+      </div>
     );
   };
 
   return (
-    <Box component="nav" sx={styles.root} aria-label={t('sidebar.navAriaLabel')}>
+    <Box component="nav" className={classes.root} aria-label={t('sidebar.navAriaLabel')}>
       {preferences.showLogo && (
         <>
-          <Box sx={styles.brand} aria-hidden>
-            <Typography
-              component="span"
-              sx={{
-                fontSize: 'inherit',
-                fontWeight: 'inherit',
-                letterSpacing: 'inherit',
-                color: 'inherit',
-              }}
-            >
-              {t('sidebar.brand')}
-            </Typography>
-          </Box>
-          <Box sx={styles.brandDivider} aria-hidden />
+          <div className={classes.brand} aria-hidden>
+            <span>{t('sidebar.brand')}</span>
+          </div>
+          <div className={classes.brandDivider} aria-hidden />
         </>
       )}
 
-      <Box sx={styles.section}>
-        {primary.map(renderItem)}
-      </Box>
+      <div className={classes.section}>{primary.map(renderItem)}</div>
 
-      <Box sx={styles.spacer} />
+      <div className={classes.spacer} />
 
-      <Box sx={styles.section}>
-        {footer.map(renderItem)}
-      </Box>
+      <div className={classes.section}>{footer.map(renderItem)}</div>
     </Box>
   );
 };

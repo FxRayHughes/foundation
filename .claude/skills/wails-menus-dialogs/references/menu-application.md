@@ -1,15 +1,14 @@
 ---
-title: Application Menus
-description: Create native menu bars for your desktop application
-sidebar:
-  order: 1
+title: "Application Menus"
+description: "Create native menu bars for your desktop application"
+slug: "features/menus/application"
+sourcePath: "features/menus/application.md"
 ---
-
-import { Card, CardGrid, Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## The Problem
 
 Professional desktop applications need menu bars—File, Edit, View, Help. But menus work differently on each platform:
+
 - **macOS**: Global menu bar at top of screen
 - **Windows**: Menu bar in window title bar
 - **Linux**: Varies by desktop environment
@@ -20,14 +19,9 @@ Building platform-appropriate menus manually is tedious and error-prone.
 
 Wails provides a **unified API** that creates platform-native menus automatically. Write once, get native behaviour on all platforms.
 
-{/* VISUAL PLACEHOLDER: Menu Bar Comparison
-Description: Three screenshots side-by-side showing the same Wails menu on:
-1. macOS - Global menu bar at top of screen with app name
-2. Windows - Menu bar in window title bar
-3. Linux (GNOME) - Menu bar in window
-All showing identical menu structure: File, Edit, View, Tools, Help
-Style: Clean screenshots with subtle borders, labels indicating platform
-*/}
+![A Wails application menu on macOS with standard, checkbox, radio, and submenu items](/assets/screenshots/application-menu-macos.png)
+
+On macOS, the application menu is placed in the global menu bar. This capture shows the native menu rendered by the Wails menu API, including disabled, checkbox, radio, and submenu items.
 
 ## Quick Start
 
@@ -112,59 +106,59 @@ app.Window.NewWithOptions(application.WebviewWindowOptions{
 ```
 
 This approach:
+
 - On **macOS**: The menu appears at the top of screen (standard behaviour)
 - On **Windows/Linux**: Each window with `UseApplicationMenu: true` displays the app menu
 
 **Platform-specific details:**
 
-<Tabs syncKey="platform">
-  <TabItem label="macOS" icon="apple">
-    **Global menu bar** (one per application):
+@tabs{sync-key="platform"}
+[macOS]
+**Global menu bar** (one per application):
 
-    ```go
-    app.Menu.Set(menu)
-    ```
+```go
+app.Menu.Set(menu)
+```
 
-    The menu appears at the top of the screen and persists even when all windows are closed. The `UseApplicationMenu` option has no effect on macOS since all apps use the global menu.
-  </TabItem>
+The menu appears at the top of the screen and persists even when all windows are closed. The `UseApplicationMenu` option has no effect on macOS since all apps use the global menu.
 
-  <TabItem label="Windows" icon="seti:windows">
-    **Per-window menu bar**:
+[Windows]
+**Per-window menu bar**:
 
-    ```go
-    // Option 1: Use application menu (recommended)
-    app.Menu.Set(menu)
-    window := app.Window.NewWithOptions(application.WebviewWindowOptions{
-        UseApplicationMenu: true,
-    })
+```go
+// Option 1: Use application menu (recommended)
+app.Menu.Set(menu)
+window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+    UseApplicationMenu: true,
+})
 
-    // Option 2: Set menu directly on window
-    window.SetMenu(menu)
-    ```
+// Option 2: Set menu directly on window
+window.SetMenu(menu)
+```
 
-    Each window can have its own menu, or inherit the application menu. The menu appears in the window's title bar.
-  </TabItem>
+Each window can have its own menu, or inherit the application menu. The menu appears in the window's title bar.
 
-  <TabItem label="Linux" icon="linux">
-    **Per-window menu bar** (usually):
+[Linux]
+**Per-window menu bar** (usually):
 
-    ```go
-    // Option 1: Use application menu (recommended)
-    app.Menu.Set(menu)
-    window := app.Window.NewWithOptions(application.WebviewWindowOptions{
-        UseApplicationMenu: true,
-    })
+```go
+// Option 1: Use application menu (recommended)
+app.Menu.Set(menu)
+window := app.Window.NewWithOptions(application.WebviewWindowOptions{
+    UseApplicationMenu: true,
+})
 
-    // Option 2: Set menu directly on window
-    window.SetMenu(menu)
-    ```
+// Option 2: Set menu directly on window
+window.SetMenu(menu)
+```
 
-    Behaviour varies by desktop environment. Some (like Unity) support global menus.
-  </TabItem>
-</Tabs>
+Behaviour varies by desktop environment. Some (like Unity) support global menus.
 
-:::tip[Simplify Cross-Platform Menus]
+@end
+
+@note{type="tip" title="Simplify Cross-Platform Menus"}
 Using `UseApplicationMenu: true` eliminates the need for platform-specific code like:
+
 ```go
 // Old approach - no longer needed
 if runtime.GOOS == "darwin" {
@@ -173,7 +167,8 @@ if runtime.GOOS == "darwin" {
     window.SetMenu(menu)
 }
 ```
-:::
+
+@end
 
 **Per-window custom menus:**
 
@@ -183,6 +178,18 @@ If a window needs a different menu than the application menu, set it directly:
 window.SetMenu(customMenu)  // Overrides UseApplicationMenu
 ```
 
+**Removing a window's menu bar:**
+
+Pass `nil` to remove the menu bar from a window:
+
+```go
+window.SetMenu(nil)
+```
+
+On Windows and Linux the window then shows no menu bar, not even the application menu it opted into with `UseApplicationMenu`, and the removed menu's accelerators stop working in that window. Calling it before the window has started creates the window without a menu bar. A later `SetMenu(menu)` puts a bar back.
+
+On macOS the menu bar belongs to the application, not to a window, so `SetMenu` does nothing there. Use `app.Menu.Set` to change the application menu.
+
 ## Menu Roles
 
 Wails provides **predefined menu roles** that create platform-appropriate menu structures automatically.
@@ -190,7 +197,7 @@ Wails provides **predefined menu roles** that create platform-appropriate menu s
 ### Available Roles
 
 | Role | Description | Platform Notes |
-|------|-------------|----------------|
+| --- | --- | --- |
 | `AppMenu` | Application menu with About, Preferences, Quit | **macOS only** |
 | `FileMenu` | File operations (New, Open, Save, etc.) | All platforms |
 | `EditMenu` | Text editing (Undo, Redo, Cut, Copy, Paste) | All platforms |
@@ -216,73 +223,80 @@ menu.AddRole(application.HelpMenu)
 
 **What you get:**
 
-<Tabs syncKey="platform">
-  <TabItem label="macOS" icon="apple">
-    **AppMenu** (with app name):
-    - About [App Name]
-    - Preferences... (⌘,)
-    - ---
-    - Services
-    - ---
-    - Hide [App Name] (⌘H)
-    - Hide Others (⌥⌘H)
-    - Show All
-    - ---
-    - Quit [App Name] (⌘Q)
+@tabs{sync-key="platform"}
+[macOS]
+**AppMenu** (with app name):
 
-    **FileMenu**:
-    - New (⌘N)
-    - Open... (⌘O)
-    - ---
-    - Close Window (⌘W)
+- About [App Name]
+- Preferences... (⌘,)
+- ---
+- Services
+- ---
+- Hide [App Name] (⌘H)
+- Hide Others (⌥⌘H)
+- Show All
+- ---
+- Quit [App Name] (⌘Q)
 
-    **EditMenu**:
-    - Undo (⌘Z)
-    - Redo (⇧⌘Z)
-    - ---
-    - Cut (⌘X)
-    - Copy (⌘C)
-    - Paste (⌘V)
-    - Select All (⌘A)
+**FileMenu**:
 
-    **WindowMenu**:
-    - Minimise (⌘M)
-    - Zoom
-    - ---
-    - Bring All to Front
+- New (⌘N)
+- Open... (⌘O)
+- ---
+- Close Window (⌘W)
 
-    **HelpMenu**:
-    - [App Name] Help
-  </TabItem>
+**EditMenu**:
 
-  <TabItem label="Windows" icon="seti:windows">
-    **FileMenu**:
-    - New (Ctrl+N)
-    - Open... (Ctrl+O)
-    - ---
-    - Exit (Alt+F4)
+- Undo (⌘Z)
+- Redo (⇧⌘Z)
+- ---
+- Cut (⌘X)
+- Copy (⌘C)
+- Paste (⌘V)
+- Select All (⌘A)
 
-    **EditMenu**:
-    - Undo (Ctrl+Z)
-    - Redo (Ctrl+Y)
-    - ---
-    - Cut (Ctrl+X)
-    - Copy (Ctrl+C)
-    - Paste (Ctrl+V)
-    - Select All (Ctrl+A)
+**WindowMenu**:
 
-    **WindowMenu**:
-    - Minimise
-    - Maximise
+- Minimise (⌘M)
+- Zoom
+- ---
+- Bring All to Front
 
-    **HelpMenu**:
-    - About [App Name]
-  </TabItem>
+**HelpMenu**:
 
-  <TabItem label="Linux" icon="linux">
-    Similar to Windows, but keyboard shortcuts may vary by desktop environment.
-  </TabItem>
-</Tabs>
+- [App Name] Help
+
+[Windows]
+**FileMenu**:
+
+- New (Ctrl+N)
+- Open... (Ctrl+O)
+- ---
+- Exit (Alt+F4)
+
+**EditMenu**:
+
+- Undo (Ctrl+Z)
+- Redo (Ctrl+Y)
+- ---
+- Cut (Ctrl+X)
+- Copy (Ctrl+C)
+- Paste (Ctrl+V)
+- Select All (Ctrl+A)
+
+**WindowMenu**:
+
+- Minimise
+- Maximise
+
+**HelpMenu**:
+
+- About [App Name]
+
+[Linux]
+Similar to Windows, but keyboard shortcuts may vary by desktop environment.
+
+@end
 
 ### Customising Role Menus
 
@@ -327,7 +341,7 @@ advancedMenu := toolsMenu.AddSubmenu("Advanced")
 advancedMenu.Add("Configure...").OnClick(showAdvancedSettings)
 ```
 
-**For more menu item types**, see [Menu Reference](/features/menus/reference).
+**For more menu item types**, see [Menu Reference](/features/menus/reference/).
 
 ## Dynamic Menus
 
@@ -355,11 +369,12 @@ func onDocumentChanged() {
 }
 ```
 
-:::caution[Always Call menu.Update()]
+@note{type="caution" title="Always Call menu.Update()"}
 After changing menu state (enable/disable, label, checked), **always call `menu.Update()`**. This is especially critical on Windows where menus are reconstructed.
 
-See [Menu Reference](/features/menus/reference#enabled-state) for details.
-:::
+See [Menu Reference](/features/menus/reference/#enabled-state) for details.
+
+@end
 
 ### Change Labels
 
@@ -453,12 +468,14 @@ menuItem.OnClick(func(ctx *application.Context) {
 ### macOS
 
 **Menu bar behaviour:**
+
 - Appears at **top of screen** (global)
 - Persists when all windows closed
 - First menu is **always the application menu**
 - Use `menu.AddRole(application.AppMenu)` for standard items
 
 **Standard locations:**
+
 - **About**: Application menu
 - **Preferences**: Application menu (⌘,)
 - **Quit**: Application menu (⌘Q)
@@ -478,11 +495,13 @@ if runtime.GOOS == "darwin" {
 ### Windows
 
 **Menu bar behaviour:**
+
 - Appears in **window title bar**
 - Each window has its own menu
 - No application menu
 
 **Standard locations:**
+
 - **Exit**: File menu (Alt+F4)
 - **Settings**: Tools or Edit menu
 - **About**: Help menu
@@ -499,6 +518,7 @@ if runtime.GOOS == "windows" {
 ### Linux
 
 **Menu bar behaviour:**
+
 - Usually per-window (like Windows)
 - Some DEs support global menus (Unity, GNOME with extension)
 - Appearance varies by desktop environment
@@ -652,32 +672,32 @@ func showAbout(ctx *application.Context) {
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Menu Reference" icon="document">
-    Complete reference for menu item types and properties.
-    
-    [Learn More →](/features/menus/reference)
-  </Card>
+@cards{cols="2"}
+📖 Menu Reference
+Complete reference for menu item types and properties.
 
-  <Card title="Context Menus" icon="puzzle">
-    Create right-click context menus.
-    
-    [Learn More →](/features/menus/context)
-  </Card>
+[Learn More →](/features/menus/reference/)
 
-  <Card title="System Tray Menus" icon="star">
-    Add system tray/menu bar integration.
-    
-    [Learn More →](/features/menus/systray)
-  </Card>
+---
+◆ Context Menus
+Create right-click context menus.
 
-  <Card title="Menu Patterns" icon="open-book">
-    Common menu patterns and best practices.
-    
-    [Learn More →](/guides/patterns/menus)
-  </Card>
-</CardGrid>
+[Learn More →](/features/menus/context/)
+
+---
+★ System Tray Menus
+Add system tray/menu bar integration.
+
+[Learn More →](/features/menus/systray/)
+
+---
+📖 Menu Patterns
+Common menu patterns and best practices.
+
+[Learn More →](/guides/menus/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [menu example](https://github.com/wailsapp/wails/tree/master/v3/examples/menu).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [menu example](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/menu).

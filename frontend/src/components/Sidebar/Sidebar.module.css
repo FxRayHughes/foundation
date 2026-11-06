@@ -1,0 +1,90 @@
+/* Sidebar 扁平化设计：
+   - 未选中：完全透明，仅图标颜色（text.secondary），不喧宾夺主
+   - hover：bg.hover 半透明覆盖 + text.primary，让"可点"信号清晰
+   - 选中：bg.active 半透明底色 + accent 图标 + 左侧 3px accent indicator bar
+   - 颜色全部取 --fd-* 变量，三主题自动适配 */
+
+.root {
+  width: 64px;
+  flex-shrink: 0;
+  background-color: var(--fd-bg-sidebar);
+  border-right: 1px solid var(--fd-divider);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block: 12px;
+  gap: 8px;
+}
+
+.brand {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--fd-bg-elevated);
+  color: var(--fd-accent);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.brandDivider {
+  width: 40px;
+  height: 1px;
+  background-color: var(--fd-divider);
+  margin-bottom: 4px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-block: 4px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.itemWrap {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.indicator {
+  position: absolute;
+  left: -8px; /* 顶到 sidebar 左侧 8px gutter 的边 */
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background-color: var(--fd-accent);
+}
+
+/* ActionIcon 的 subtle 变体已有全局 hover 样式；这里提高选择器权重覆盖尺寸与选中态 */
+.item.item {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  color: var(--fd-text-secondary);
+  transition:
+    background-color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.item.item:hover {
+  background-color: var(--fd-bg-hover);
+  color: var(--fd-text-primary);
+}
+.item.item[data-active],
+.item.item[data-active]:hover {
+  color: var(--fd-accent);
+  background-color: var(--fd-bg-active);
+}

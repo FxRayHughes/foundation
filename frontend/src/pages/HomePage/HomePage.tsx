@@ -1,111 +1,109 @@
-import { Box, Button, TextField, Typography, useTheme } from '@mui/material';
-import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
-// TODO(systray): 托盘功能暂时移除；恢复时取消下面图标 import 注释。
-// import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
+import { Button, Text, TextInput } from '@mantine/core';
+import { IconBellRinging, IconExternalLink } from '@tabler/icons-react';
 import { useT } from '@/i18n';
 import { useHomePage } from './useHomePage';
-import { homePageStyles } from './HomePage.styles';
+import classes from './HomePage.module.css';
 
 // Home 页面：脚手架占位首页 —— 只演示 Greet 调用 + time 事件订阅。
 // 所有人类可见文本必须走 t() —— 不允许在 JSX 里硬编码中/英文。
 export const HomePage = () => {
-  const theme = useTheme();
-  const styles = homePageStyles(theme);
   const t = useT();
-  const { name, setName, result, time, loading, error, greet, openConfirm, openMessage, openBlank, childResult } = useHomePage();
+  const {
+    name, setName, result, time, loading, error, greet,
+    openConfirm, openMessage, openBlank, childResult,
+    systrayEnabled, systrayBusy, systrayError, toggleSystray,
+  } = useHomePage();
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     void greet();
   };
 
-  return (
-    <Box sx={styles.root}>
-      <Box sx={styles.body}>
-        <Typography sx={styles.eyebrow}>{t('home.eyebrow')}</Typography>
-        <Typography component="h1" sx={styles.hero}>
-          {t('home.hero')}
-        </Typography>
-        <Typography sx={styles.subtitle}>
-          {t('home.subtitle', { file: 'internal/services/greet/greet.go' })}
-        </Typography>
+  const openIcon = <IconExternalLink size={18} stroke={1.75} />;
 
-        <Box sx={styles.card}>
-          <Typography sx={styles.cardTitle}>{t('home.backendCard.title')}</Typography>
-          <Typography sx={styles.result}>{result ?? t('home.backendCard.defaultResult')}</Typography>
-          <Box component="form" sx={styles.form} onSubmit={onSubmit}>
-            <TextField
-              sx={styles.input}
+  return (
+    <div className={classes.root}>
+      <div className={classes.body}>
+        <Text className={classes.eyebrow}>{t('home.eyebrow')}</Text>
+        <h1 className={classes.hero}>{t('home.hero')}</h1>
+        <Text className={classes.subtitle}>
+          {t('home.subtitle', { file: 'internal/services/greet/greet.go' })}
+        </Text>
+
+        <div className={classes.card}>
+          <Text className={classes.cardTitle}>{t('home.backendCard.title')}</Text>
+          <Text className={classes.result}>{result ?? t('home.backendCard.defaultResult')}</Text>
+          <form className={classes.form} onSubmit={onSubmit}>
+            <TextInput
+              className={classes.input}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(e.currentTarget.value)}
               placeholder={t('home.backendCard.placeholder')}
               autoComplete="off"
               disabled={loading}
             />
-            <Button type="submit" variant="contained" disabled={loading}>
+            <Button type="submit" variant="filled" disabled={loading}>
               {loading ? t('home.backendCard.submitting') : t('home.backendCard.submit')}
             </Button>
-          </Box>
+          </form>
           {error && (
-            <Typography sx={styles.error}>
+            <Text className={classes.error}>
               {t('home.backendCard.errorPrefix')}{error}
-            </Typography>
+            </Text>
           )}
-        </Box>
+        </div>
 
-        <Box sx={styles.card}>
-          <Typography sx={styles.cardTitle}>{t('home.childWindowCard.title')}</Typography>
-          <Typography sx={{ fontSize: 13, color: theme.palette.foundation.text.secondary }}>
-            {t('home.childWindowCard.description')}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
-            <Button variant="outlined" size="small" startIcon={<OpenInNewRoundedIcon />} onClick={() => void openConfirm()}>
+        <div className={classes.card}>
+          <Text className={classes.cardTitle}>{t('home.childWindowCard.title')}</Text>
+          <Text className={classes.cardDescription}>{t('home.childWindowCard.description')}</Text>
+          <div className={classes.actions}>
+            <Button variant="outline" size="xs" leftSection={openIcon} onClick={() => void openConfirm()}>
               {t('home.childWindowCard.confirmBtn')}
             </Button>
-            <Button variant="outlined" size="small" startIcon={<OpenInNewRoundedIcon />} onClick={() => void openMessage()}>
+            <Button variant="outline" size="xs" leftSection={openIcon} onClick={() => void openMessage()}>
               {t('home.childWindowCard.messageBtn')}
             </Button>
-            <Button variant="outlined" size="small" startIcon={<OpenInNewRoundedIcon />} onClick={() => void openBlank()}>
+            <Button variant="outline" size="xs" leftSection={openIcon} onClick={() => void openBlank()}>
               {t('home.childWindowCard.blankBtn')}
             </Button>
-          </Box>
+          </div>
           {childResult && (
-            <Typography sx={{ fontSize: 13, color: theme.palette.foundation.accent, mt: 1 }}>
+            <Text className={classes.childResult}>
               {t('home.childWindowCard.resultPrefix')}{childResult}
-            </Typography>
+            </Text>
           )}
-        </Box>
+        </div>
 
-        {/* TODO(systray): 托盘功能暂时移除，后端 bindings 不存在；恢复时取消下面整段注释。
-        <Box sx={styles.card}>
-          <Typography sx={styles.cardTitle}>{t('home.systrayCard.title')}</Typography>
-          <Typography sx={{ fontSize: 13, color: theme.palette.foundation.text.secondary }}>
-            {t('home.systrayCard.description')}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, mt: 1, alignItems: 'center' }}>
+        <div className={classes.card}>
+          <Text className={classes.cardTitle}>{t('home.systrayCard.title')}</Text>
+          <Text className={classes.cardDescription}>{t('home.systrayCard.description')}</Text>
+          <div className={classes.actions}>
             <Button
-              variant={systrayEnabled ? 'contained' : 'outlined'}
-              size="small"
-              color={systrayEnabled ? 'error' : 'primary'}
-              startIcon={<NotificationsActiveRoundedIcon />}
+              variant={systrayEnabled ? 'filled' : 'outline'}
+              size="xs"
+              className={systrayEnabled ? classes.systrayDanger : undefined}
+              leftSection={<IconBellRinging size={18} stroke={1.75} />}
+              loading={systrayBusy}
               onClick={() => void toggleSystray()}
             >
               {systrayEnabled ? t('home.systrayCard.disableBtn') : t('home.systrayCard.enableBtn')}
             </Button>
-            <Typography sx={{ fontSize: 12, color: theme.palette.foundation.text.muted }}>
+            <Text className={classes.systrayStatus}>
               {systrayEnabled ? t('home.systrayCard.statusOn') : t('home.systrayCard.statusOff')}
-            </Typography>
-          </Box>
-        </Box>
-        */}
+            </Text>
+          </div>
+          {systrayError && (
+            <Text className={classes.error}>
+              {t('home.systrayCard.errorPrefix')}{systrayError}
+            </Text>
+          )}
+        </div>
 
-        <Box sx={styles.footer}>
-          <Typography variant="inherit">
-            {t('home.footer.backendTick', { time: time || '—' })}
-          </Typography>
-          <Typography variant="inherit">{t('home.footer.poweredBy')}</Typography>
-        </Box>
-      </Box>
-    </Box>
+        <div className={classes.footer}>
+          <span>{t('home.footer.backendTick', { time: time || '—' })}</span>
+          <span>{t('home.footer.poweredBy')}</span>
+        </div>
+      </div>
+    </div>
   );
 };

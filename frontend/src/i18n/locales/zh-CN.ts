@@ -15,6 +15,11 @@ export const zhCN: Locale = {
   nativeName: '简体中文',
   messages: {
     app: {
+      // 托盘原生右键菜单（主窗口推送给后端 SystrayService.SetMenuLabels）
+      trayMenu: {
+        showWindow: '显示主窗口',
+        quit: '退出',
+      },
       title: 'Foundation',
     },
     sidebar: {

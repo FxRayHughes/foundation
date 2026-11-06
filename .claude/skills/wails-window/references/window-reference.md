@@ -1,11 +1,9 @@
 ---
-title: Window API
-description: Complete reference for the Window API
-sidebar:
-  order: 2
+title: "Window API"
+description: "Complete reference for the Window API"
+slug: "reference/window"
+sourcePath: "reference/window.md"
 ---
-
-import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Overview
 
@@ -14,6 +12,7 @@ The Window API provides methods to control window appearance, behaviour, and lif
 `Window` is an interface satisfied by `*application.WebviewWindow`; method signatures below are on `*WebviewWindow`. Many mutators return `Window` to allow chaining — the return values are documented per method.
 
 **Common operations:**
+
 - Create and show windows
 - Control size, position, and state
 - Handle window events
@@ -31,6 +30,7 @@ func (w *WebviewWindow) Show() Window
 ```
 
 **Example:**
+
 ```go
 window := app.Window.New()
 window.Show()
@@ -45,6 +45,7 @@ func (w *WebviewWindow) Hide() Window
 ```
 
 **Example:**
+
 ```go
 // Hide window temporarily
 window.Hide()
@@ -54,6 +55,7 @@ window.Show()
 ```
 
 **Use cases:**
+
 - System tray applications that hide to tray
 - Wizard flows where windows are reused
 - Temporary hiding during operations
@@ -67,6 +69,7 @@ func (w *WebviewWindow) Close()
 ```
 
 **Example:**
+
 ```go
 window.Close()
 ```
@@ -84,9 +87,11 @@ func (w *WebviewWindow) SetTitle(title string) Window
 ```
 
 **Parameters:**
+
 - `title` - The new window title
 
 **Example:**
+
 ```go
 window.SetTitle("My Application - Document.txt")
 ```
@@ -100,6 +105,7 @@ func (w *WebviewWindow) Name() string
 ```
 
 **Example:**
+
 ```go
 name := window.Name()
 fmt.Println("Window name:", name)
@@ -121,10 +127,12 @@ func (w *WebviewWindow) SetSize(width, height int) Window
 ```
 
 **Parameters:**
+
 - `width` - Window width in pixels
 - `height` - Window height in pixels
 
 **Example:**
+
 ```go
 window.SetSize(1024, 768)
 ```
@@ -138,6 +146,7 @@ func (w *WebviewWindow) Size() (width, height int)
 ```
 
 **Example:**
+
 ```go
 width, height := window.Size()
 fmt.Printf("Window is %dx%d\n", width, height)
@@ -153,6 +162,7 @@ func (w *WebviewWindow) SetMaxSize(width, height int) Window
 ```
 
 **Example:**
+
 ```go
 // Prevent window from being too small
 window.SetMinSize(800, 600)
@@ -170,10 +180,12 @@ func (w *WebviewWindow) SetPosition(x, y int)
 ```
 
 **Parameters:**
+
 - `x` - Horizontal position in pixels
 - `y` - Vertical position in pixels
 
 **Example:**
+
 ```go
 // Position window at top-left
 window.SetPosition(0, 0)
@@ -191,6 +203,7 @@ func (w *WebviewWindow) Position() (x, y int)
 ```
 
 **Example:**
+
 ```go
 x, y := window.Position()
 fmt.Printf("Window is at (%d, %d)\n", x, y)
@@ -205,6 +218,7 @@ func (w *WebviewWindow) Center()
 ```
 
 **Example:**
+
 ```go
 window := app.Window.New()
 window.Center()
@@ -222,6 +236,7 @@ func (w *WebviewWindow) Focus()
 ```
 
 **Example:**
+
 ```go
 // Bring window to front
 window.Focus()
@@ -239,6 +254,7 @@ func (w *WebviewWindow) UnMinimise()
 ```
 
 **Example:**
+
 ```go
 // Minimise window
 window.Minimise()
@@ -257,6 +273,7 @@ func (w *WebviewWindow) UnMaximise()
 ```
 
 **Example:**
+
 ```go
 // Maximise window
 window.Maximise()
@@ -276,6 +293,7 @@ func (w *WebviewWindow) ToggleFullscreen()
 ```
 
 **Example:**
+
 ```go
 // Enter fullscreen
 window.Fullscreen()
@@ -300,6 +318,7 @@ func (w *WebviewWindow) IsFullscreen() bool
 ```
 
 **Example:**
+
 ```go
 if window.IsMinimised() {
     window.UnMinimise()
@@ -325,9 +344,11 @@ func (w *WebviewWindow) SetURL(url string) Window
 ```
 
 **Parameters:**
+
 - `url` - URL to navigate to (can be `http://wails.localhost/` for embedded assets)
 
 **Example:**
+
 ```go
 // Navigate to embedded page
 window.SetURL("http://wails.localhost/settings.html")
@@ -345,9 +366,11 @@ func (w *WebviewWindow) SetHTML(html string) Window
 ```
 
 **Parameters:**
+
 - `html` - HTML content to display
 
 **Example:**
+
 ```go
 html := `
 <!DOCTYPE html>
@@ -363,6 +386,7 @@ window.SetHTML(html)
 ```
 
 **Use cases:**
+
 - Dynamic content generation
 - Simple windows without a frontend build process
 - Error pages or splash screens
@@ -376,6 +400,7 @@ func (w *WebviewWindow) Reload()
 ```
 
 **Example:**
+
 ```go
 // Reload current page
 window.Reload()
@@ -402,6 +427,7 @@ func (w *WebviewWindow) OnWindowEvent(
 ```
 
 **Example:**
+
 ```go
 import "github.com/wailsapp/wails/v3/pkg/events"
 
@@ -422,6 +448,7 @@ window.OnWindowEvent(events.Common.WindowDidResize, func(e *application.WindowEv
 ```
 
 **Common Window Events:**
+
 - `events.Common.WindowClosing` - Window is about to close
 - `events.Common.WindowFocus` - Window gained focus
 - `events.Common.WindowLostFocus` - Window lost focus
@@ -444,6 +471,7 @@ func (w *WebviewWindow) RegisterHook(
 ```
 
 **Example - Prevent window close:**
+
 ```go
 import "github.com/wailsapp/wails/v3/pkg/events"
 
@@ -466,6 +494,7 @@ window.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent
 ```
 
 **Example - Save before closing:**
+
 ```go
 window.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
     if !hasUnsavedChanges {
@@ -499,10 +528,12 @@ func (w *WebviewWindow) EmitEvent(name string, data ...any) bool
 ```
 
 **Parameters:**
+
 - `name` - Event name
 - `data` - Optional data to send with the event
 
 **Example:**
+
 ```go
 // Send data to specific window
 window.EmitEvent("data-updated", map[string]any{
@@ -512,6 +543,7 @@ window.EmitEvent("data-updated", map[string]any{
 ```
 
 **Frontend (JavaScript):**
+
 ```javascript
 import { Events } from '@wailsio/runtime'
 
@@ -532,6 +564,7 @@ func (w *WebviewWindow) SetEnabled(enabled bool)
 ```
 
 **Example:**
+
 ```go
 // Disable window during long operation
 window.SetEnabled(false)
@@ -554,6 +587,7 @@ func (w *WebviewWindow) SetBackgroundColour(colour RGBA) Window
 `RGBA` is `application.RGBA{Red, Green, Blue, Alpha uint8}`. Use the helpers `application.NewRGB(r, g, b)` (alpha 255) or `application.NewRGBA(r, g, b, a)`.
 
 **Example:**
+
 ```go
 // White background
 window.SetBackgroundColour(application.NewRGB(255, 255, 255))
@@ -571,6 +605,7 @@ func (w *WebviewWindow) SetResizable(resizable bool) Window
 ```
 
 **Example:**
+
 ```go
 // Make window fixed size
 window.SetResizable(false)
@@ -585,9 +620,35 @@ func (w *WebviewWindow) SetAlwaysOnTop(alwaysOnTop bool) Window
 ```
 
 **Example:**
+
 ```go
 // Keep window on top
 window.SetAlwaysOnTop(true)
+```
+
+### SetMenu()
+
+Sets the window's menu bar on Windows and Linux, replacing the one it shows.
+
+```go
+func (w *WebviewWindow) SetMenu(menu *Menu)
+```
+
+**Parameters:**
+- `menu` - The menu to show, or `nil` to remove the menu bar
+
+Passing `nil` removes the bar: the window shows no menu, not even the application menu, and the removed menu's accelerators stop working in that window. Called before the window starts, the window is created without a menu bar.
+
+**Platform support:**
+- **Windows**: Full support
+- **Linux**: Full support
+- **macOS**: No effect, because the menu bar belongs to the application. Use `app.Menu.Set` instead.
+
+**Example:**
+
+```go
+window.SetMenu(menu) // show a menu bar
+window.SetMenu(nil)  // remove it
 ```
 
 ### Print()
@@ -601,6 +662,7 @@ func (w *WebviewWindow) Print() error
 **Returns:** Error if printing fails.
 
 **Example:**
+
 ```go
 if err := window.Print(); err != nil {
     log.Println("Print failed:", err)
@@ -616,14 +678,17 @@ func (w *WebviewWindow) AttachModal(modalWindow Window)
 ```
 
 **Parameters:**
+
 - `modalWindow` - The window to attach as a modal
 
 **Platform support:**
+
 - **macOS**: Full support (presents as a sheet)
 - **Windows**: No support
 - **Linux**: No support
 
 **Example:**
+
 ```go
 modalWindow := app.Window.New()
 window.AttachModal(modalWindow)
@@ -640,11 +705,12 @@ Linux windows support the following platform-specific options via `LinuxWindow`:
 Controls how the application menu is displayed. This option is available on the default GTK4 build and is ignored on legacy `-tags gtk3` builds.
 
 | Value | Description |
-|-------|-------------|
+| --- | --- |
 | `LinuxMenuStyleMenuBar` | Traditional menu bar below the title bar (default) |
 | `LinuxMenuStylePrimaryMenu` | Primary menu button in the header bar (GNOME style) |
 
 **Example:**
+
 ```go
 window := app.Window.NewWithOptions(application.WebviewWindowOptions{
     Title: "My Application",

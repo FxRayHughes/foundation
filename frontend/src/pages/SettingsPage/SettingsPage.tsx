@@ -1,6 +1,6 @@
-import { Box, ButtonBase, Typography, useTheme } from '@mui/material';
+import { Text, Title, UnstyledButton } from '@mantine/core';
 import { useT } from '@/i18n';
-import { settingsPageStyles } from './SettingsPage.styles';
+import classes from './SettingsPage.module.css';
 import { useSettingsPage } from './useSettingsPage';
 import { Personalization } from './personalization';
 import { Language } from './language';
@@ -11,55 +11,54 @@ import { Database } from './database';
 //   右列：根据 activeItemId 分发到对应子页面组件
 //
 // 每个子页面是一个独立目录（personalization / language / database），
-// 内部包含 View / VM / Style / lang。SettingsPage 仅做"框架 + 分发"，
+// 内部包含 View / VM / Style(.module.css) / lang。SettingsPage 仅做"框架 + 分发"，
 // 不感知子页面的业务细节。
 export const SettingsPage = () => {
-  const theme = useTheme();
-  const styles = settingsPageStyles(theme);
   const vm = useSettingsPage();
   const t = useT();
 
   return (
-    <Box sx={styles.root}>
+    <div className={classes.root}>
       {/* 左列：选项列表 */}
-      <Box sx={styles.list} aria-label={t('settings.title')}>
-        <Box sx={styles.listHeader}>
-          <Typography sx={styles.listEyebrow}>{t('settings.eyebrow')}</Typography>
-          <Typography sx={styles.listTitle}>{t('settings.title')}</Typography>
-        </Box>
-        <Box sx={styles.listItems}>
+      <div className={classes.list} aria-label={t('settings.title')}>
+        <div className={classes.listHeader}>
+          <Text className={classes.listEyebrow}>{t('settings.eyebrow')}</Text>
+          <Text className={classes.listTitle}>{t('settings.title')}</Text>
+        </div>
+        <div className={classes.listItems}>
           {vm.items.map((item) => {
             const isActive = item.id === vm.activeItemId;
             return (
-              <ButtonBase
+              <UnstyledButton
                 key={item.id}
                 onClick={() => vm.setActiveItemId(item.id)}
-                sx={isActive ? styles.listItemActive : styles.listItem}
+                className={classes.listItem}
+                data-active={isActive || undefined}
                 aria-pressed={isActive}
               >
-                {isActive && <Box sx={styles.listItemIndicator} aria-hidden />}
-                <Typography sx={styles.listItemLabel}>{t(item.labelKey)}</Typography>
-                <Typography sx={styles.listItemDesc}>{t(item.descriptionKey)}</Typography>
-              </ButtonBase>
+                {isActive && <div className={classes.listItemIndicator} aria-hidden />}
+                <Text className={classes.listItemLabel}>{t(item.labelKey)}</Text>
+                <Text className={classes.listItemDesc}>{t(item.descriptionKey)}</Text>
+              </UnstyledButton>
             );
           })}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* 右列：详细配置 */}
-      <Box sx={styles.detail}>
-        <Box sx={styles.detailHeader}>
-          <Typography sx={styles.detailEyebrow}>{t(vm.activeItem.labelKey)}</Typography>
-          <Typography component="h1" sx={styles.detailTitle}>
+      <div className={classes.detail}>
+        <div className={classes.detailHeader}>
+          <Text className={classes.detailEyebrow}>{t(vm.activeItem.labelKey)}</Text>
+          <Title order={1} className={classes.detailTitle}>
             {t(vm.activeItem.labelKey)}
-          </Typography>
-          <Typography sx={styles.detailDesc}>{t(vm.activeItem.descriptionKey)}</Typography>
-        </Box>
+          </Title>
+          <Text className={classes.detailDesc}>{t(vm.activeItem.descriptionKey)}</Text>
+        </div>
 
         {vm.activeItem.id === 'personalization' && <Personalization />}
         {vm.activeItem.id === 'language' && <Language />}
         {vm.activeItem.id === 'database' && <Database />}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

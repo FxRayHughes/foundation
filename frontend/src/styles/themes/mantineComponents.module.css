@@ -1,0 +1,59 @@
+/* Foundation 对 Mantine 原生组件的全局样式覆盖（由 buildMantineTheme 通过 classNames 注入）。
+   颜色只允许使用 --fd-* 变量。 */
+
+.button {
+  font-weight: 500;
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+.button:active:not([data-disabled]) {
+  transform: translateY(1px);
+}
+
+/* 扁平图标按钮：默认无底色，hover 才出现（对应原 MUI IconButton 覆盖） */
+.actionIcon[data-variant='subtle'] {
+  color: var(--fd-text-secondary);
+  background-color: transparent;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.actionIcon[data-variant='subtle']:hover:not([data-disabled]) {
+  background-color: var(--fd-bg-hover);
+  color: var(--fd-text-primary);
+}
+
+.surface {
+  background-color: var(--fd-bg-surface);
+  color: var(--fd-text-primary);
+}
+
+.dropdown {
+  background-color: var(--fd-bg-surface);
+  border-color: var(--fd-divider);
+  color: var(--fd-text-primary);
+}
+
+.menuItem:where([data-hovered]) {
+  background-color: var(--fd-bg-hover);
+}
+
+.input {
+  background-color: var(--fd-bg-elevated);
+  border-color: var(--fd-divider);
+  color: var(--fd-text-primary);
+}
+.input:hover:not(:focus):not([data-disabled]) {
+  border-color: var(--fd-accent);
+}
+.input:focus,
+.input:focus-within {
+  border-color: var(--fd-accent);
+}
+
+.tooltip {
+  background-color: var(--fd-bg-base);
+  color: var(--fd-text-primary);
+  border: 1px solid var(--fd-divider);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 10px;
+  --tooltip-bg: var(--fd-bg-base);
+}

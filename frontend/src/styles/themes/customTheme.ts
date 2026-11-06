@@ -6,7 +6,7 @@ import type { FoundationPalette, FoundationThemePreset } from './types';
 export const CUSTOM_THEME_NAME = 'foundation-custom';
 export const CUSTOM_THEME_LABEL = '自定义';
 
-// 持久化结构：mode 决定 MUI 的 contrast 计算方向，palette 全字段独立保存。
+// 持久化结构：mode 决定 Mantine color scheme，palette 全字段独立保存。
 //
 // 存储后端从 localStorage 切到了 SQLite（appsettings.custom_theme JSON 字段）；
 // 写入流程改为：UI → ThemeProvider → AppSettingsService.setCustomTheme()，

@@ -1,11 +1,9 @@
 ---
-title: Linux Packaging
-description: Package your Wails application for Linux distribution
-sidebar:
-  order: 5
+title: "Linux Packaging"
+description: "Package your Wails application for Linux distribution"
+slug: "guides/build/linux"
+sourcePath: "guides/build/linux.md"
 ---
-
-import { Aside } from '@astrojs/starlight/components';
 
 ## Package Formats
 
@@ -16,6 +14,7 @@ wails3 package GOOS=linux
 ```
 
 This creates multiple formats in the `bin/` directory:
+
 - **AppImage**: Portable, runs on any Linux distribution
 - **DEB**: For Debian, Ubuntu, and derivatives
 - **RPM**: For Fedora, RHEL, and derivatives
@@ -63,6 +62,8 @@ license: MIT
 
 AppImage configuration is in `build/linux/appimage/`. The app icon comes from `build/appicon.png`.
 
+The AppImage bundles WebKit and its helper processes, and patches the bundled library to start them from inside the AppImage. Its `AppRun` starts the app from `usr/lib` inside the AppImage, where the patched path resolves both outside and inside WebKit's bubblewrap sandbox, so the sandbox stays on. Supply your own `AppRun` only if it keeps that working directory.
+
 ## Signing Packages
 
 Sign DEB and RPM packages with a PGP key:
@@ -88,10 +89,10 @@ vars:
 Store your key password:
 
 ```bash
-wails3 setup signing
+wails3 signing
 ```
 
-See [Signing Applications](/guides/build/signing) for details.
+See [Signing Applications](/guides/build/signing/) for details.
 
 ## Building for ARM
 
@@ -100,17 +101,19 @@ wails3 build GOOS=linux GOARCH=arm64
 wails3 package GOOS=linux GOARCH=arm64
 ```
 
-<Aside type="note">
+@note{type="note"}
 ARM64 builds from x86_64 hosts use Docker for CGO cross-compilation.
-</Aside>
+
+@end
 
 ## Legacy GTK3 Support
 
 Wails v3 builds on **GTK4 with WebKitGTK 6.0** by default. A legacy GTK3 / WebKit2GTK 4.1 path is still available for distributions that don't yet ship WebKitGTK 6.0 (Ubuntu 22.04 LTS, Debian 12, Fedora ≤ 39, RHEL 9.x). The legacy path is opt-in via a build tag and is scheduled for removal in v3.1.
 
-<Aside type="caution" title="Legacy path">
+@note{type="caution" title="Legacy path"}
 The GTK3 / WebKit2GTK 4.1 path is supported through the v3.0.x line. Plan to migrate to GTK4 in coordination with your target distribution's GTK4 / WebKitGTK 6.0 availability — `-tags gtk3` will be removed in v3.1.
-</Aside>
+
+@end
 
 ### Dependencies
 
@@ -145,8 +148,8 @@ go build -tags gtk3 -o myapp .
 
 ### Known Differences from GTK4
 
-- **File dialogs**: GTK4 uses `xdg-desktop-portal` for file dialogs (the default), which means some dialog options (like default directory, custom filters display) behave differently from GTK3. See [Dialogs Reference - Linux Dialog Behavior](/reference/dialogs#linux-dialog-behavior) for details.
-- **Menu style**: GTK4 supports a `LinuxMenuStylePrimaryMenu` option that displays a hamburger button (☰) in the header bar, following GNOME HIG. This option has no effect on `-tags gtk3` builds. See [Window API - Linux MenuStyle](/reference/window#linux).
+- **File dialogs**: GTK4 uses `xdg-desktop-portal` for file dialogs (the default), which means some dialog options (like default directory, custom filters display) behave differently from GTK3. See [Dialogs Reference - Linux Dialog Behavior](/reference/dialogs/#linux-dialog-behavior) for details.
+- **Menu style**: GTK4 supports a `LinuxMenuStylePrimaryMenu` option that displays a hamburger button (☰) in the header bar, following GNOME HIG. This option has no effect on `-tags gtk3` builds. See [Window API - Linux MenuStyle](/reference/window/#linux).
 - **DPI scaling**: GTK4 uses `gdk_monitor_get_scale` (GTK 4.14+) for fractional scaling support.
 
 ### Checking Your Build
@@ -165,18 +168,29 @@ chmod +x MyApp-x86_64.AppImage
 
 ### Missing dependencies
 
-If the app fails to start, check for missing WebKit dependencies:
+Match the libraries to the binary's build variant. For a default GTK4/WebKitGTK 6.0 build:
+
+```bash
+# Debian/Ubuntu versions that provide WebKitGTK 6.0
+sudo apt install libgtk-4-1 libwebkitgtk-6.0-4
+# Fedora
+sudo dnf install gtk4 webkitgtk6.0
+# Arch
+sudo pacman -S gtk4 webkitgtk-6.0
+```
+
+For a binary explicitly built with `-tags gtk3`, install the legacy GTK3/WebKit2GTK 4.1 libraries instead:
 
 ```bash
 # Debian/Ubuntu
-sudo apt install libwebkit2gtk-4.1-0
-
+sudo apt install libgtk-3-0 libwebkit2gtk-4.1-0
 # Fedora
-sudo dnf install webkit2gtk4.1
-
+sudo dnf install gtk3 webkit2gtk4.1
 # Arch
-sudo pacman -S webkit2gtk-4.1
+sudo pacman -S gtk3 webkit2gtk-4.1
 ```
+
+Package availability and names depend on the distribution release. Use a supported release with the required libraries, or the documented cross-build/container path; installing the legacy libraries does not satisfy a default build. An AppImage's portability depends on what its packaging actually bundles and which host libraries it still needs.
 
 ### No C compiler found
 
@@ -216,6 +230,7 @@ On modern Linux distributions (Arch Linux, Fedora 39+, Ubuntu 24.04+), system li
 Wails automatically detects this situation by checking system GTK libraries before building the AppImage. When detected, stripping is disabled (`NO_STRIP=1`) to ensure compatibility.
 
 **What this means:**
+
 - AppImages will be slightly larger (~20-40%) on affected systems
 - The application functionality is not affected
 - This is handled automatically—no action required

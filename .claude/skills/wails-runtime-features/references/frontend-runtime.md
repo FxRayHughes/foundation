@@ -1,12 +1,11 @@
 ---
-title: Frontend Runtime
-description: The Wails JavaScript runtime package for frontend integration
-sidebar:
-  order: 1
+title: "Frontend Runtime"
+description: "The Wails JavaScript runtime package for frontend integration"
+slug: "reference/frontend-runtime"
+sourcePath: "reference/frontend-runtime.md"
 ---
 
-The Wails frontend runtime is the standard library for Wails applications. It provides a
-number of features that may be used in your applications, including:
+The Wails frontend runtime is the standard library for Wails applications. It provides a number of features that may be used in your applications, including:
 
 - Window management
 - Dialogs
@@ -19,18 +18,14 @@ number of features that may be used in your applications, including:
 - Screens
 - WML (Wails Markup Language)
 
-The runtime is required for integration between Go and the frontend. There are 2
-ways to integrate the runtime:
+The runtime is required for integration between Go and the frontend. There are 2 ways to integrate the runtime:
 
 - Using the `@wailsio/runtime` package
 - Using a pre-built bundle
 
 ## Using the npm package
 
-The `@wailsio/runtime` package is a JavaScript package that provides access to
-the Wails runtime from the frontend. It is used by all standard templates
-and is the recommended way to integrate the runtime into your application.
-By using the `@wailsio/runtime` package, you will only include the parts of the runtime that you use.
+The `@wailsio/runtime` package is a JavaScript package that provides access to the Wails runtime from the frontend. It is used by all standard templates and is the recommended way to integrate the runtime into your application. By using the `@wailsio/runtime` package, you will only include the parts of the runtime that you use.
 
 The package is available on npm and can be installed using:
 
@@ -40,18 +35,13 @@ npm install --save @wailsio/runtime
 
 ## Using a pre-built bundle
 
-Some projects will not use a Javascript bundler and may prefer to use a
-pre-built bundled version of the runtime. This version can be generated locally
-using the following command:
+Some projects will not use a Javascript bundler and may prefer to use a pre-built bundled version of the runtime. This version can be generated locally using the following command:
 
 ```shell
 wails3 generate runtime
 ```
 
-The command will output a `runtime.js` (and `runtime.debug.js`) file in the current
-directory. This file is an ES module that can be imported by your application scripts
-just like the npm package, but the API is also exported to the global window object,
-so for simpler applications you can use it as follows:
+The command will output a `runtime.js` (and `runtime-debug.js`) file in the current directory. This file is an ES module that can be imported by your application scripts just like the npm package, but the API is also exported to the global window object, so for simpler applications you can use it as follows:
 
 ```html
 <html>
@@ -67,29 +57,25 @@ so for simpler applications you can use it as follows:
 </html>
 ```
 
-:::caution
-It is important to include the `type="module"` attribute on the `<script>` tag that loads the runtime
-and to wait for the page to be fully loaded before calling the API,
-because scripts with the `type="module"` attribute run asynchronously.
-:::
+@note{type="caution"}
+It is important to include the `type="module"` attribute on the `<script>` tag that loads the runtime and to wait for the page to be fully loaded before calling the API, because scripts with the `type="module"` attribute run asynchronously.
+
+@end
 
 ## Initialisation
 
-Apart from the API functions, the runtime provides support for context menus and window dragging.
-These features will only work as expected after the runtime has been initialised.
-Even if you don't use the API, make sure to include a side-effect import statement
-somewhere in your frontend code:
+Apart from the API functions, the runtime provides support for context menus and window dragging. These features will only work as expected after the runtime has been initialised. Even if you don't use the API, make sure to include a side-effect import statement somewhere in your frontend code:
 
 ```javascript
 import "@wailsio/runtime";
 ```
 
-Your bundler should detect the presence of side-effects and include
-all required initialisation code in the build.
+Your bundler should detect the presence of side-effects and include all required initialisation code in the build.
 
-:::note
+@note{type="info"}
 If you prefer the pre-built bundle, adding a script tag as shown above suffices.
-:::
+
+@end
 
 ## Vite Plugin for Typed Events
 
@@ -104,9 +90,11 @@ import { defineConfig } from 'vite'
 import wails from '@wailsio/runtime/plugins/vite'
 
 export default defineConfig({
-  plugins: [wails()],
+  plugins: [wails("./bindings")],
 })
 ```
+
+The argument is the generated bindings directory, relative to the Vite project. Generate bindings before building the frontend.
 
 ### Benefits
 
@@ -148,10 +136,10 @@ import { Events } from '@wailsio/runtime'
 import { UserUpdated } from './bindings/events'
 
 // Type-safe event with autocomplete
-Events.Emit(UserUpdated({
+Events.Emit(UserUpdated, {
     ID: "123",
     Name: "John Doe"
-}))
+})
 ```
 
 ## API Reference
@@ -164,15 +152,14 @@ import { Events, Window, Clipboard } from '@wailsio/runtime'
 
 ### Events
 
-Event system for communication between Go and JavaScript.
+Event system for communication between Go and JavaScript. Generated event exports such as `UserUpdated` are string constants, not payload factories. The generator augments `CustomEvents` to map registered event names to payload types. The types below (`WailsEventName`, `WailsEventCallback`, `WailsEventData`) are exported by the Events module.
 
 #### On()
 
 Register a callback for an event.
 
 ```typescript
-function On(eventName: string, callback: (event: WailsEvent) => void): () => void
-function On<T>(eventType: EventType<T>, callback: (event: WailsEvent<T>) => void): () => void
+function On<E extends WailsEventName = WailsEventName>(eventName: E, callback: WailsEventCallback<E>): () => void
 ```
 
 **Returns:** Unsubscribe function
@@ -203,8 +190,7 @@ Events.On(UserLogin, (event) => {
 Register a callback that runs only once.
 
 ```typescript
-function Once(eventName: string, callback: (event: WailsEvent) => void): () => void
-function Once<T>(eventType: EventType<T>, callback: (event: WailsEvent<T>) => void): () => void
+function Once<E extends WailsEventName = WailsEventName>(eventName: E, callback: WailsEventCallback<E>): () => void
 ```
 
 **Example:**
@@ -222,8 +208,8 @@ Events.Once('app-ready', () => {
 Emit an event to Go backend or other windows.
 
 ```typescript
-function Emit(name: string, data?: any): Promise<boolean>
-function Emit<T>(event: Event<T>): Promise<boolean>
+function Emit<E extends WailsEventName = WailsEventName>(name: E, data: WailsEventData<E>): Promise<boolean>
+function Emit<E extends WailsEventName = WailsEventName>(name: WailsEventData<E> extends null | void ? E : never): Promise<boolean>
 ```
 
 **Returns:** Promise that resolves to `true` if the event was cancelled, `false` otherwise
@@ -239,20 +225,21 @@ const wasCancelled = await Events.Emit('button-clicked', { buttonId: 'submit' })
 // With typed events (TypeScript)
 import { UserLogin } from './bindings/events'
 
-const cancelled = await Events.Emit(UserLogin({
+const cancelled = await Events.Emit(UserLogin, {
     UserID: "123",
     Username: "john_doe",
     LoginTime: new Date().toISOString()
-}))
+})
 
 if (cancelled) {
     console.log('Login was cancelled by a hook')
 }
 ```
 
-:::note
+@note{type="info"}
 The return value indicates whether the event was cancelled by a hook. Most events cannot be cancelled and will always return `false`.
-:::
+
+@end
 
 #### Off()
 
@@ -581,13 +568,14 @@ System.invoke('my-custom-message')
 System.invoke(JSON.stringify({ action: 'update', value: 42 }))
 ```
 
-:::caution
+@note{type="caution"}
 This is a fire-and-forget function with no return value. Use events to receive responses from the backend.
-:::
 
-For more details, see the [Raw Messages Guide](/guides/raw-messages).
+@end
 
-#### 平台检测（beta.9 新增）
+For more details, see the [Raw Messages Guide](/guides/raw-messages/).
+
+#### 平台检测（beta.9 起，v3.1.0 仍有效；官方 reference 未收录，本地补充）
 
 `System` 还导出一组**同步**平台检测函数，可在共享前端代码里无需构建分支即可判断运行环境（与 Go 侧 `application.System` 对应）：
 

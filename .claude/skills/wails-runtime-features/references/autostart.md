@@ -1,11 +1,9 @@
 ---
-title: Autostart
-description: Register your application to launch at user login on macOS, Windows, and Linux
-sidebar:
-  order: 1
+title: "Autostart"
+description: "Register your application to launch at user login on macOS, Windows, and Linux"
+slug: "features/autostart/basics"
+sourcePath: "features/autostart/basics.md"
 ---
-
-import { Tabs, TabItem, Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Autostart
 
@@ -55,7 +53,7 @@ func (m *AutostartManager) EnableWithOptions(opts AutostartOptions) error
 **`AutostartOptions`:**
 
 | Field | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `Identifier` | `string` | Overrides the auto-derived registration ID. See "Identifier" below. |
 | `Arguments` | `[]string` | Extra arguments appended to the executable path when launched at login (e.g. `--hidden`). |
 
@@ -86,69 +84,66 @@ func (m *AutostartManager) Status() (AutostartStatus, error)
 **`AutostartStatus`:**
 
 | Field | Type | Description |
-|---|---|---|
+| --- | --- | --- |
 | `Enabled` | `bool` | Whether a registration exists. |
 | `Path` | `string` | On-disk location of the registration artefact (plist path, `.desktop` path, or registry sub-key). Empty when `Enabled` is false. |
 | `Strategy` | `AutostartStrategy` | Which mechanism registered the app (see [Platform Behaviour](#platform-behaviour)). |
 
 ## Platform Behaviour
 
-<Tabs syncKey="platform">
-  <TabItem label="macOS" icon="apple">
-    Two mechanisms are used depending on how the app is packaged:
+@tabs{sync-key="platform"}
+[macOS]
+Two mechanisms are used depending on how the app is packaged:
 
-    - **macOS 13+, bundled `.app`**: `SMAppService.mainAppService`. Works for sandboxed apps and Mac App Store builds. No TCC automation prompt (the historical AppleScript approach triggered one).
-    - **macOS pre-13, or unbundled binary**: a LaunchAgent plist written to `~/Library/LaunchAgents/<identifier>.plist` with `RunAtLoad=true`.
+- **macOS 13+, bundled `.app`**: `SMAppService.mainAppService`. Works for sandboxed apps and Mac App Store builds. No TCC automation prompt (the historical AppleScript approach triggered one).
+- **macOS pre-13, or unbundled binary**: a LaunchAgent plist written to `~/Library/LaunchAgents/<identifier>.plist` with `RunAtLoad=true`.
 
-    `Status()` returns `AutostartStrategySMAppService` or `AutostartStrategyLaunchAgent` so callers can tell which path was taken.
+`Status()` returns `AutostartStrategySMAppService` or `AutostartStrategyLaunchAgent` so callers can tell which path was taken.
 
-    When the app upgrades from unbundled to bundled, both paths are checked on `Status()` and cleaned up by `Disable()` so an orphaned LaunchAgent doesn't keep launching the old build.
-  </TabItem>
+When the app upgrades from unbundled to bundled, both paths are checked on `Status()` and cleaned up by `Disable()` so an orphaned LaunchAgent doesn't keep launching the old build.
 
-  <TabItem label="Windows" icon="seti:windows">
-    A registry value is added under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, with the value name set to the autostart `Identifier` and the data set to the quoted executable path plus any `Arguments`.
+[Windows]
+A registry value is added under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, with the value name set to the autostart `Identifier` and the data set to the quoted executable path plus any `Arguments`.
 
-    Argument quoting follows `CommandLineToArgvW` rules (backslashes doubled before quotes) so paths with spaces or quotes round-trip correctly.
+Argument quoting follows `CommandLineToArgvW` rules (backslashes doubled before quotes) so paths with spaces or quotes round-trip correctly.
 
-    `Status().Strategy` returns `AutostartStrategyRegistryRun`.
-  </TabItem>
+`Status().Strategy` returns `AutostartStrategyRegistryRun`.
 
-  <TabItem label="Linux" icon="linux">
-    An XDG autostart entry is written to `$XDG_CONFIG_HOME/autostart/<identifier>.desktop` (defaulting to `~/.config/autostart/`) with:
+[Linux]
+An XDG autostart entry is written to `$XDG_CONFIG_HOME/autostart/<identifier>.desktop` (defaulting to `~/.config/autostart/`) with:
 
-    ```ini
-    Type=Application
-    Hidden=false
-    X-GNOME-Autostart-enabled=true
-    Exec=<executable> <arguments>
-    ```
+```ini
+Type=Application
+Hidden=false
+X-GNOME-Autostart-enabled=true
+Exec=<executable> <arguments>
+```
 
-    The `Exec` field is escaped per the [freedesktop.org Desktop Entry spec](https://specifications.freedesktop.org/desktop-entry-spec/) — reserved characters (``"``, `` ` ``, `$`, `\\`) are backslash-escaped and the value is double-quoted when it contains whitespace.
+The `Exec` field is escaped per the [freedesktop.org Desktop Entry spec](https://specifications.freedesktop.org/desktop-entry-spec/) — reserved characters (`"`, `` ` ``, `$`, `\\`) are backslash-escaped and the value is double-quoted when it contains whitespace.
 
-    `Status().Strategy` returns `AutostartStrategyXDGAutostart`.
-  </TabItem>
+`Status().Strategy` returns `AutostartStrategyXDGAutostart`.
 
-  <TabItem label="iOS / Android / server" icon="information">
-    Not supported. All methods return `ErrAutostartNotSupported`. Use `errors.Is(err, application.ErrAutostartNotSupported)` to detect this cleanly:
+[iOS / Android / server]
+Not supported. All methods return `ErrAutostartNotSupported`. Use `errors.Is(err, application.ErrAutostartNotSupported)` to detect this cleanly:
 
-    ```go
-    if err := app.Autostart.Enable(); err != nil {
-        if errors.Is(err, application.ErrAutostartNotSupported) {
-            // hide the toggle in the UI
-            return
-        }
-        // real failure — surface it
+```go
+if err := app.Autostart.Enable(); err != nil {
+    if errors.Is(err, application.ErrAutostartNotSupported) {
+        // hide the toggle in the UI
+        return
     }
-    ```
-  </TabItem>
-</Tabs>
+    // real failure — surface it
+}
+```
+
+@end
 
 ## Identifier
 
 If `Options.Identifier` is empty, a default is derived from your app's name:
 
 | Platform | Default identifier |
-|---|---|
+| --- | --- |
 | macOS (bundled) | The app's bundle identifier, e.g. `com.example.MyApp` |
 | macOS (unbundled) | `wails.autostart.<slug>`, where `<slug>` is derived from `application.Options.Name` |
 | Windows | Slug of `application.Options.Name` (lowercase, non-`A-Za-z0-9._-` stripped, spaces become dashes) |
@@ -197,4 +192,4 @@ func main() {
 }
 ```
 
-A complete runnable example with status / enable / disable buttons is in [`examples/autostart/`](https://github.com/wailsapp/wails/tree/master/v3/examples/autostart).
+A complete runnable example with status / enable / disable buttons is in [`examples/autostart/`](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/autostart).

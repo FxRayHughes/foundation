@@ -1,11 +1,9 @@
 ---
-title: Manager API
-description: Organized API structure with focused manager interfaces
-sidebar:
-  order: 2
+title: "Manager API"
+description: "Organized API structure with focused manager interfaces"
+slug: "concepts/manager-api"
+sourcePath: "concepts/manager-api.md"
 ---
-
-import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 The Wails v3 Manager API provides an organised and discoverable way to access application functionality through focused manager structs grouped under public fields on `*application.App`. Wails 3 is a clean break from v2 — there is no per-call wrapper layer to maintain compatibility with the old `app.NewWebviewWindow(...)`-style API, so the managers below are the way to drive the app.
 
@@ -14,7 +12,7 @@ The Wails v3 Manager API provides an organised and discoverable way to access ap
 The Manager API organises application functionality into twelve focused areas (one logger plus eleven managers):
 
 - **`app.Window`** - Window creation, management, and callbacks
-- **`app.ContextMenu`** - Context menu registration and management  
+- **`app.ContextMenu`** - Context menu registration and management\
 - **`app.KeyBinding`** - Global key binding management
 - **`app.Browser`** - Browser integration (opening URLs and files)
 - **`app.Env`** - Environment information and system state
@@ -147,7 +145,7 @@ app.Dialog.Info().
     Show()
 
 app.Dialog.Error().
-    SetTitle("Error").  
+    SetTitle("Error").
     SetMessage("An error occurred").
     Show()
 ```

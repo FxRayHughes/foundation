@@ -11,8 +11,10 @@ package appsettings
 import (
 	"context"
 
+	"foundation/internal/events"
 	"foundation/internal/storage"
 
+	"github.com/wailsapp/wails/v3/pkg/application"
 	"gorm.io/gorm"
 )
 
@@ -26,6 +28,20 @@ func New(holder *storage.Holder) *Service {
 
 func (s *Service) db() *gorm.DB {
 	return s.holder.Current().GORM
+}
+
+// update 写单个字段，成功后广播 AppSettingsChanged（payload=字段名）。
+func (s *Service) update(ctx context.Context, column, field string, value string) error {
+	err := s.db().WithContext(ctx).
+		Model(&storage.AppSettings{}).
+		Where("id = ?", 1).
+		Update(column, value).Error
+	if err == nil {
+		if app := application.Get(); app != nil {
+			app.Event.Emit(events.AppSettingsChanged, field)
+		}
+	}
+	return err
 }
 
 // Snapshot 是对外暴露的整体快照，前端启动时一次拉取。
@@ -50,19 +66,13 @@ func (s *Service) Get(ctx context.Context) (Snapshot, error) {
 
 // SetThemeChoice 仅更新主题选择。
 func (s *Service) SetThemeChoice(ctx context.Context, choice string) error {
-	return s.db().WithContext(ctx).
-		Model(&storage.AppSettings{}).
-		Where("id = ?", 1).
-		Update("theme_choice", choice).Error
+	return s.update(ctx, "theme_choice", "themeChoice", choice)
 }
 
 // SetCustomTheme 写入自定义主题 JSON（前端 stringify 后传入）。
 // 传空字符串等价于"未设置"。
 func (s *Service) SetCustomTheme(ctx context.Context, json string) error {
-	return s.db().WithContext(ctx).
-		Model(&storage.AppSettings{}).
-		Where("id = ?", 1).
-		Update("custom_theme", json).Error
+	return s.update(ctx, "custom_theme", "customTheme", json)
 }
 
 // ResetCustomTheme 清空自定义主题。
@@ -72,8 +82,5 @@ func (s *Service) ResetCustomTheme(ctx context.Context) error {
 
 // SetLocaleChoice 'auto' | LocaleCode。
 func (s *Service) SetLocaleChoice(ctx context.Context, choice string) error {
-	return s.db().WithContext(ctx).
-		Model(&storage.AppSettings{}).
-		Where("id = ?", 1).
-		Update("locale_choice", choice).Error
+	return s.update(ctx, "locale_choice", "localeChoice", choice)
 }

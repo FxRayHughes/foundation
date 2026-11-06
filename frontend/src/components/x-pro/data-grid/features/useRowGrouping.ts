@@ -1,82 +1,98 @@
-import { useState, useMemo, useCallback } from 'react';
-import type { GridRowModel, GridColDef } from '@mui/x-data-grid';
-import type { RowGroupingModel, RowGroupingResult } from '../premium-types';
+import { useCallback, useMemo, useState } from 'react';
+import type { AggregationModel, DataGridRecord, RowGroupingModel, RowGroupingResult } from '../premium-types';
+import type { DataGridColumn, DataGridRow, DataGridRowId } from '../types';
+import { defaultGetRowId, fieldOf, getCellValue } from '../utils';
+import { computeAggregates } from './useAggregation';
 
-interface UseRowGroupingParams {
-  rows: GridRowModel[];
+// 行分组（多级）：按 rowGroupingModel.fields 依次嵌套分组，
+// 输出"分组行 + 数据行"的扁平显示记录；分组行携带计数与（可选）组内聚合值。
+// 展开状态 = "默认展开深度" XOR "用户切换过"。
+
+interface UseRowGroupingParams<T extends DataGridRow> {
+  rows: T[];
   rowGroupingModel?: RowGroupingModel;
+  aggregationModel?: AggregationModel;
+  columns?: DataGridColumn<T>[];
+  getRowId?: (row: T) => DataGridRowId;
 }
 
-const GROUP_ROW_PREFIX = '__group__';
+export function useRowGrouping<T extends DataGridRow>({
+  rows,
+  rowGroupingModel,
+  aggregationModel,
+  columns,
+  getRowId = defaultGetRowId,
+}: UseRowGroupingParams<T>): RowGroupingResult<T> {
+  const [toggled, setToggled] = useState<Set<string>>(() => new Set());
 
-export function useRowGrouping({ rows, rowGroupingModel }: UseRowGroupingParams): RowGroupingResult {
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-
-  const toggleGroup = useCallback((groupId: string) => {
-    setExpandedGroups((prev) => {
+  const toggleGroup = useCallback((groupKey: string) => {
+    setToggled((prev) => {
       const next = new Set(prev);
-      if (next.has(groupId)) {
-        next.delete(groupId);
-      } else {
-        next.add(groupId);
-      }
+      if (next.has(groupKey)) next.delete(groupKey);
+      else next.add(groupKey);
       return next;
     });
   }, []);
 
-  const { groupedRows, groupColumn } = useMemo(() => {
-    if (!rowGroupingModel || rowGroupingModel.fields.length === 0) {
-      return { groupedRows: rows, groupColumn: null };
-    }
+  const isActive = !!rowGroupingModel && rowGroupingModel.fields.length > 0;
 
-    const fields = rowGroupingModel.fields;
-    const defaultDepth = rowGroupingModel.defaultExpansionDepth ?? 0;
-    const groups = new Map<string, GridRowModel[]>();
-
-    for (const row of rows) {
-      const key = fields.map((f) => String(row[f] ?? '')).join(' / ');
-      const existing = groups.get(key);
-      if (existing) {
-        existing.push(row);
-      } else {
-        groups.set(key, [row]);
-      }
-    }
-
-    const result: GridRowModel[] = [];
-    for (const [key, groupRows] of groups) {
-      const groupId = `${GROUP_ROW_PREFIX}${key}`;
-      const isExpanded = expandedGroups.has(groupId) || defaultDepth > 0;
-
-      result.push({
-        id: groupId,
-        __isGroupRow: true,
-        __groupKey: key,
-        __groupCount: groupRows.length,
-        __isExpanded: isExpanded,
-      });
-
-      if (isExpanded) {
-        result.push(...groupRows);
-      }
-    }
-
-    const col: GridColDef = {
-      field: '__group__',
-      headerName: 'Group',
-      width: 200,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => {
-        const row = params.row;
-        if (!row.__isGroupRow) return null;
-        const icon = row.__isExpanded ? '▼' : '▶';
-        return `${icon} ${row.__groupKey} (${row.__groupCount})`;
-      },
+  const groupedRows = useMemo((): DataGridRecord<T>[] => {
+    const toRecord = (row: T, depth: number): DataGridRecord<T> => {
+      const rowId = getRowId(row);
+      return { key: `row:${String(rowId)}`, kind: 'row', row, rowId, depth };
     };
+    if (!rowGroupingModel || rowGroupingModel.fields.length === 0) {
+      return rows.map((r) => toRecord(r, 0));
+    }
 
-    return { groupedRows: result, groupColumn: col };
-  }, [rows, rowGroupingModel, expandedGroups]);
+    const { fields } = rowGroupingModel;
+    const defaultDepth = rowGroupingModel.defaultExpansionDepth ?? 0;
+    const colMap = new Map((columns ?? []).map((c) => [fieldOf(c), c]));
+    const valueOf = (row: T, field: string) => {
+      const col = colMap.get(field);
+      return col ? getCellValue(col, row) : row[field];
+    };
+    const hasAgg = !!aggregationModel && Object.keys(aggregationModel).length > 0;
+    const out: DataGridRecord<T>[] = [];
 
-  return { groupedRows, groupColumn, toggleGroup };
+    const build = (subset: T[], depth: number, parentKey: string) => {
+      const field = fields[depth];
+      if (field === undefined) {
+        subset.forEach((r) => out.push(toRecord(r, depth)));
+        return;
+      }
+      // 保持首次出现顺序（上游已排序时组内顺序也随之有序）
+      const buckets = new Map<string, { value: unknown; rows: T[] }>();
+      for (const row of subset) {
+        const value = valueOf(row, field);
+        const k = String(value ?? '');
+        const bucket = buckets.get(k);
+        if (bucket) bucket.rows.push(row);
+        else buckets.set(k, { value, rows: [row] });
+      }
+      for (const [k, bucket] of buckets) {
+        const groupKey = `${parentKey}/${field}=${k}`;
+        const expanded = (depth < defaultDepth) !== toggled.has(groupKey);
+        out.push({
+          key: `group:${groupKey}`,
+          kind: 'group',
+          row: null,
+          rowId: null,
+          depth,
+          groupField: field,
+          groupValue: bucket.value,
+          groupCount: bucket.rows.length,
+          groupAggregates: hasAgg ? computeAggregates(bucket.rows, aggregationModel!, columns) : undefined,
+          treeKey: groupKey,
+          hasChildren: true,
+          expanded,
+        });
+        if (expanded) build(bucket.rows, depth + 1, groupKey);
+      }
+    };
+    build(rows, 0, '');
+    return out;
+  }, [rows, rowGroupingModel, aggregationModel, columns, toggled, getRowId]);
+
+  return { groupedRows, isActive, toggleGroup };
 }

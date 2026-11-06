@@ -1,15 +1,14 @@
 ---
-title: Context Menus
-description: Create right-click context menus for your application
-sidebar:
-  order: 2
+title: "Context Menus"
+description: "Create right-click context menus for your application"
+slug: "features/menus/context"
+sourcePath: "features/menus/context.md"
 ---
-
-import { Card, CardGrid, Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## The Problem
 
 Users expect right-click menus with context-specific actions. Different elements need different menus:
+
 - **Text**: Cut, Copy, Paste
 - **Images**: Save, Copy, Open
 - **Custom elements**: Application-specific actions
@@ -19,6 +18,10 @@ Building context menus manually means handling mouse events, positioning, and pl
 ## The Wails Solution
 
 Wails provides **declarative context menus** using CSS properties. Associate menus with HTML elements, pass data, and handle clicks—all with native platform behaviour.
+
+![A Wails custom context menu displayed over a webview on macOS](/assets/screenshots/context-menu-macos.png)
+
+The menu is native to the platform while the element that opened it remains part of your webview. This macOS capture uses the example below's custom context-menu registration.
 
 ## Quick Start
 
@@ -113,7 +116,7 @@ contextMenu.AddRadio("Large", false).OnClick(handleSize)
 app.ContextMenu.Add("view-menu", contextMenu)
 ```
 
-**For all menu item types**, see [Menu Reference](/features/menus/reference).
+**For all menu item types**, see [Menu Reference](/features/menus/reference/).
 
 ## Associating with HTML Elements
 
@@ -152,6 +155,7 @@ app.ContextMenu.Add("file-menu", contextMenu)
 ```
 
 **CSS properties:**
+
 - `--custom-contextmenu: <menu-id>` - Which menu to show
 - `--custom-contextmenu-data: <data>` - Data to pass to handlers
 
@@ -237,9 +241,10 @@ contextMenu.Add("Process").OnClick(func(ctx *application.Context) {
 })
 ```
 
-:::caution[Security]
+@note{type="caution" title="Security"}
 **Always validate context data** from the frontend. Users can manipulate CSS properties, so treat data as untrusted input.
-:::
+
+@end
 
 ### Validation Example
 
@@ -297,6 +302,7 @@ The WebView provides a built-in context menu for standard operations (copy, past
 ```
 
 **Default behaviour.** Shows default menu when:
+
 - Text is selected
 - In text input fields
 - In editable content (`contenteditable`)
@@ -313,6 +319,7 @@ Hides default menu otherwise.
 ```
 
 **Behaviour:**
+
 1. Custom menu shows first
 2. If custom menu is empty or not found, default menu shows
 3. Both can coexist (platform-dependent)
@@ -348,11 +355,12 @@ func onSelectionChanged(hasSelection bool) {
 }
 ```
 
-:::caution[Always Call Update()]
+@note{type="caution" title="Always Call Update()"}
 After changing menu state, **call `contextMenu.Update()`**. This is critical on Windows.
 
-See [Menu Reference](/features/menus/reference#enabled-state) for details.
-:::
+See [Menu Reference](/features/menus/reference/#enabled-state) for details.
+
+@end
 
 ### Change Labels
 
@@ -404,47 +412,51 @@ func rebuildContextMenu(fileType string) {
 
 Context menus are **platform-native**:
 
-<Tabs syncKey="platform">
-  <TabItem label="macOS" icon="apple">
-    **Native macOS context menus:**
-    - System animations and transitions
-    - Right-click = Control+Click (automatic)
-    - Adapts to system appearance (light/dark)
-    - Standard text operations in default menu
-    - Native scrolling for long menus
-    
-    **macOS conventions:**
-    - Use sentence case for menu items
-    - Use ellipsis (...) for items that open dialogs
-    - Common shortcuts: ⌘C (Copy), ⌘V (Paste)
-  </TabItem>
+@tabs{sync-key="platform"}
+[macOS]
+**Native macOS context menus:**
 
-  <TabItem label="Windows" icon="seti:windows">
-    **Native Windows context menus:**
-    - Windows native style
-    - Follows Windows theme
-    - Standard Windows operations in default menu
-    - Touch and pen input support
-    
-    **Windows conventions:**
-    - Use title case for menu items
-    - Use ellipsis (...) for items that open dialogs
-    - Common shortcuts: Ctrl+C (Copy), Ctrl+V (Paste)
-  </TabItem>
+- System animations and transitions
+- Right-click = Control+Click (automatic)
+- Adapts to system appearance (light/dark)
+- Standard text operations in default menu
+- Native scrolling for long menus
 
-  <TabItem label="Linux" icon="linux">
-    **Desktop environment integration:**
-    - Adapts to desktop theme (GTK, Qt, etc.)
-    - Right-click behaviour follows system settings
-    - Default menu content varies by environment
-    - Positioning follows DE conventions
-    
-    **Linux considerations:**
-    - Test on target desktop environments
-    - GTK and Qt have different behaviours
-    - Some DEs customise context menus
-  </TabItem>
-</Tabs>
+**macOS conventions:**
+
+- Use sentence case for menu items
+- Use ellipsis (...) for items that open dialogs
+- Common shortcuts: ⌘C (Copy), ⌘V (Paste)
+
+[Windows]
+**Native Windows context menus:**
+
+- Windows native style
+- Follows Windows theme
+- Standard Windows operations in default menu
+- Touch and pen input support
+
+**Windows conventions:**
+
+- Use title case for menu items
+- Use ellipsis (...) for items that open dialogs
+- Common shortcuts: Ctrl+C (Copy), Ctrl+V (Paste)
+
+[Linux]
+**Desktop environment integration:**
+
+- Adapts to desktop theme (GTK, Qt, etc.)
+- Right-click behaviour follows system settings
+- Default menu content varies by environment
+- Positioning follows DE conventions
+
+**Linux considerations:**
+
+- Test on target desktop environments
+- GTK and Qt have different behaviours
+- Some DEs customise context menus
+
+@end
 
 ## Complete Example
 
@@ -649,6 +661,7 @@ func handlePaste(ctx *application.Context) { /* ... */ }
 ### Context Menu Not Appearing
 
 **Possible causes:**
+
 1. Menu ID mismatch
 2. CSS property typo
 3. Runtime not initialised
@@ -668,6 +681,7 @@ app.ContextMenu.Add("my-menu", contextMenu)
 ### Context Data Not Received
 
 **Possible causes:**
+
 1. CSS property not set
 2. Data contains special characters
 
@@ -697,32 +711,32 @@ contextMenu.Update()  // Add this!
 
 ## Next Steps
 
-<CardGrid>
-  <Card title="Menu Reference" icon="document">
-    Complete reference for menu item types and properties.
-    
-    [Learn More →](/features/menus/reference)
-  </Card>
+@cards{cols="2"}
+📖 Menu Reference
+Complete reference for menu item types and properties.
 
-  <Card title="Application Menus" icon="list-format">
-    Create application menu bars.
-    
-    [Learn More →](/features/menus/application)
-  </Card>
+[Learn More →](/features/menus/reference/)
 
-  <Card title="System Tray Menus" icon="star">
-    Add system tray/menu bar integration.
-    
-    [Learn More →](/features/menus/systray)
-  </Card>
+---
+☰ Application Menus
+Create application menu bars.
 
-  <Card title="Menu Patterns" icon="open-book">
-    Common menu patterns and best practices.
-    
-    [Learn More →](/guides/patterns/menus)
-  </Card>
-</CardGrid>
+[Learn More →](/features/menus/application/)
+
+---
+★ System Tray Menus
+Add system tray/menu bar integration.
+
+[Learn More →](/features/menus/systray/)
+
+---
+📖 Menu Patterns
+Common menu patterns and best practices.
+
+[Learn More →](/guides/menus/)
+
+@end
 
 ---
 
-**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [context menu example](https://github.com/wailsapp/wails/tree/master/v3/examples/contextmenus).
+**Questions?** Ask in [Discord](https://discord.gg/JDdSxwjhGf) or check the [context menu example](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/contextmenus).

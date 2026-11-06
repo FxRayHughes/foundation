@@ -1,30 +1,25 @@
-import { Box, Button, useTheme } from '@mui/material';
-import PowerSettingsNewRoundedIcon from '@mui/icons-material/PowerSettingsNewRounded';
+import { Button } from '@mantine/core';
+import { IconPower } from '@tabler/icons-react';
 import { Application } from '@wailsio/runtime';
 import { useT } from '@/i18n';
+import classes from './ExitButton.module.css';
 
 export const ExitButton = () => {
-  const theme = useTheme();
-  const fp = theme.palette.foundation;
   const t = useT();
 
   return (
-    <Box sx={{ px: 2, py: 1.5, borderTop: `1px solid ${fp.divider}` }}>
+    <div className={classes.root}>
       <Button
         fullWidth
-        size="small"
-        startIcon={<PowerSettingsNewRoundedIcon />}
+        variant="subtle"
+        size="xs"
+        justify="flex-start"
+        leftSection={<IconPower size={18} stroke={1.75} />}
         onClick={() => Application.Quit()}
-        sx={{
-          justifyContent: 'flex-start',
-          textTransform: 'none',
-          color: fp.status.danger,
-          borderRadius: 1.5,
-          '&:hover': { backgroundColor: `${fp.status.danger}14` },
-        }}
+        className={classes.exit}
       >
         {t('systray.exit.label')}
       </Button>
-    </Box>
+    </div>
   );
 };

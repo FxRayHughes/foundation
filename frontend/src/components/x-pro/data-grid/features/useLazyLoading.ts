@@ -1,58 +1,47 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import type { RefObject } from 'react';
 import type { LazyLoadingConfig } from '../types';
+
+// 懒加载（无限滚动）：
+//  - mantine-datatable 的 onScrollToBottom 触发下一批
+//  - 首屏 / 加载完成后若内容不足一屏（无法滚动），主动再拉一批，直到填满或 hasMore=false
+//  - 200ms 节流，loading 期间不重复触发
 
 interface UseLazyLoadingParams {
   config?: LazyLoadingConfig;
-  containerRef: React.RefObject<HTMLDivElement | null>;
+  scrollViewportRef: RefObject<HTMLDivElement | null>;
 }
 
 interface UseLazyLoadingResult {
-  sentinelRef: React.RefObject<HTMLDivElement | null>;
   isLoading: boolean;
-  totalRowCount: number;
+  onScrollToBottom: (() => void) | undefined;
 }
 
-export function useLazyLoading({
-  config,
-  containerRef,
-}: UseLazyLoadingParams): UseLazyLoadingResult {
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const lastFetchRef = useRef<number>(0);
+export function useLazyLoading({ config, scrollViewportRef }: UseLazyLoadingParams): UseLazyLoadingResult {
+  const lastFetchRef = useRef(0);
 
-  const handleIntersect = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      if (!config || config.loading) return;
-      const entry = entries[0];
-      if (entry?.isIntersecting) {
-        const now = Date.now();
-        if (now - lastFetchRef.current < 200) return;
-        lastFetchRef.current = now;
-        config.onFetchRows({ startIndex: config.rowCount, endIndex: config.rowCount + 50 });
-      }
-    },
-    [config],
-  );
+  const fetchMore = useCallback(() => {
+    if (!config || config.loading || config.hasMore === false) return;
+    const now = Date.now();
+    if (now - lastFetchRef.current < 200) return;
+    lastFetchRef.current = now;
+    const size = config.pageSize ?? 50;
+    config.onFetchRows({ startIndex: config.rowCount, endIndex: config.rowCount + size });
+  }, [config]);
 
+  // 内容不足一屏时主动填充
   useEffect(() => {
-    if (!config || !sentinelRef.current) return;
-
-    observerRef.current = new IntersectionObserver(handleIntersect, {
-      root: containerRef.current,
-      rootMargin: '200px',
-      threshold: 0,
+    if (!config || config.loading || config.hasMore === false) return;
+    const vp = scrollViewportRef.current;
+    if (!vp) return;
+    const raf = requestAnimationFrame(() => {
+      if (vp.scrollHeight <= vp.clientHeight + 1) fetchMore();
     });
-
-    observerRef.current.observe(sentinelRef.current);
-
-    return () => {
-      observerRef.current?.disconnect();
-    };
-  }, [config, containerRef, handleIntersect]);
+    return () => cancelAnimationFrame(raf);
+  }, [config, config?.rowCount, config?.loading, scrollViewportRef, fetchMore]);
 
   return {
-    sentinelRef,
     isLoading: config?.loading ?? false,
-    totalRowCount: config?.rowCount ?? 0,
+    onScrollToBottom: config ? fetchMore : undefined,
   };
 }

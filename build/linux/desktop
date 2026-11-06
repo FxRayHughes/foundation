@@ -3,11 +3,11 @@ Version=1.0
 Name=My Product
 Comment=A foundation application
 # The Exec line includes %u to pass the URL to the application
-Exec=/usr/local/bin/foundation.exe %u
+Exec=/usr/local/bin/foundation %u
 Terminal=false
 Type=Application
-Icon=foundation.exe
+Icon=foundation
 Categories=Utility;
-StartupWMClass=foundation.exe
+StartupWMClass=foundation
 
  

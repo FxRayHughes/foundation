@@ -1,25 +1,20 @@
-import { Box, Typography, useTheme } from '@mui/material';
+import { Text } from '@mantine/core';
 import { useT } from '@/i18n';
+import classes from './AppStatus.module.css';
 
 export const AppStatus = () => {
-  const theme = useTheme();
-  const fp = theme.palette.foundation;
   const t = useT();
 
   return (
-    <Box sx={{ px: 2, py: 1.5 }}>
-      <Typography sx={{ fontSize: 11, fontWeight: 600, color: fp.text.muted, textTransform: 'uppercase', letterSpacing: 0.5, mb: 0.5 }}>
-        {t('systray.appStatus.title')}
-      </Typography>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: fp.status.success }} />
-        <Typography sx={{ fontSize: 13, color: fp.text.primary }}>
-          {t('systray.appStatus.running')}
-        </Typography>
-      </Box>
-      <Typography sx={{ fontSize: 12, color: fp.text.muted, mt: 0.5 }}>
-        {t('systray.appStatus.version')} 1.0.0
-      </Typography>
-    </Box>
+    <div className={classes.root}>
+      <Text className={classes.sectionTitle}>{t('systray.appStatus.title')}</Text>
+      <div className={classes.statusRow}>
+        <div className={classes.dot} />
+        <Text className={classes.statusText}>{t('systray.appStatus.running')}</Text>
+      </div>
+      <Text className={classes.version}>
+        {t('systray.appStatus.version')} {__APP_VERSION__}
+      </Text>
+    </div>
   );
 };

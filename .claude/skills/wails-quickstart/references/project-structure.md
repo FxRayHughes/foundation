@@ -1,8 +1,8 @@
 ---
-title: Project Structure
-description: Understand the file layout for a typical Wails project
-sidebar:
-  order: 1
+title: "Project Structure"
+description: "Understand the file layout for a typical Wails project"
+slug: "guides/dev/project-structure"
+sourcePath: "guides/dev/project-structure.md"
 ---
 
 This page is a simple reference to the files created when you initiate a new project using the Vanilla template
@@ -35,8 +35,9 @@ This page is a simple reference to the files created when you initiate a new pro
 │   └── tsconfig.json       # TypeScript configuration
 ├── bin/                    # Compiled binaries
 └── .task/                  # Task runner cache
-  ```
+```
 
-:::note[Frontend project files]
+@note{type="info" title="Frontend project files"}
 If you choose to use a different starter template, contents of `frontend/src` will differ depending on your chosen framework
-:::
+
+@end

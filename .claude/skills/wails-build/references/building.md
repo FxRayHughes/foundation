@@ -1,11 +1,9 @@
 ---
-title: Building Applications
-description: Build and package your Wails application
-sidebar:
-  order: 1
+title: "Building Applications"
+description: "Build and package your Wails application"
+slug: "guides/build/building"
+sourcePath: "guides/build/building.md"
 ---
-
-import { Tabs, TabItem, Aside } from "@astrojs/starlight/components";
 
 Wails v3 uses [Task](https://taskfile.dev) as its build system. The `wails3 build` and `wails3 package` commands are convenient wrappers around Task.
 
@@ -33,9 +31,10 @@ GOOS=windows wails3 build
 
 Output goes to the `bin/` directory.
 
-<Aside type="tip">
-Cross-compiling to macOS or Linux from another platform requires Docker. See [Cross-Platform Builds](/guides/build/cross-platform) for setup.
-</Aside>
+@note{type="tip"}
+Cross-compiling to macOS or Linux from another platform requires Docker. See [Cross-Platform Builds](/guides/build/cross-platform/) for setup.
+
+@end
 
 ## Development
 
@@ -67,9 +66,10 @@ wails3 package GOOS=linux
 ```
 
 This creates platform-specific packages:
-- **Windows**: NSIS installer — see [Windows Packaging](/guides/build/windows)
-- **macOS**: Application bundle (`.app`) — see [macOS Packaging](/guides/build/macos)
-- **Linux**: AppImage, deb, and rpm — see [Linux Packaging](/guides/build/linux)
+
+- **Windows**: NSIS installer — see [Windows Packaging](/guides/build/windows/)
+- **macOS**: Application bundle (`.app`) — see [macOS Packaging](/guides/build/macos/)
+- **Linux**: AppImage, deb, and rpm — see [Linux Packaging](/guides/build/linux/)
 
 ## Custom Build Tags
 
@@ -86,7 +86,7 @@ wails3 build -tags server
 wails3 build -tags gtk3,customtag
 ```
 
-Tags are forwarded as `EXTRA_TAGS` to the underlying Taskfile. See [Server Build](/guides/server-build) and [Linux Packaging - Legacy GTK3 Support](/guides/build/linux#legacy-gtk3-support) for details.
+Tags are forwarded as `EXTRA_TAGS` to the underlying Taskfile. See [Server Build](/guides/server-build/) and [Linux Packaging - Legacy GTK3 Support](/guides/build/linux/#legacy-gtk3-support) for details.
 
 ## Using Task Directly
 

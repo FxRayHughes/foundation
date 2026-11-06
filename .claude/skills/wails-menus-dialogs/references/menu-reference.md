@@ -1,17 +1,16 @@
 ---
-title: Menu API
-description: Complete reference for the Menu API
-sidebar:
-  order: 3
+title: "Menu API"
+description: "Complete reference for the Menu API"
+slug: "reference/menu"
+sourcePath: "reference/menu.md"
 ---
-
-import { Card, CardGrid } from "@astrojs/starlight/components";
 
 ## Overview
 
 The Menu API provides methods to create and manage application menus, context menus, and system tray menus.
 
 **Menu Types:**
+
 - **Application Menus** - Top menu bar (File, Edit, etc.)
 - **Context Menus** - Right-click menus
 - **System Tray Menus** - Menus in the system tray/notification area
@@ -27,6 +26,7 @@ func (a *App) NewMenu() *Menu
 ```
 
 **Example:**
+
 ```go
 menu := app.NewMenu()
 ```
@@ -42,11 +42,13 @@ func (m *Menu) Add(label string) *MenuItem
 ```
 
 **Parameters:**
+
 - `label` - The text displayed for the menu item
 
 **Returns:** The created menu item
 
 **Example:**
+
 ```go
 item := menu.Add("Open File")
 item.OnClick(func(ctx *application.Context) {
@@ -63,11 +65,13 @@ func (m *Menu) AddSubmenu(label string) *Menu
 ```
 
 **Parameters:**
+
 - `label` - The submenu label
 
 **Returns:** The created submenu
 
 **Example:**
+
 ```go
 fileMenu := menu.AddSubmenu("File")
 fileMenu.Add("New")
@@ -84,6 +88,7 @@ func (m *Menu) AddSeparator()
 ```
 
 **Example:**
+
 ```go
 menu.Add("Copy")
 menu.Add("Paste")
@@ -92,6 +97,33 @@ menu.Add("Select All")
 ```
 
 **Best practice:** Use separators to group related menu items.
+
+### AddSectionHeader()
+
+Adds a native, non-interactive section heading on **macOS 14 and later**.
+On older macOS versions and all other platforms (including server builds),
+this is a no-op: no placeholder item is inserted.
+
+```go
+func (m *Menu) AddSectionHeader(label string)
+```
+
+Use headings to label groups in tray, context or application menus:
+
+```go
+menu.AddSectionHeader("mac-node1")
+menu.Add("Windows VM").OnClick(openWindowsVM)
+menu.Add("Linux VM").OnClick(openLinuxVM)
+menu.AddSectionHeader("ai-master")
+menu.Add("Build VM").OnClick(openBuildVM)
+```
+
+Headings use AppKit's standard section-header appearance. Call `menu.Update()`
+after rebuilding an already displayed menu, as with other structural changes.
+See the `systray-menu` example for a heading obtained from `os.Hostname()`.
+
+Omitted headings do not split radio groups. Use `AddSeparator()` when radio
+groups must remain separate on every platform.
 
 ### AddCheckbox()
 
@@ -102,10 +134,12 @@ func (m *Menu) AddCheckbox(label string, checked bool) *MenuItem
 ```
 
 **Parameters:**
+
 - `label` - The checkbox label
 - `checked` - Initial checked state
 
 **Example:**
+
 ```go
 darkMode := menu.AddCheckbox("Dark Mode", false)
 darkMode.OnClick(func(ctx *application.Context) {
@@ -123,10 +157,12 @@ func (m *Menu) AddRadio(label string, checked bool) *MenuItem
 ```
 
 **Parameters:**
+
 - `label` - The radio button label
 - `checked` - Initial checked state
 
 **Example:**
+
 ```go
 // Create radio group for view modes
 viewMenu := menu.AddSubmenu("View")
@@ -151,6 +187,7 @@ func (m *Menu) Update()
 ```
 
 **Example:**
+
 ```go
 item.SetEnabled(false)
 menu.Update()  // Must call to apply changes
@@ -169,11 +206,13 @@ func (mi *MenuItem) OnClick(callback func(ctx *application.Context)) *MenuItem
 ```
 
 **Parameters:**
+
 - `callback` - Function called when item is clicked
 
 **Returns:** The menu item (for chaining)
 
 **Example:**
+
 ```go
 item.OnClick(func(ctx *application.Context) {
     fmt.Println("Menu item clicked")
@@ -190,6 +229,7 @@ func (mi *MenuItem) SetLabel(label string) *MenuItem
 ```
 
 **Example:**
+
 ```go
 item.SetLabel("Save As...")
 menu.Update()
@@ -204,6 +244,7 @@ func (mi *MenuItem) SetEnabled(enabled bool) *MenuItem
 ```
 
 **Example:**
+
 ```go
 // Disable save when no document is open
 saveItem.SetEnabled(hasOpenDocument)
@@ -211,6 +252,7 @@ menu.Update()
 ```
 
 **Common pattern:**
+
 ```go
 // Update menu state based on application state
 func updateMenuState() {
@@ -230,6 +272,7 @@ func (mi *MenuItem) SetChecked(checked bool) *MenuItem
 ```
 
 **Example:**
+
 ```go
 darkModeItem.SetChecked(isDarkModeEnabled)
 menu.Update()
@@ -244,6 +287,7 @@ func (mi *MenuItem) Checked() bool
 ```
 
 **Example:**
+
 ```go
 if darkModeItem.Checked() {
     // Dark mode is enabled
@@ -259,14 +303,17 @@ func (mi *MenuItem) SetAccelerator(accelerator string) *MenuItem
 ```
 
 **Parameters:**
+
 - `accelerator` - Keyboard shortcut (e.g., "Ctrl+S", "Cmd+Q")
 
 **Accelerator format:**
+
 - **Modifiers:** `Ctrl`, `Cmd`, `Alt`, `Shift`
 - **Keys:** `A-Z`, `0-9`, `F1-F12`, `Enter`, `Backspace`, etc.
 - **Platform:** Use `Cmd` on macOS, `Ctrl` on Windows/Linux
 
 **Example:**
+
 ```go
 saveItem.SetAccelerator("Ctrl+S")
 quitItem.SetAccelerator("Ctrl+Q")
@@ -274,6 +321,7 @@ newItem.SetAccelerator("Ctrl+N")
 ```
 
 **Platform-aware example:**
+
 ```go
 import "runtime"
 
@@ -295,6 +343,7 @@ func (mi *MenuItem) SetTooltip(tooltip string) *MenuItem
 ```
 
 **Example:**
+
 ```go
 item.SetTooltip("Opens a file from disk")
 ```
@@ -308,6 +357,7 @@ func (mi *MenuItem) SetHidden(hidden bool) *MenuItem
 ```
 
 **Example:**
+
 ```go
 // Hide debug menu in production
 debugItem.SetHidden(!isDevelopment)
@@ -325,6 +375,7 @@ func (mm *MenuManager) Set(menu *Menu)
 ```
 
 **Example:**
+
 ```go
 menu := app.NewMenu()
 
@@ -351,6 +402,7 @@ app.Menu.Set(menu)
 ```
 
 **Platform notes:**
+
 - **macOS:** Menu appears in the top menu bar
 - **Windows/Linux:** Menu appears in the window title bar
 - **macOS:** Automatically adds application menu with app name
@@ -399,6 +451,7 @@ The runtime triggers a registered context menu when the right-click target (or a
 There is no `data-wails-context-menu="..."` attribute — that was never wired in the runtime.
 
 **Dynamic context menus:**
+
 ```go
 // Update context menu based on selection
 func updateContextMenu() {
@@ -426,6 +479,7 @@ func (sm *SystemTrayManager) New() *SystemTray
 ```
 
 **Example:**
+
 ```go
 tray := app.SystemTray.New()
 ```
@@ -439,6 +493,7 @@ func (st *SystemTray) SetIcon(icon []byte) *SystemTray
 ```
 
 **Example:**
+
 ```go
 iconData, _ := os.ReadFile("icon.png")
 tray.SetIcon(iconData)
@@ -453,6 +508,7 @@ func (st *SystemTray) SetMenu(menu *Menu) *SystemTray
 ```
 
 **Example:**
+
 ```go
 trayMenu := app.NewMenu()
 trayMenu.Add("Show Window").OnClick(func(ctx *application.Context) {
@@ -477,6 +533,7 @@ func (st *SystemTray) SetTooltip(tooltip string)
 ```
 
 **Example:**
+
 ```go
 tray.SetTooltip("My Application - Running")
 ```
@@ -490,6 +547,7 @@ func (st *SystemTray) OnClick(callback func()) *SystemTray
 ```
 
 **Example:**
+
 ```go
 tray.OnClick(func() {
     if window.IsVisible() {

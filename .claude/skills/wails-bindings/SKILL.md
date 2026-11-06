@@ -1,6 +1,6 @@
 ---
 name: wails-bindings
-description: 编写 Service、生成 TypeScript 绑定、方法签名、模型映射、枚举支持、最佳实践。当用户问到「Service / Greet / NewService / 服务生命周期 / ServiceStartup / ServiceShutdown / 类型映射 / TypeScript 生成 / 自定义 binding 名 / Internal 隐藏方法」时使用。
+description: 编写 Service、生成 TypeScript 绑定、方法签名、模型映射、枚举支持、最佳实践。当用户问到「Service / Greet / NewService / NewServiceWithOptions / 服务生命周期 / ServiceStartup / ServiceShutdown / 类型映射 / time.Time 映射 / -time-type / []byte base64 / TypeScript 生成 / bindings/events 事件名常量 / 自定义 binding 名 / Internal 隐藏方法」时使用。
 ---
 
 # Wails v3 - Bindings & Services
@@ -114,8 +114,10 @@ func (s *MyService) DoStuff(ctx context.Context) error {
 | `bool` | `boolean` |
 | `[]T` | `T[]` |
 | `map[string]T` | `Record<string, T>` |
-| `struct` | `interface` |
-| `time.Time` | `Date` |
+| `struct` | `class`（默认，带 `createFrom`）；`-i` 时生成 `interface` |
+| `time.Time` | `string`（RFC3339Nano，CLI **默认**，beta.9 起）；`-time-type=Date` 时为 `Date`（注意：官方 JS/class 模板的构建任务默认传 `Date`，TS interface 任务保持 `string`——以项目 Taskfile 里的命令为准） |
+| `[]byte` | `string`（base64） |
+| `encoding/json` 的 `Marshaler` / `Unmarshaler` / `RawMessage` | `any`（Go 1.27 下这些成为 json/v2 别名，beta.31 起仍渲染为 `any`，不再为 json/v2 生成 model） |
 | `error` | throw exception |
 
 不支持：`chan`、`func()`、非 struct 指针、未导出字段。
@@ -172,12 +174,25 @@ wails3 generate bindings -d frontend/bindings -ts -models -clean -v
 | `-models` | 生成 model 文件 |
 | `-index` | 生成入口 index 文件 |
 | `-clean` | 输出前清空（默认 true） |
-| `-noevents` | 跳过事件常量 |
+| `-time-type` | `time.Time` 的 JS 类型：`string`（默认）或 `Date` |
+| `-dir` | 加载 Go 包的目录（默认工作目录） |
+| `-noevents` | 跳过事件类型 + `bindings/events` 名称常量 |
 | `-noindex` | 不生成 index |
 | `-i` | 接口绑定 |
 | `-b` | bundle 模式 |
 | `-names` | 启用 `Call.ByName` |
 | `-obfuscated` | Garble 兼容稳定 ID |
+
+### `bindings/events` 事件名常量（beta.33 新增）
+
+`application.RegisterEvent[T]("user:login")` 里**名字是编译期常量**的事件，生成器会额外产出 `bindings/events` 模块，每个事件导出一个类型化名字常量（`user:login` → `UserLogin`），无需 Vite 插件即可 `Events.On(UserLogin, e => e.data /* 已类型化 */)`。详见 `wails-events`。
+
+### 服务带选项注册
+
+```go
+application.NewServiceWithOptions(svc, application.ServiceOptions{Name: "...", Route: "/api"})
+// ⚠️ 不存在 2 参 NewService(svc, ServiceOptions{}) —— 那是旧 alpha 写法
+```
 
 ### 最佳实践
 

@@ -1,13 +1,12 @@
 ---
-title: Windows UAC Configuration
-description: Configure User Account Control (UAC) for your Windows Wails application
-sidebar:
-  order: 11
+title: "Windows UAC Configuration"
+description: "Configure User Account Control (UAC) for your Windows Wails application"
+slug: "guides/windows-uac"
+sourcePath: "guides/windows-uac.md"
 ---
 
-import {Badge} from '@astrojs/starlight/components';
+Relevant Platforms: <span class="mpress-badge mpress-badge-note">Windows</span>
 
-Relevant Platforms: <Badge text="Windows" variant="note" />
 <br/>
 
 Windows User Account Control (UAC) determines the execution privileges of your Wails application. By default, Wails v3 applications include explicit UAC configuration in their Windows manifest, ensuring consistent behavior across different machines.
@@ -19,7 +18,7 @@ Windows applications can request different execution levels through their manife
 ### Available Execution Levels
 
 | Level | Description | Use Case |
-|-------|-------------|----------|
+| --- | --- | --- |
 | `asInvoker` | Runs with the same privileges as the parent process | Default for most applications |
 | `highestAvailable` | Runs with the highest privileges available to the user | Applications that may need elevated access |
 | `requireAdministrator` | Always requires administrator privileges | System utilities, installers |
@@ -39,6 +38,7 @@ Wails v3 applications include a default UAC configuration in their Windows manif
 ```
 
 This configuration ensures your application:
+
 - Runs with the same privileges as the launching process
 - Does not require elevation by default
 - Works consistently across different machines
@@ -51,6 +51,7 @@ Since Wails v3 encourages users to customize their build assets, you can modify 
 ### Locating the Manifest Template
 
 The Windows manifest template is located at:
+
 ```
 build/windows/wails.exe.manifest
 ```
@@ -59,7 +60,7 @@ build/windows/wails.exe.manifest
 
 To change the execution level, edit the `level` attribute in the `requestedExecutionLevel` element:
 
-```xml title="build/windows/wails.exe.manifest"
+```xml {title="build/windows/wails.exe.manifest"}
 <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
     <security>
         <requestedPrivileges>
@@ -72,6 +73,7 @@ To change the execution level, edit the `level` attribute in the `requestedExecu
 ### Examples
 
 #### Standard Application (Default)
+
 Most applications should use the default `asInvoker` level:
 
 ```xml
@@ -79,6 +81,7 @@ Most applications should use the default `asInvoker` level:
 ```
 
 #### System Utility
+
 Applications that need elevated access when available:
 
 ```xml
@@ -86,6 +89,7 @@ Applications that need elevated access when available:
 ```
 
 #### Administrative Tool
+
 Applications that always require administrator privileges:
 
 ```xml
@@ -97,15 +101,18 @@ Applications that always require administrator privileges:
 The `uiAccess` attribute controls whether your application can interact with higher-privilege UI elements. In most cases, this should remain `false`.
 
 Set to `true` only if your application needs to:
+
 - Send input to other applications
 - Drive the UI of other applications
 - Access UI elements of higher-privilege processes
 
-:::caution[UI Access Requirements]
+@note{type="caution" title="UI Access Requirements"}
 Setting `uiAccess="true"` requires your application to be:
+
 - Digitally signed with a certificate from a trusted certificate authority
 - Installed in a secure location (Program Files or Windows\System32)
-:::
+
+@end
 
 ## Building with Custom UAC Settings
 
@@ -127,26 +134,33 @@ go-winres extract --in your-app.exe --out extracted-resources/
 
 Then examine the extracted manifest file to confirm your UAC configuration is present.
 
-:::tip[Manifest Persistence]
+@note{type="tip" title="Manifest Persistence"}
 Unlike some other frameworks, Wails v3's UAC configuration is embedded directly into the executable during compilation, ensuring it persists when the application is copied to other machines.
-:::
+
+@end
 
 ## Troubleshooting
 
 ### UAC Prompts Not Appearing
+
 If you set `requireAdministrator` but don't see UAC prompts:
+
 - Verify the manifest is properly embedded in your executable
 - Check that you're not running from an already-elevated process
 - Ensure the manifest syntax is valid XML
 
 ### Application Not Starting
+
 If your application fails to start after UAC changes:
+
 - Check the manifest syntax for XML errors
 - Verify the execution level value is valid
 - Try reverting to `asInvoker` to isolate the issue
 
 ### Inconsistent Behavior Across Machines
+
 If UAC behavior differs between machines:
+
 - Ensure the manifest is embedded in the executable (not external)
 - Check that the executable wasn't modified after building
 - Verify Windows UAC settings are enabled on the target machine

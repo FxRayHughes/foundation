@@ -1,11 +1,13 @@
 ---
-title: Menus
-description: A guide to creating and customising menus in Wails v3
+title: "Menus"
+description: "A guide to creating and customising menus in Wails v3"
+slug: "guides/menus"
+sourcePath: "guides/menus.md"
 ---
 
 Wails v3 provides a powerful menu system that allows you to create both application menus and context menus. This guide will walk you through the various features and capabilities of the menu system.
 
-### Creating a Menu
+## Creating a Menu
 
 To create a new menu, use the `New()` method from the Menus manager:
 
@@ -18,6 +20,7 @@ menu := app.Menu.New()
 Wails supports several types of menu items, each serving a specific purpose:
 
 #### Regular Menu Items
+
 Regular menu items are the basic building blocks of menus. They display text and can trigger actions when clicked:
 
 ```go
@@ -25,6 +28,7 @@ menuItem := menu.Add("Click Me")
 ```
 
 #### Checkboxes
+
 Checkbox menu items provide a toggleable state, useful for enabling/disabling features or settings:
 
 ```go
@@ -32,6 +36,7 @@ checkbox := menu.AddCheckbox("My checkbox", true)  // true = initially checked
 ```
 
 #### Radio Groups
+
 Radio groups allow users to select one option from a set of mutually exclusive choices. They are automatically created when radio items are placed next to each other:
 
 ```go
@@ -41,6 +46,7 @@ menu.AddRadio("Option 3", false)
 ```
 
 #### Separators
+
 Separators are horizontal lines that help organise menu items into logical groups:
 
 ```go
@@ -48,6 +54,7 @@ menu.AddSeparator()
 ```
 
 #### Submenus
+
 Submenus are nested menus that appear when hovering over or clicking a menu item. They're useful for organizing complex menu structures:
 
 ```go
@@ -57,7 +64,9 @@ submenu.Add("Save")
 ```
 
 #### Combining menus
+
 A menu can be added into another menu by appending or prepending it.
+
 ```go
 menu := app.Menu.New()
 menu.Add("First Menu")
@@ -75,14 +84,15 @@ menu.Prepend(secondaryMenu)
 menu.Update()
 ```
 
-:::note
-By default, `prepend` and `append` will share state with the original menu. If you want to create a new menu with its own state,
-you can call `.Clone()` on the menu.
+@note{type="info"}
+By default, `prepend` and `append` will share state with the original menu. If you want to create a new menu with its own state, you can call `.Clone()` on the menu.
 
 E.g: `menu.Append(secondaryMenu.Clone())`
-:::
+
+@end
 
 #### Clearing a menu
+
 In some cases it'll be better to construct a whole new menu if you are working with a variable amount of menu items.
 
 This will clear all items on an existing menu and allows you to add items again.
@@ -97,10 +107,10 @@ menu.Add("Update complete!")
 menu.Update()
 ```
 
-:::note
-Clearing a menu simply clears the menu items at the top level. Whilst Submenus won't be visible, they will still occupy memory
-so be sure to manage your menus carefully.
-:::
+@note{type="info"}
+Clearing a menu simply clears the menu items at the top level. Whilst Submenus won't be visible, they will still occupy memory so be sure to manage your menus carefully.
+
+@end
 
 #### Destroying a menu
 
@@ -114,19 +124,18 @@ menu.Add("Waiting for update...")
 menu.Destroy()
 ```
 
-
 ### Menu Item Properties
 
 Menu items have several properties that can be configured:
 
-| Property    | Method                   | Description                                         |
-|-------------|--------------------------|-----------------------------------------------------|
-| Label       | `SetLabel(string)`       | Sets the display text                               |
-| Enabled     | `SetEnabled(bool)`       | Enables/disables the item                           |
-| Checked     | `SetChecked(bool)`       | Sets the checked state (for checkboxes/radio items) |
-| Tooltip     | `SetTooltip(string)`     | Sets the tooltip text                               |
-| Hidden      | `SetHidden(bool)`        | Shows/hides the item                                |
-| Accelerator | `SetAccelerator(string)` | Sets the keyboard shortcut                          |
+| Property | Method | Description |
+| --- | --- | --- |
+| Label | `SetLabel(string)` | Sets the display text |
+| Enabled | `SetEnabled(bool)` | Enables/disables the item |
+| Checked | `SetChecked(bool)` | Sets the checked state (for checkboxes/radio items) |
+| Tooltip | `SetTooltip(string)` | Sets the tooltip text |
+| Hidden | `SetHidden(bool)` | Shows/hides the item |
+| Accelerator | `SetAccelerator(string)` | Sets the keyboard shortcut |
 
 ### Menu Item States
 
@@ -169,6 +178,7 @@ isEnabled := menuItem.Enabled()
 ```
 
 Disabled menu items remain visible but appear grayed out and cannot be clicked. This is commonly used to indicate that an action is currently unavailable, such as:
+
 - Disabling "Save" when there are no changes to save
 - Disabling "Copy" when nothing is selected
 - Disabling "Undo" when there's no action to undo
@@ -223,10 +233,11 @@ menuItem.OnClick(func(ctx *application.Context) {
 Wails provides a set of predefined menu roles that automatically create menu items with standard functionality. Here are the supported menu roles:
 
 #### Complete Menu Structures
+
 These roles create entire menu structures with common functionality:
 
 | Role | Description | Platform Notes |
-|------|-------------|----------------|
+| --- | --- | --- |
 | `AppMenu` | Application menu with About, Services, Hide/Show, and Quit | macOS only |
 | `EditMenu` | Standard Edit menu with Undo, Redo, Cut, Copy, Paste, etc. | All platforms |
 | `ViewMenu` | View menu with Reload, Zoom, and Fullscreen controls | All platforms |
@@ -234,10 +245,11 @@ These roles create entire menu structures with common functionality:
 | `HelpMenu` | Help menu with "Learn More" link to Wails website | All platforms |
 
 #### Individual Menu Items
+
 These roles can be used to add individual menu items:
 
 | Role | Description | Platform Notes |
-|------|-------------|----------------|
+| --- | --- | --- |
 | `About` | Show application About dialog | All platforms |
 | `Hide` | Hide application | macOS only |
 | `HideOthers` | Hide other applications | macOS only |
@@ -284,11 +296,9 @@ fileMenu.AddRole(application.Quit)
 
 Application menus are the menus that appear at the top of your application window (Windows/Linux) or at the top of the screen (macOS).
 
-
 ### Application Menu Behaviour
 
-When you set an application menu using `app.Menu.Set()`, it becomes the main menu on macOS.
-Menus are set on a per-window basis for Windows/Linux.
+When you set an application menu using `app.Menu.Set()`, it becomes the main menu on macOS. Menus are set on a per-window basis for Windows/Linux.
 
 ```go
 app.Window.NewWithOptions(application.WebviewWindowOptions{
@@ -338,6 +348,7 @@ Context menus are popup menus that appear when right-clicking elements in your a
 ### Default Context Menu
 
 The default context menu is the webview's built-in context menu that provides system-level operations such as:
+
 - Copy, Cut, and Paste for text manipulation
 - Text selection controls
 - Spell checking options
@@ -366,9 +377,10 @@ You can control when the default context menu appears using the `--default-conte
 </div>
 ```
 
-:::note
-This feature will only work as expected after the runtime [has been initialised](../../learn/runtime#initialisation).
-:::
+@note{type="info"}
+This feature will only work as expected after the [frontend runtime is ready](/reference/frontend-runtime/).
+
+@end
 
 #### Nested Context Menu Behavior
 
@@ -404,6 +416,7 @@ Example of nested context menu behaviour:
 ### Custom Context Menus
 
 Custom context menus allow you to provide application-specific actions that are relevant to the element being clicked. They're particularly useful for:
+
 - File operations in a document manager
 - Image manipulation tools
 - Custom actions in a data grid
@@ -420,6 +433,7 @@ app.ContextMenu.Add("imageMenu", contextMenu)
 ```
 
 The name parameter ("imageMenu" in this example) serves as a unique identifier that will be used to:
+
 1. Link HTML elements to this specific context menu
 2. Identify which menu should be shown when right-clicking
 3. Allow menu updates and cleanup
@@ -465,9 +479,11 @@ When you no longer need a context menu, you can destroy it:
 ```go
 contextMenu.Destroy()
 ```
-:::danger[Warning] 
+
+@note{type="danger" title="Warning"}
 After calling `Destroy()`, using the context menu reference again will result in a panic.
-:::
+
+@end
 
 ### Real-World Example: Image Gallery
 
@@ -518,6 +534,7 @@ imageMenu.Add("Share").OnClick(func(ctx *application.Context) {
 ```
 
 In this example:
+
 1. The context menu is created with the identifier "imageMenu"
 2. Each image container is linked to the menu using `--custom-contextmenu: imageMenu`
 3. Each container provides its image ID as context data using `--custom-contextmenu-data`
@@ -525,6 +542,7 @@ In this example:
 5. The same menu is reused for all images, but the context data tells us which image to operate on
 
 This pattern is particularly powerful for:
+
 - Data grids where rows need specific operations
 - File managers where files need context-specific actions
 - Design tools where different elements need different operations

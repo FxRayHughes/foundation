@@ -1,79 +1,100 @@
-import { useState, useCallback, useMemo } from 'react';
-import type { GridColDef, GridFilterModel, GridFilterItem } from '@mui/x-data-grid';
-import type { HeaderFilterConfig } from '../types';
-import { createElement } from 'react';
-import { TextField, Box } from '@mui/material';
+import { useCallback, useMemo, useState } from 'react';
+import type {
+  DataGridColumn,
+  DataGridFilterItem,
+  DataGridFilterModel,
+  DataGridRow,
+  HeaderFilterConfig,
+} from '../types';
+import { fieldOf, getCellValue, toNumber } from '../utils';
 
-interface UseHeaderFiltersParams {
-  columns: GridColDef[];
+// 表头筛选：每列表头下方渲染一个输入框（见 DataGridCells.HeaderTitle），
+// 这里只负责筛选模型（受控 / 非受控）与客户端过滤。
+
+interface UseHeaderFiltersParams<T extends DataGridRow> {
+  columns: DataGridColumn<T>[];
   config?: HeaderFilterConfig;
 }
 
-interface UseHeaderFiltersResult {
-  filterModel: GridFilterModel;
-  headerFilterRow: GridColDef[] | null;
-  onFilterChange: (field: string, value: string) => void;
+export interface UseHeaderFiltersResult<T extends DataGridRow> {
   isActive: boolean;
+  filterModel: DataGridFilterModel;
+  getFilterValue: (field: string) => string;
+  onFilterChange: (field: string, value: string) => void;
+  applyFilters: (rows: T[]) => T[];
 }
 
-export function useHeaderFilters({
+const EMPTY: DataGridFilterModel = { items: [] };
+
+const matches = (cell: unknown, item: DataGridFilterItem, numeric: boolean): boolean => {
+  const needle = item.value.trim();
+  if (!needle) return true;
+  if (['gt', 'gte', 'lt', 'lte'].includes(item.operator) || (numeric && item.operator === 'equals')) {
+    const a = toNumber(cell);
+    const b = toNumber(needle);
+    if (Number.isNaN(a) || Number.isNaN(b)) return false;
+    switch (item.operator) {
+      case 'gt': return a > b;
+      case 'gte': return a >= b;
+      case 'lt': return a < b;
+      case 'lte': return a <= b;
+      default: return a === b;
+    }
+  }
+  const hay = String(cell ?? '').toLowerCase();
+  const n = needle.toLowerCase();
+  switch (item.operator) {
+    case 'equals': return hay === n;
+    case 'startsWith': return hay.startsWith(n);
+    case 'endsWith': return hay.endsWith(n);
+    default: return hay.includes(n);
+  }
+};
+
+export function useHeaderFilters<T extends DataGridRow>({
   columns,
   config,
-}: UseHeaderFiltersParams): UseHeaderFiltersResult {
-  const [internalFilter, setInternalFilter] = useState<Record<string, string>>({});
+}: UseHeaderFiltersParams<T>): UseHeaderFiltersResult<T> {
+  const [internalModel, setInternalModel] = useState<DataGridFilterModel>(EMPTY);
+  const isActive = !!config?.enabled;
+  const filterModel = config?.filterModel ?? internalModel;
 
-  const filterModel: GridFilterModel = useMemo(() => {
-    if (config?.filterModel) return config.filterModel;
-    const items: GridFilterItem[] = Object.entries(internalFilter)
-      .filter(([, value]) => value.length > 0)
-      .map(([field, value], idx) => ({
-        id: idx,
-        field,
-        operator: 'contains',
-        value,
-      }));
-    return { items };
-  }, [config?.filterModel, internalFilter]);
+  const getFilterValue = useCallback(
+    (field: string) => filterModel.items.find((i) => i.field === field)?.value ?? '',
+    [filterModel],
+  );
 
   const onFilterChange = useCallback(
     (field: string, value: string) => {
-      if (config?.onFilterModelChange) {
-        const items: GridFilterItem[] = [
-          ...filterModel.items.filter((item) => item.field !== field),
-          ...(value ? [{ id: Date.now(), field, operator: 'contains', value }] : []),
-        ];
-        config.onFilterModelChange({ items });
-      } else {
-        setInternalFilter((prev) => ({ ...prev, [field]: value }));
-      }
+      const items: DataGridFilterItem[] = [
+        ...filterModel.items.filter((i) => i.field !== field),
+        ...(value ? [{ field, operator: 'contains' as const, value }] : []),
+      ];
+      const next = { items };
+      if (!config?.filterModel) setInternalModel(next);
+      config?.onFilterModelChange?.(next);
     },
     [config, filterModel],
   );
 
-  const headerFilterRow = useMemo(() => {
-    if (!config?.enabled) return null;
-    return columns.map((col) => ({
-      ...col,
-      renderHeader: () =>
-        createElement(
-          Box,
-          { sx: { display: 'flex', flexDirection: 'column', width: '100%', gap: 0.5 } },
-          createElement(Box, { sx: { fontWeight: 500, fontSize: '0.875rem' } }, col.headerName ?? col.field),
-          col.filterable !== false
-            ? createElement(TextField, {
-                size: 'small',
-                variant: 'standard',
-                placeholder: '...',
-                value: internalFilter[col.field] ?? '',
-                onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-                  onFilterChange(col.field, e.target.value),
-                sx: { '& .MuiInput-input': { fontSize: '0.75rem', py: 0.25 } },
-                onClick: (e: React.MouseEvent) => e.stopPropagation(),
-              })
-            : null,
-        ),
-    }));
-  }, [columns, config?.enabled, internalFilter, onFilterChange]);
+  const applyFilters = useCallback(
+    (rows: T[]): T[] => {
+      const items = filterModel.items.filter((i) => i.value.trim().length > 0);
+      if (!isActive || items.length === 0) return rows;
+      const colMap = new Map(columns.map((c) => [fieldOf(c), c]));
+      return rows.filter((row) =>
+        items.every((item) => {
+          const col = colMap.get(item.field);
+          const cell = col ? getCellValue(col, row) : row[item.field];
+          return matches(cell, item, col?.type === 'number');
+        }),
+      );
+    },
+    [columns, filterModel, isActive],
+  );
 
-  return { filterModel, headerFilterRow, onFilterChange, isActive: !!config?.enabled };
+  return useMemo(
+    () => ({ isActive, filterModel, getFilterValue, onFilterChange, applyFilters }),
+    [isActive, filterModel, getFilterValue, onFilterChange, applyFilters],
+  );
 }

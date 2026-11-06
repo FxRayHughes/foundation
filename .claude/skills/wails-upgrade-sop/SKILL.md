@@ -38,16 +38,32 @@ cd /Users/ray_hughes/Documents/CodeSpase/wails
 gh repo clone wailsapp/wails -- --depth 1 --branch <TARGET_TAG>   # 如 v3.0.0-beta.9
 ```
 
-> `gh clone` 走 git 协议，github.com 波动时也可能失败——失败就重试。克隆较大（几分钟），后台跑 + Monitor 等完成。
+> `gh clone` 走 git 协议，github.com 波动时也可能失败（v3.1.0 那次 https / ssh 都 `early EOF`）。**备用方案**：
+> - 直接下 tag 源码包（只需 https 短连接，比 clone 稳）：
+>   `curl -fsSL --retry 3 -o w.tgz https://codeload.github.com/wailsapp/wails/tar.gz/refs/tags/<TARGET_TAG> && mkdir wails && tar -xzf w.tgz -C wails --strip-components=1`
+> - `go get` 之后模块缓存里已有 v3 源码 + `release_notes.md`（release 说明；注意 v3.1.0 的模块里这份仍是 v3.0.0 的说明，以 changelog 为准）：`$(go env GOMODCACHE)/github.com/wailsapp/wails/v3@<TARGET_TAG>/`——**只核对 Go API / build_assets 时不必 clone**，只有同步 skill 需要 `docs/`。
+> - **只要文档时用 sparse checkout（v3.1.0 那次实测可行，只拉英文 `.md`，体积小、不易 EOF）**：
+>   ```sh
+>   cd /Users/ray_hughes/Documents/CodeSpase/wails
+>   git clone --depth 1 --filter=blob:none --sparse --branch <TARGET_TAG> https://github.com/wailsapp/wails.git wails-docs
+>   cd wails-docs && git sparse-checkout set --no-cone \
+>     '/docs/mpress/content/*.md' \
+>     '/docs/mpress/content/concepts/' '/docs/mpress/content/features/' '/docs/mpress/content/guides/' \
+>     '/docs/mpress/content/reference/' '/docs/mpress/content/tutorials/' '/docs/mpress/content/migration/' \
+>     '/docs/mpress/content/getting-started/' '/docs/mpress/content/quick-start/' '/docs/mpress/content/troubleshooting/'
+>   ```
+>   （只列根级 `*.md` + 英文主题目录，就不会拉到翻译 / blog / community；`--no-cone` 模式下 `/*.md` 只匹配该层文件。）
+> - **新旧版源码 API diff**：模块缓存里同时有旧版（如 `v3@v3.0.0-beta.9`）和新版时，直接对比两边 `pkg/application/*.go` 的导出声明，比读 changelog 快得多找到新增 / 改签名的 API。
 
 关键路径（后续步骤反复用到）：
 - Go API 源码：`wails/v3/pkg/application/`、`wails/v3/pkg/events/`
-- 变更日志（权威、含全历史）：`wails/docs/src/content/docs/changelog.mdx`
-- 官方文档（.mdx，Astro Starlight）：`wails/docs/src/content/docs/`
+- 变更日志（权威、含全历史）：`wails/docs/mpress/content/changelog.md`
+- 官方文档（`.md`，M-Press；beta.21 起）：`wails/docs/mpress/content/`（主题目录 concepts / features / guides / reference / tutorials / migration / getting-started / quick-start / troubleshooting + 根级 `changelog.md` / `whats-new.md` / `faq.md` / `status.md`）
+  - 历史：≤ beta.20 为 Astro Starlight 的 `docs/src/content/docs/*.mdx`（含 `import ... @astrojs/starlight` 与 `<Tabs>` 组件；M-Press 用 `@note{...}` / `@tabs` / `@end` 指令）
 - 前端 runtime 源码：`wails/v3/internal/runtime/desktop/@wailsio/runtime/src/`
 - CLI flag 定义：`wails/v3/internal/flags/`
 
-**收尾（发版后必做）**：`rm -rf /Users/ray_hughes/Documents/CodeSpase/wails/wails`。
+**收尾（发版后必做）**：`rm -rf /Users/ray_hughes/Documents/CodeSpase/wails/wails /Users/ray_hughes/Documents/CodeSpase/wails/wails-docs`。
 
 ---
 
@@ -91,6 +107,28 @@ go build ./internal/... && go vet ./internal/...      # 真正的 API 测试（�
 
 ---
 
+## 3.5 同步 build/ 资产（容易漏，别省）
+
+`wails3 task common:update:build-assets` **只重渲染 `.tmpl` 生成的文件**（plist / nfpm.yaml / info.json / desktop / wails.exe.manifest / nsis 工具 / iOS 工程），值取自 `build/config.yml` 的 `info.*`。
+**各平台 Taskfile、`build/Taskfile.yml`、docker/、android/、ios 源码等静态文件它不会动**——新版模板里的修复（如 purego、run:once 并发修复、GOOS 分发、Docker 基础镜像）要手动同步：
+
+```sh
+M=$(go env GOMODCACHE)/github.com/wailsapp/wails/v3@<TARGET_TAG>/internal/commands/build_assets
+# 1) 先确认 build/config.yml 的 info.* 是项目实际在用的值（否则重渲染会把 bundle id / 版本覆盖成占位值）
+# 2) 重渲染模板文件
+wails3 task common:update:build-assets
+# 3) 静态文件：从模板 rsync（排除模板、配置、图标）
+rsync -r --exclude='*.tmpl' --exclude='Taskfile.tmpl.yml' --exclude='config.yml' \
+  --exclude='appicon*' --exclude='icons.icns' --exclude='Assets.car' --exclude='icon.ico' "$M/" build/
+# 4) build/Taskfile.yml 由 $M/Taskfile.tmpl.yml 渲染：{{.Opn}}→{{ 、{{.Cls}}→}}，
+#    但 `wails3 generate bindings` 那一行保留项目原写法（init 时条件拼出来的 -ts / -time-type 不适用）
+# 5) 根 Taskfile.yml 对照 $(dirname $M)/../templates/_legacy/Taskfile.tmpl.yml 手动合并（APP_NAME / PACKAGE_MANAGER 保留项目值）
+git diff --stat build Taskfile.yml   # 逐个过一遍，确认没有把项目自定义改回去
+```
+> `wails3 init` 生成参考项目在这台机器上会报 `invalid remote git URL`，不要依赖它。
+
+---
+
 ## 4. 升级前端 + 重新生成 bindings
 
 ```sh
@@ -116,7 +154,10 @@ pnpm typecheck
 
 ## 5. 同步 wails-* skill 知识库
 
-skill 内容源自官方 `docs/src/content/docs/`（旧版拷贝）。按 §2 审计结果逐条改。**只改因新版而错的 + 补高价值新特性**，忽略翻译/showcase/CI 类改动。
+skill 内容源自官方 `docs/mpress/content/`（≤ beta.9 的拷贝来自旧 Starlight 布局 `docs/src/content/docs/`）。按 §2 审计结果逐条改。
+
+- references 基本是官方页的**原样拷贝**：先按 `INDEX.md`「与官方文档对应表」做 old→new 映射，逐个 diff（去掉 frontmatter / import 行再比），有实质变化就整页 `cp` 覆盖；**覆盖前先 `git show <上次同步 commit>` 查本地补过的段落**（如 `application.md` 的 `application.System`、`frontend-runtime.md` 的平台检测、CLI 表里的 `-time-type`），新官方页仍缺的要重新补回并标「本地补充」。
+- SKILL.md 摘要里的 API 断言要**对源码**（`$(go env GOMODCACHE)/.../v3@<TAG>/pkg/application`）验，不要只信文档——官方文档本身也会写错（如 v3.1.0 的 setup.md 把 `wails3 setup signing` 写成 `wails3 signing`）。**只改因新版而错的 + 补高价值新特性**，忽略翻译/showcase/CI 类改动。
 
 - 破坏性变更（会让示例编译不过 / 类型错）→ **必改**。例：`wails-bindings` 里 2 参 `NewService` → `NewServiceWithOptions`；`models.md` 的 `time.Time`/`[]byte` 映射表。
 - 文档结构性缺失（已文档化的结构体少了新字段 / 措辞现在会误导）→ **应改**。例：`wails-window` 补 `DisableMenu`/`CornerType`；`wails-runtime-features` 修正 `KeyBinding` 的 "global" 措辞。
@@ -126,9 +167,12 @@ skill 内容源自官方 `docs/src/content/docs/`（旧版拷贝）。按 §2 �
 ```sh
 # 确认没有残留会编译不过的旧写法（示例：2 参 NewService）
 grep -rnE "NewService\([^,)]+,\s*application\.(Service)?Options" .claude/skills/
-# 把 changelog 参考刷新到新版（新版 changelog 是全历史超集，可直接覆盖，frontmatter 一致）
-cp <clone>/docs/src/content/docs/changelog.mdx .claude/skills/wails-overview/references/changelog.md
-# 刷新 INDEX.md 里的「最新基准」行
+# 把 changelog 参考刷新到新版（新版 changelog 是全历史超集，可直接覆盖；M-Press 版 frontmatter 多了 slug/sourcePath）
+cp <clone>/docs/mpress/content/changelog.md .claude/skills/wails-overview/references/changelog.md   # 然后把 frontmatter 换回 title/description 两行
+# 刷新 INDEX.md 里的「最新基准」行 + 「版本」小节
+# 确认没有残留「旧版本是最新」的说法、旧文档路径只出现在历史说明里
+grep -rnE "beta\.9 (是|为)?最新|当前基准 .v3\.0\.0-beta" .claude/skills/
+grep -rn "docs/src/content/docs" .claude/skills/
 ```
 新增/改动 skill 的 frontmatter `description` 里要把新特性触发词也加上（如 `GlobalShortcut`/`Streams`/`MCP`），否则路由不到。
 
@@ -179,9 +223,10 @@ gh release view v<X.Y.Z>     # 确认 draft:false prerelease:false，notes 正�
 3. `frontend/pnpm-workspace.yaml` 一旦生成就**必须提交**，删了 `wails3 build` 会挂。
 4. 判断"要不要改代码"靠**逐个验新版源码签名**，不靠读 changelog 猜。
 5. 后端验证以 `go build ./internal/...` 为准（`./...` 的 embed 报错是噪音）。
+5½. `build/` 静态资产要按 §3.5 手动同步；重渲染模板前先核对 `config.yml` 的 `info.*`。
 6. 发布是外发动作，版本号/范围**先问用户**再动手。
 
 ## 关联
-- 本次具体结论 → 项目 `CLAUDE.md` 变更记录 + memory `wails-beta9-upgrade`
+- 本次具体结论 → 项目 `CLAUDE.md` 变更记录 + memory `wails-3.1-mantine` / `wails-beta9-upgrade`
 - Wails 各主题知识库 → `wails-*` skill（见 `.claude/skills/INDEX.md`）
 - 网络代理坑详情 → memory `go-proxy-workaround`

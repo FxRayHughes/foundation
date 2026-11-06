@@ -95,6 +95,10 @@ description: 完整动手教程（QR Code Service / TODO List / Notes / Self-Upd
 ### 重要提示
 
 - v3 是**完全重写**，不是 v2 的增量升级
+- **v3.0.0 已 GA（2026-10-26）**，桌面端（Windows / macOS / Linux）在稳定性承诺内；iOS / Android 仍实验性。当前 weekly 为 v3.1.0
+- v3 需要 **Go 1.26+**（官方迁移指南示例 `go.mod` 仍写 `go 1.25.0`，以 v3 模块实际声明的 `go 1.26.0` 为准）；`go get github.com/wailsapp/wails/v3@v3.1.0` 写精确版本
+- `@wailsio/runtime` 版本始终等于 Wails 版本，前端依赖要同步锁定
+- v2 继续接收关键更新，文档移到 `v2.wails.io`；`wails`（v2）与 `wails3` 是不同二进制，可并存
 - 很多模式需要重新设计（绑定 / 窗口 / 菜单）
 - 旧 `app.NewWebviewWindow(...)` API **不存在** —— 没有兼容包装层
 - 如有大量 v2 业务逻辑，建议先写一个最小 v3 应用熟悉模式再逐步迁移
@@ -108,6 +112,7 @@ description: 完整动手教程（QR Code Service / TODO List / Notes / Self-Upd
 | 03 Notes 完整教程 | [03-notes-vanilla.md](./references/03-notes-vanilla.md) |
 | 04 Self-Update 完整教程 | [04-self-update-a-wails-app.md](./references/04-self-update-a-wails-app.md) |
 | **v2 → v3 迁移指南**（完整 breaking changes） | [v2-to-v3.md](./references/v2-to-v3.md) |
+| v3 新特性总览（What's New，在 `wails-overview`） | [../wails-overview/references/whats-new.md](../wails-overview/references/whats-new.md) |
 
 ## 链接到其他 SKILL
 

@@ -1,4 +1,5 @@
-import type { ComponentType, ReactNode } from 'react';
+import type { Icon } from '@tabler/icons-react';
+import type { ReactNode } from 'react';
 
 // 路由展示槽位：决定 Sidebar 在哪一段渲染该项的导航按钮。
 // - 'primary'：顶部主导航
@@ -13,7 +14,7 @@ export interface RouteDefinition {
   labelKey?: string;
   // 兜底 label（无 i18n key 时用 / 翻译失败时显示的字面量）
   label: string;
-  icon?: ComponentType<{ fontSize?: 'small' | 'medium' | 'large' | 'inherit' }>;
+  icon?: Icon;                        // @tabler/icons-react 图标组件（如 IconHome）
   element: ReactNode;                 // 该路由对应的页面组件实例
   slot?: RouteSlot;                   // 默认 'primary'
   // 是否缓存页面状态：

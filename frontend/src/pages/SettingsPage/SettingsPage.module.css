@@ -1,0 +1,203 @@
+/* 设置页两列布局（最外侧的 Sidebar 菜单按钮不算）：
+    ┌─────────────┬─────────────────────────────┐
+    │  选项列表    │        详细配置             │
+    │ (220px 固定) │       (flex 占满)           │
+    └─────────────┴─────────────────────────────┘
+
+   这里只放"框架样式"：
+     - root / list / detail 容器
+     - 共享的 section 卡片标题（子页面内部分组用 sectionTitle / sectionHint / section）
+     - 骨架屏专用的版式类（skeleton*）
+
+   子页面专属样式（卡片网格 / 开关行 / 调色板等）请在 SettingsPage/<name>/<Name>.module.css 里维护。
+   颜色全部取 --fd-* 变量。 */
+
+.root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  background-color: var(--fd-bg-content);
+  overflow: hidden;
+}
+
+/* —— 左列：选项列表 —— */
+.list {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--fd-divider);
+  background-color: var(--fd-bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.listHeader {
+  padding: 24px 20px 12px;
+}
+
+.listEyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--fd-text-muted);
+}
+
+.listTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--fd-text-primary);
+  margin-top: 4px;
+}
+
+.listItems {
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.listItem {
+  position: relative;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  /* column 布局下显式声明 flex-start 才是真正的左对齐 */
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 2px;
+  color: var(--fd-text-secondary);
+  background-color: transparent;
+  transition:
+    background-color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 160ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.listItem:hover {
+  background-color: var(--fd-bg-hover);
+  color: var(--fd-text-primary);
+}
+.listItem[data-active],
+.listItem[data-active]:hover {
+  color: var(--fd-accent);
+  background-color: var(--fd-bg-active);
+}
+
+.listItemIndicator {
+  position: absolute;
+  left: -8px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background-color: var(--fd-accent);
+}
+
+.listItemLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: inherit;
+}
+
+.listItemDesc {
+  font-size: 12px;
+  color: var(--fd-text-muted);
+  line-height: 1.4;
+}
+
+/* —— 右列：详细配置 —— */
+.detail {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.detailHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detailEyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--fd-text-muted);
+}
+
+.detailTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--fd-text-primary);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.detailDesc {
+  font-size: 14px;
+  color: var(--fd-text-secondary);
+  line-height: 1.55;
+  max-width: 640px;
+}
+
+/* —— 子页面共享：section 容器 + 标题（被各 Subpage View 复用） —— */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 720px;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--fd-text-primary);
+}
+
+.sectionHint {
+  font-size: 12px;
+  color: var(--fd-text-muted);
+  line-height: 1.55;
+}
+
+/* —— 骨架屏版式（复刻子页面的网格，避免替换时跳动） —— */
+.skeletonListItem {
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.skeletonToolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.skeletonPaletteGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}

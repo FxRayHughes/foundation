@@ -1,20 +1,17 @@
 ---
-title: Updater
-description: In-app self-updates for Wails v3 — pluggable providers, cryptographic verification, atomic swap, and a default UI you can theme or replace.
+title: "Updater"
+description: "In-app self-updates for Wails v3 — pluggable providers, cryptographic verification, atomic swap, and a default UI you can theme or replace."
+slug: "guides/updater"
+sourcePath: "guides/updater.md"
 ---
 
-import { Image } from "astro:assets";
-import defaultWindowReady from "../../../assets/updater/default-window-ready.png";
-import defaultWindowUpToDate from "../../../assets/updater/default-window-up-to-date.png";
-import byoCustomWindow from "../../../assets/updater/byo-custom-window.png";
+The updater ships in-app software updates without forcing you to build your own download / verify / swap pipeline. It sits on `app.Updater`, accepts one or more pluggable `Provider`s (GitHub Releases, keygen.sh, Sparkle AppCast, the open Wails Update Manifest protocol, or your own), authenticates downloads against a configured public key, swaps the running binary safely, and surfaces every transition through the standard Wails event bus.
 
-The updater ships in-app software updates without forcing you to build your own download / verify / swap pipeline. It sits on `app.Updater`, accepts one or more pluggable `Provider`s (GitHub Releases, keygen.sh, Sparkle AppCast, or your own), authenticates downloads against a configured public key, swaps the running binary safely, and surfaces every transition through the standard Wails event bus.
-
-<Image src={defaultWindowReady} alt="The default updater window in the Update Ready state — state-aware icon, version pill (v1.0.0 → v2.0.1 · 8.8 MB), Markdown-rendered release notes including a GFM table, and a single primary action." style="max-width: 480px; margin: 1.25rem auto; display: block; filter: drop-shadow(0 6px 16px rgba(0,0,0,0.25));" />
+![The default updater window in the Update Ready state — state-aware icon, version pill (v1.0.0 → v2.0.1 · 8.8 MB), Markdown-rendered release notes including a GFM table, and a single primary action.](/assets/updater/default-window-ready.png)
 
 ## Quick start
 
-```go title="main.go"
+```go {title="main.go"}
 package main
 
 import (
@@ -52,7 +49,7 @@ That opens the framework's update window, checks GitHub, downloads the platform 
 `app.Updater` is a state machine with these states (`updater.State`):
 
 | State | When |
-|---|---|
+| --- | --- |
 | `unconfigured` | Before `Init` is called |
 | `idle` | After `Init`, before any check |
 | `checking` | A `Check` is in flight |
@@ -66,9 +63,15 @@ That opens the framework's update window, checks GitHub, downloads the platform 
 
 You can read the current state with `app.Updater.State()` at any time. Every transition also emits a Wails event (see [Events](#events)).
 
+`Restart` waits for the helper to reach `application.New` before asking the running app to quit. The default startup timeout is 30 seconds. If your app performs lengthy initialization before `application.New`, set `Config.HelperReadyTimeout` to a longer duration, such as `time.Minute`. Zero selects the default; negative durations are rejected. If startup times out, `Restart` returns `updater.ErrHelperNotReady` and keeps the running app open.
+
+The update is staged in a `wails-update-*` directory beside the installed binary (on macOS, beside the `.app` bundle), so that directory must be writable.
+
+Inside an AppImage the updater replaces and relaunches the `.AppImage` file named by `$APPIMAGE` rather than the read-only mount.
+
 The default window reflects the current state automatically — for example, when `Check` returns no upgrade the user sees this and dismisses with **Close**:
 
-<Image src={defaultWindowUpToDate} alt="The default updater window in the Up-to-Date state — green checkmark, 'You're Up to Date' heading, single Close button." style="max-width: 420px; margin: 1rem auto; display: block; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));" />
+![The default updater window in the Up-to-Date state — green checkmark, 'You're Up to Date' heading, single Close button.](/assets/updater/default-window-up-to-date.png)
 
 ## Providers
 
@@ -82,11 +85,11 @@ type Provider interface {
 }
 ```
 
-Three implementations ship in-tree.
+Four implementations ship in-tree.
 
 ### GitHub Releases — `updater/providers/github`
 
-```go title="github provider"
+```go {title="github provider"}
 gh, err := github.New(github.Config{
     Repository:    "myorg/myapp",     // your owner/repo (required)
     Token:         "ghp_…",           // optional; raises rate limit + private repos
@@ -119,7 +122,7 @@ gh, _ := github.New(github.Config{
 
 ### keygen.sh — `updater/providers/keygen`
 
-```go title="keygen provider"
+```go {title="keygen provider"}
 kg, err := keygen.New(keygen.Config{
     Account:    "your-account-slug", // required
     Product:    "product-uuid",      // optional but recommended when account has multiple products
@@ -139,7 +142,7 @@ The provider automatically maps keygen.sh's per-artifact SHA-512 checksum and Ed
 
 ### Sparkle AppCast — `updater/providers/appcast`
 
-```go title="appcast provider"
+```go {title="appcast provider"}
 ac, err := appcast.New(appcast.Config{
     URL:        "https://your.app/appcast.xml", // required
     Channel:    "stable",                       // optional sparkle:channel filter
@@ -150,6 +153,31 @@ ac, err := appcast.New(appcast.Config{
 Drops in to existing Sparkle / WinSparkle infrastructure unchanged. Reads `sparkle:shortVersionString`, `<enclosure url type length sparkle:os sparkle:edSignature>`, and `sparkle:channel` from the feed.
 
 Sparkle 1's DSA signatures (`sparkle:dsaSignature`) are not supported — projects on that signing scheme should rotate to EdDSA (Sparkle 2).
+
+### Wails Update Manifest — `updater/providers/endpoint`
+
+```go {title="endpoint provider"}
+ep, err := endpoint.New(endpoint.Config{
+    URL:        "https://updates.example.com/check", // required; supports {{platform}} / {{arch}} / {{version}} / {{channel}} placeholders
+    Channel:    "stable",                            // optional channel filter
+    Headers:    nil,                                 // optional headers, e.g. {"Authorization": "License <key>"}
+    HTTPClient: nil,                                 // optional client override; redirect-strip wrapper still applied
+})
+```
+
+Speaks the open [Wails Update Manifest protocol](/reference/update-manifest/): one JSON document describing the latest release and its per-platform artifacts, with checksums and signatures inline. The same document works from a static file host (S3, GitHub Pages, any CDN — publish one manifest per channel listing all platforms) or from a dynamic update server (the provider sends `platform`, `arch`, `version` and `channel` with every check, so the server can return exactly one artifact or gate on a license).
+
+URL placeholders make static layouts one line of config:
+
+```go
+ep, _ := endpoint.New(endpoint.Config{
+    URL: "https://cdn.example.com/updates/{{platform}}/{{arch}}/stable.json",
+})
+```
+
+Configured headers are sent on every manifest request; artifact downloads reuse them only on the manifest's own host with no `https` to `http` downgrade, and the `Authorization` header is stripped on any cross-origin or downgrading redirect.
+
+The CLI owns the publishing side: `wails3 updater manifest` digests, signs and describes your release files in one command, and `wails3 updater verify` re-checks the result before you upload. See [Publishing with the wails3 CLI](/reference/update-manifest/#publishing-with-the-wails3-cli).
 
 ### Fallback chain
 
@@ -207,7 +235,7 @@ app.Updater.Init(updater.Config{
 Supported algorithms (`Release.Verification.SignatureAlgo`):
 
 | Algorithm | What's signed | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `ed25519` | The SHA-256 digest of the artifact | Used by Sparkle EdDSA |
 | `ed25519ph` | The full artifact via Ed25519ph's pre-hash (SHA-512 internally) | Used by keygen.sh |
 | `ecdsa-p256` | The SHA-256 digest of the artifact | Both raw `r∥s` and DER signatures accepted |
@@ -216,18 +244,20 @@ Plus digest-only (`DigestAlgo`: `sha256` / `sha512`) when a release ships a hash
 
 `Config.PublicKey` is the ONLY trust anchor for signature verification — the release source has no way to substitute its own key. Releases that carry a `Signature` without a configured `Config.PublicKey` fail closed. The verifier computes the digest in a streaming pass during download, so even on multi-GB updates verification adds no extra disk pass.
 
-:::caution[Digest-only ≠ cryptographic verification]
+@note{type="caution" title="Digest-only ≠ cryptographic verification"}
 A release with only `Digest` is authenticated against the registry's TLS plus whatever integrity guarantee the registry itself provides — not against a cryptographic root you control. Use digest-only for bit-rot detection; use signatures for tamper resistance against a compromised release pipeline.
-:::
+
+@end
 
 ### Generating a signing key
 
 ```bash
-# Generate a fresh Ed25519 keypair for signing
-ssh-keygen -t ed25519 -f updater-key -N "" -C "wails-updater"
-# updater-key       — keep secret, use to sign releases
-# updater-key.pub   — bundle in your app via go:embed
+wails3 updater genkey
+# updater.key       — keep secret, use to sign releases
+# updater.key.pub   — bundle in your app via go:embed
 ```
+
+The private key is PKCS#8 PEM, the public key PKIX PEM; `Config.PublicKey` accepts the `.pub` file as-is (it also accepts the raw 32-byte key or its base64, which `genkey` prints for inlining). Sign releases with `wails3 updater manifest -key updater.key ...` or `wails3 updater sign`; see [Publishing with the wails3 CLI](/reference/update-manifest/#publishing-with-the-wails3-cli).
 
 Or in Go:
 
@@ -277,7 +307,7 @@ app.Updater.Init(updater.Config{
 The default stylesheet exposes these variables — override any of them:
 
 | Variable | Default (light) | Default (dark) |
-|---|---|---|
+| --- | --- | --- |
 | `--bg` | `#f8f8fa` | `#1a1a1c` |
 | `--surface` | `#ffffff` | `#232326` |
 | `--surface-2` | `#f0f0f3` | `#2c2c30` |
@@ -308,7 +338,7 @@ app.Updater.Init(updater.Config{
 InitialHTML windows are loaded with no asset-server origin, so they can't dynamically fetch `/wails/runtime.js`. You have two ways to talk to the host from one:
 
 1. **Just write HTML.** The framework auto-injects a minimal `window.wails.Events` shim into any window opened with `WebviewWindowOptions.AllowSimpleEventEmit = true` and `HTML` set — which is exactly what the updater's builtin and BYO paths do. No build step required. This is the path the example below uses.
-2. **Bundle `@wailsio/runtime` with your preferred bundler** (Vite, esbuild, Rollup) and import it into your custom HTML at build time. `Events.On` works out of the box because it's purely client-side; `Events.Emit` goes through the runtime's fetch transport, which the null origin breaks — so install a tiny postMessage transport via the runtime's [`setTransport`](https://wails.io/wails/runtime.js) hook that routes through `window._wails.invoke("wails:event:emit:<name>")`. The framework injection no-ops if `window.wails.Events` is already in scope, so the two approaches don't fight.
+2. **Bundle `@wailsio/runtime` with your preferred bundler** (Vite, esbuild, Rollup) and import it into your custom HTML at build time. `Events.On` works out of the box because it's purely client-side; `Events.Emit` goes through the runtime's fetch transport, which the null origin breaks — so install a tiny postMessage transport via the runtime's [`setTransport`](/guides/custom-transport/) hook that routes through `window._wails.invoke("wails:event:emit:<name>")`. The framework injection no-ops if `window.wails.Events` is already in scope, so the two approaches don't fight.
 
 Either way, the JS you write in your custom HTML calls the same `Events.On` / `Events.Emit` API:
 
@@ -331,7 +361,7 @@ Emit("wails:updater:window:ready");
 
 The shim exposes the subset of the modern runtime that bare-name events need: `Events.On(name, cb)` returns an unsubscribe function, and `Events.Emit(nameOrEventObject)` routes to the host via the gated `wails:event:emit:` postMessage path. It's installed once at page-load time before any of your inline scripts run.
 
-If you _want_ to override the shim (or you're loading the full runtime some other way), set `window.wails.Events` before the page's first `<script>` tag executes and the injection skips itself.
+If you *want* to override the shim (or you're loading the full runtime some other way), set `window.wails.Events` before the page's first `<script>` tag executes and the injection skips itself.
 
 ### Window chrome
 
@@ -354,8 +384,7 @@ Window: &updater.BuiltinWindow{
 
 Drive the update flow against an `*application.WebviewWindow` you create yourself. The updater calls `Show()` / `Close()` / `EmitEvent()` on your window — your HTML decides what to render:
 
-<Image src={byoCustomWindow} alt="A 'Bring your own' updater window with a pink-orange gradient background, a single white rounded card, custom typography, and the same updater events driving the visible state. Demonstrates how completely the default UI can be replaced." style="max-width: 380px; margin: 1rem auto; display: block; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));" />
-
+![A 'Bring your own' updater window with a pink-orange gradient background, a single white rounded card, custom typography, and the same updater events driving the visible state. Demonstrates how completely the default UI can be replaced.](/assets/updater/byo-custom-window.png)
 
 ```go
 myWin := app.Window.NewWithOptions(application.WebviewWindowOptions{
@@ -372,13 +401,14 @@ app.Updater.Init(updater.Config{
 
 Your HTML uses `window.wails.Events.On` / `Events.Emit` just like the builtin template — the framework's auto-injected shim ships into any window with `AllowSimpleEventEmit: true` regardless of whether the window is framework-owned or yours. See [Replace the template](#replace-the-template) for the API.
 
-:::caution[`AllowSimpleEventEmit` is required for BYO updater windows]
+@note{type="caution" title="`AllowSimpleEventEmit` is required for BYO updater windows"}
 The framework gates the `wails:event:emit:` postMessage shortcut on this field for security: a window without it set can't synthesise host-side custom events. The updater's custom-HTML shim emits `updater:user:*` events via that shortcut, so a BYO window that forgets the field silently swallows every button click — the user clicks Install and nothing happens.
 
 Keep `AllowSimpleEventEmit` **off** for any window that loads HTML you don't fully control (remote URLs, user-supplied content). When on, any JavaScript in the page — including XSS sinks — can fire any `app.Event.On(name, …)` handler. The shortcut conveys bare names only (no payload) and cannot reach the binding/Call path, but it can still trigger privileged custom-event handlers in your Go code if those handlers act on the event name alone.
 
 The framework's *builtin* updater window has this set internally — only BYO callers need to remember it.
-:::
+
+@end
 
 ### Headless
 
@@ -399,7 +429,7 @@ Both Go and JavaScript subscribe through the standard Wails event bus. **Don't t
 
 The constants live in `github.com/wailsapp/wails/v3/pkg/updater`. Subscribe via `app.Event.On(name, fn)`; the callback receives a `*application.CustomEvent` whose `Data` field is the typed payload listed in the [event reference](#event-reference) — type-assert, don't JSON-decode:
 
-```go title="main.go"
+```go {title="main.go"}
 import (
     "log"
 
@@ -431,7 +461,7 @@ app.Event.On(updater.EventError, func(e *application.CustomEvent) {
 All available Go constants:
 
 | Constant | Wire string |
-|---|---|
+| --- | --- |
 | `updater.EventCheckStarted` | `wails:updater:check-started` |
 | `updater.EventUpdateAvailable` | `wails:updater:update-available` |
 | `updater.EventNoUpdate` | `wails:updater:no-update` |
@@ -489,7 +519,7 @@ document.getElementById("install-btn").addEventListener("click", () => {
 Subscribe-side (host → page):
 
 | Constant (Go) | Constant (JS) | Payload | When |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `updater.EventCheckStarted` | `Updater.Events.CheckStarted` | none | Before each `Check` round-trip |
 | `updater.EventUpdateAvailable` | `Updater.Events.UpdateAvailable` | `*Release` | `Check` found a newer release |
 | `updater.EventNoUpdate` | `Updater.Events.NoUpdate` | none | `Check` confirmed up-to-date |
@@ -505,7 +535,7 @@ Subscribe-side (host → page):
 Page-side (page → host) — your code subscribes if you write a custom template:
 
 | Constant (Go) | Constant (JS) | When |
-|---|---|---|
+| --- | --- | --- |
 | `updater.EventWindowReady` | `Updater.Events.Window.Ready` | Window finished loading; host replays current state |
 | `updater.EventUserInstall` | `Updater.Events.User.Install` | Primary action in `available` state |
 | `updater.EventUserRestart` | `Updater.Events.User.Restart` | Primary action in `ready` state |
@@ -518,7 +548,7 @@ Page-side (page → host) — your code subscribes if you write a custom templat
 ### `updater.Config`
 
 | Field | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `CurrentVersion` | `string` | **Required.** Same string you tag releases with (no `v` prefix) |
 | `Providers` | `[]updater.Provider` | **Required.** Ordered fallback chain |
 | `PublicKey` | `[]byte` | PEM or raw bytes. Optional but signed releases fail closed without it |
@@ -531,7 +561,7 @@ Page-side (page → host) — your code subscribes if you write a custom templat
 ### Methods on `*updater.Updater`
 
 | Signature | Purpose |
-|---|---|
+| --- | --- |
 | `Init(cfg Config) error` | Configure. Returns `ErrAlreadyConfigured` on second call |
 | `State() State` | Current lifecycle phase |
 | `CurrentVersion() string` | The version passed to `Init` |
@@ -547,7 +577,7 @@ Page-side (page → host) — your code subscribes if you write a custom templat
 ### Errors
 
 | Sentinel | Returned by |
-|---|---|
+| --- | --- |
 | `ErrAlreadyConfigured` | `Init` after first success |
 | `ErrNotConfigured` | Any operation before `Init` |
 | `ErrNoPendingRelease` | `DownloadAndInstall` without prior `Check` |
@@ -561,8 +591,9 @@ Page-side (page → host) — your code subscribes if you write a custom templat
 1. Helper waits up to 30 s for the parent PID to exit (`platformIsAlive` polls via `syscall.OpenProcess` + `GetExitCodeProcess` on Windows, `os.FindProcess` + `proc.Signal(syscall.Signal(0))` on Unix).
 2. Helper backs up the target (copy for files, recursive copy for macOS `.app` bundle directories).
 3. Helper replaces the target with the staged artifact, retrying up to 20 times with a 500 ms backoff between attempts:
-   - **Unix** — `os.RemoveAll(target)` + `os.Rename(newPath, target)`. Open file descriptors against the old inode remain valid.
-   - **Windows** — `os.Rename(target, target.old.<nanos>)` + `os.Rename(newPath, target)`. Windows allows renaming files whose image is still mapped, but not deleting them; on the next update the helper sweeps any leftover `.old.*` siblings whose owning kernel mapping has been released.
+  - **Unix** — `os.RemoveAll(target)` + `os.Rename(newPath, target)`. Open file descriptors against the old inode remain valid.
+  - **Windows** — `os.Rename(target, target.old.<nanos>)` + `os.Rename(newPath, target)`. Windows allows renaming files whose image is still mapped, but not deleting them; on the next update the helper sweeps any leftover `.old.*` siblings whose owning kernel mapping has been released.
+
 4. Helper restores the original executable mode on the new binary (the downloaded file was created with the default umask, which drops `+x` on Unix; on Windows this is a no-op).
 5. Helper scrubs the helper-mode env vars and re-launches the (now-replaced) binary.
 6. Helper exits.
@@ -621,6 +652,6 @@ Before you publish a release that the updater will install:
 
 ## See also
 
-- Runnable example: [`v3/examples/updater`](https://github.com/wailsapp/wails/tree/master/v3/examples/updater)
+- Runnable example: [`v3/examples/updater`](https://github.com/wailsapp/wails/tree/v3.0.0/v3/examples/updater)
 - Test demo repo: [`wailsapp/updater-demo`](https://github.com/wailsapp/updater-demo)
-- Tutorial: [Adding self-updates to a Wails app](/tutorials/04-self-update-a-wails-app)
+- Tutorial: [Adding self-updates to a Wails app](/tutorials/04-self-update-a-wails-app/)

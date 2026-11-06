@@ -1,11 +1,9 @@
 ---
-title: Windows Packaging
-description: Package your Wails application for Windows distribution
-sidebar:
-  order: 3
+title: "Windows Packaging"
+description: "Package your Wails application for Windows distribution"
+slug: "guides/build/windows"
+sourcePath: "guides/build/windows.md"
 ---
-
-import { Aside } from '@astrojs/starlight/components';
 
 ## NSIS Installer
 
@@ -16,11 +14,12 @@ wails3 package GOOS=windows
 ```
 
 This runs `wails3 task windows:package` which:
+
 1. Builds the application
 2. Generates the WebView2 bootstrapper
 3. Creates an NSIS installer
 
-Output: `build/windows/nsis/<AppName>-installer.exe`
+Output: `bin/<AppName>-<arch>-installer.exe`. The NSIS source scripts remain under `build/windows/nsis/`.
 
 ### MSIX Package
 
@@ -32,9 +31,10 @@ wails3 package GOOS=windows FORMAT=msix
 
 Output: `bin/<AppName>-<arch>.msix`
 
-<Aside type="note">
+@note{type="note"}
 MSIX requires either `makeappx.exe` (Windows SDK) or the standalone MSIX tooling. The Windows Taskfile exposes the install task as `wails3 task install:msix:tools`.
-</Aside>
+
+@end
 
 ## Customizing the Installer
 
@@ -54,7 +54,7 @@ Application metadata comes from `build/windows/info.json`:
     "file_version": "1.0.0"
   },
   "info": {
-    "0000": {
+    "0409": {
       "ProductVersion": "1.0.0",
       "CompanyName": "My Company",
       "FileDescription": "My Application",
@@ -90,10 +90,10 @@ vars:
 Store your certificate password securely:
 
 ```bash
-wails3 setup signing
+wails3 signing
 ```
 
-See [Signing Applications](/guides/build/signing) for details.
+See [Signing Applications](/guides/build/signing/) for details.
 
 ## Building for ARM
 
